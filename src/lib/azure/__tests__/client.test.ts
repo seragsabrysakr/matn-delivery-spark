@@ -182,3 +182,27 @@ describe("AzureDevOpsClient metadata reads", () => {
     for (const call of calls) expect(call.url).toContain("api-version=7.1");
   });
 });
+
+describe("AzureDevOpsClient backlog WIQL", () => {
+  it("sends timePrecision and $top on the allowlisted WIQL POST", async () => {
+    let seenUrl = "";
+    let seenMethod = "";
+    const client = makeClient(async (url, init) => {
+      seenUrl = String(url);
+      seenMethod = String(init?.method);
+      return jsonResponse({ workItems: [] });
+    });
+
+    await client.postAllowlisted(
+      "wiql",
+      "proj-1",
+      { query: "SELECT [System.Id] FROM WorkItems" },
+      { query: { timePrecision: "true", $top: 5001 } },
+    );
+
+    expect(seenMethod).toBe("POST");
+    expect(seenUrl).toContain("/proj-1/_apis/wit/wiql?");
+    expect(seenUrl).toContain("timePrecision=true");
+    expect(seenUrl).toContain("%24top=5001");
+  });
+});

@@ -124,6 +124,20 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Consequences**: Custom processes work without configuration or code changes; the funnel matches what each team sees in Azure. A few extra GETs per sync (bounded by the 6-hour freshness window), and four small tables. Until revisions are ingested, time-in-column is known only for moves observed between syncs.
 - **Alternatives**: Extend the English dictionary (rejected — still hardcoded and wrong for localized or custom processes), require tenants to map every state by hand (rejected — Azure already knows the category), keep fixed funnel stages (rejected — does not reflect any real team's board).
 
+### ADR-014: Project backlog and incremental work item sync (Phase 1b)
+
+- **Context**: Only items under the current iteration were synchronized (`buildIterationWiql`), so the real backlog was invisible, and every sync re-read everything.
+- **Decision**:
+  1. **Backlog scope comes from Azure** — each team's areas are read from `GET {project}/{team}/_apis/work/teamsettings/teamfieldvalues` at sync time, honouring `includeChildren`; a team keyed on a non-area team field is skipped with a warning, and the synced `core_teams.area_paths` is only a flagged fallback. The backlog is every item in those areas, of the mapping's work item types that exist in the project, whose state is open, regardless of iteration.
+  2. **"Open" is per type, from synced metadata** — the full query is `(type = T AND state IN (open states of T)) OR …`, where open means any state whose Azure category is not Completed/Removed (unknown counts as open). Types without synced states are skipped and make the run `partial`; nothing falls back to state names in code.
+  3. **Incremental by watermark** — the per-project watermark lives in `ops_sync_cursors` (`entity_kind = 'work_items_backlog'`): `watermark_at` is the latest `System.ChangedDate` stored; `watermark_token` carries the last full reconcile instant. Later runs query `[System.ChangedDate] > watermark − 5 min` (`timePrecision=true`) with no state filter, so closures are seen too. The watermark only moves after a failure-free, untruncated run and never moves backwards.
+  4. **Daily full reconcile** — the first run and any run 24 h after the last full one is full: after reading the open items, every stored open item of the project that Azure did not return is re-read by id (`errorPolicy: Omit`), so items that moved out of scope, closed or were deleted are corrected. Ids Azure no longer returns are counted as unavailable, never deleted (ADR-009).
+  5. **Placement** — the owning team is the most specific matching team area (ties keep the current owner, else the lowest id); the iteration is resolved from `System.IterationPath`. `classifyPlacement` derives `in_sprint` / `in_backlog` / `closed` at read time instead of persisting a flag that goes stale when sprints roll over.
+  6. **Visible limits** — the same 5,000-item ceiling as the sprint sync (`$top = ceiling + 1` detects overflow); a truncated run is `partial`, skips the reconcile and keeps the old watermark.
+  7. **Shared persistence** — sprint and backlog syncs write through one `persistWorkItemBatch`, so blocked-since, board-column entry and state-category gap reporting behave identically.
+- **Consequences**: The backlog and future sprints are available for the upcoming Backlog/People/Stuck pages; repeat syncs read only what changed. Items that leave a team's areas between full reconciles are corrected within a day. No schema change was needed.
+- **Alternatives**: One query per team (rejected — shared areas would be read twice and ownership would flip), a persisted `in_backlog` flag (rejected — wrong as soon as a sprint rolls over), relying on `State NOT IN ('Closed','Removed')` (rejected — hardcoded names, ADR-013).
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.

@@ -5,8 +5,10 @@ synced with this repository's `main` branch, and the database is the Lovable
 Cloud Postgres (Supabase underneath — hence `supabase-js`,
 `supabase/migrations` and `supabase_migrations.schema_migrations`).
 
-> The Lovable project may list the repository as `Sragsakr/matn-delivery-spark`.
-> That is this repository under the account's former name; GitHub redirects it.
+> The Lovable project lists the repository as `Sragsakr/matn-delivery-spark`.
+> GitHub redirects that name to this repository (it was transferred from the
+> `Sragsakr` account, which Lovable still uses to commit). If sync stops, check
+> that the Lovable GitHub App still has access to this repository.
 
 ## 1. Before merging
 

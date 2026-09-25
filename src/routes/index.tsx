@@ -48,6 +48,7 @@ function OverviewPage() {
     syncMessage,
     runSync,
     syncReport,
+    backlogReport,
     sprintDatesUnavailable,
   } = useWorkspace();
 
@@ -130,6 +131,33 @@ function OverviewPage() {
               f: syncReport.detached,
               g: syncReport.failed,
             })}${syncReport.truncated ? ` — ${t("real.sync.truncated")}` : ""}`}
+          />
+        ) : null}
+        {backlogReport ? (
+          <Notice
+            tone={
+              backlogReport.status === "succeeded" && !backlogReport.truncated
+                ? "neutral"
+                : "warning"
+            }
+            title={t("real.backlog.reportTitle")}
+            body={
+              backlogReport.status === "failed"
+                ? (backlogReport.message ?? t("real.backlog.failed"))
+                : `${t(
+                    backlogReport.mode === "full"
+                      ? "real.backlog.modeFull"
+                      : "real.backlog.modeIncremental",
+                  )} · ${t("real.backlog.report", {
+                    a: backlogReport.discoveredIds,
+                    b: backlogReport.inserted,
+                    c: backlogReport.updated,
+                    d: backlogReport.unchanged,
+                    e: backlogReport.rechecked,
+                    f: backlogReport.unavailable,
+                    g: backlogReport.failed,
+                  })}${backlogReport.truncated ? ` — ${t("real.backlog.truncated")}` : ""}`
+            }
           />
         ) : null}
         {noWorkItems ? (

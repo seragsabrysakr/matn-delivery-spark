@@ -251,6 +251,18 @@ export const dictionary = {
     ar: "تم بلوغ الحد الأقصى لعدد العناصر، لذلك النتيجة غير مكتملة.",
     en: "The per-sprint item ceiling was reached, so this result is incomplete.",
   },
+  "real.backlog.reportTitle": { ar: "نتيجة مزامنة الـ Backlog", en: "Backlog sync result" },
+  "real.backlog.modeFull": { ar: "مزامنة كاملة", en: "Full pass" },
+  "real.backlog.modeIncremental": { ar: "مزامنة التغييرات فقط", en: "Changes only" },
+  "real.backlog.report": {
+    ar: "تم اكتشاف {a} عنصرًا · إضافة {b} · تحديث {c} · دون تغيير {d} · إعادة فحص {e} · غير متاح في Azure {f} · فشل {g}",
+    en: "{a} discovered · {b} inserted · {c} updated · {d} unchanged · {e} re-checked · {f} no longer in Azure · {g} failed",
+  },
+  "real.backlog.truncated": {
+    ar: "تم بلوغ الحد الأقصى لعدد عناصر الـ Backlog، لذلك النتيجة غير مكتملة.",
+    en: "The backlog item ceiling was reached, so this result is incomplete.",
+  },
+  "real.backlog.failed": { ar: "فشلت مزامنة الـ Backlog", en: "Backlog sync failed" },
   "overview.copilot.comingSoon": { ar: "قريبًا", en: "Coming soon" },
 
   "common.na": { ar: "غير متاح", en: "N/A" },

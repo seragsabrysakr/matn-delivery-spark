@@ -101,9 +101,13 @@ export const WORK_ITEM_BATCH_FIELDS: readonly string[] = [
 export function buildWorkItemsBatchBody(
   ids: readonly number[],
   extraFields: readonly string[] = [],
-): { ids: number[]; fields: string[] } {
+  options: { readonly omitMissing?: boolean } = {},
+): { ids: number[]; fields: string[]; errorPolicy?: "Omit" } {
   if (ids.length === 0 || ids.length > MAX_BATCH_IDS)
     throw new AzureDevOpsError("invalid_configuration");
   const fields = Array.from(new Set([...WORK_ITEM_BATCH_FIELDS, ...extraFields]));
-  return { ids: [...ids], fields };
+  // "Omit" returns null for deleted or inaccessible ids instead of failing the batch.
+  return options.omitMissing
+    ? { ids: [...ids], fields, errorPolicy: "Omit" }
+    : { ids: [...ids], fields };
 }

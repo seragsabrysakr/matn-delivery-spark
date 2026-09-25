@@ -111,6 +111,62 @@ export const getSprintWorkItemSyncStatus = createServerFn({ method: "GET" })
     }
   });
 
+/**
+ * Starts (or rejoins) the resumable backlog sync for the selected sprint's
+ * project: open items in the teams' areas, regardless of iteration.
+ */
+export const startBacklogWorkItemSync = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => teamIterationInput.parse(data))
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext, assertCanRunSync, writeAudit } =
+      await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { startBacklogSync } = await import("@/lib/azure/backlog-sync.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      assertCanRunSync(tenant);
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      const status = await startBacklogSync(target, tenant.coreUserId);
+      await writeAudit({
+        tenantId: tenant.tenantId,
+        actorUserId: tenant.coreUserId,
+        action: "azure.backlog.sync.start",
+        entityType: "core_projects",
+        entityId: target.projectId,
+        outcome: "success",
+      });
+      return { ok: true as const, status };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
+
+/** Performs one bounded, checkpointed slice of the backlog sync. Call until done. */
+export const advanceBacklogWorkItemSync = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({ teamIterationId: uuid, runId: uuid, tenantId: uuid.optional() })
+      .strict()
+      .parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext, assertCanRunSync } = await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { advanceBacklogSync } = await import("@/lib/azure/backlog-sync.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      assertCanRunSync(tenant);
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      return { ok: true as const, status: await advanceBacklogSync(data.runId, target) };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
+
 /** Real, tenant-scoped Team page payload for one validated team iteration. */
 export const getRealTeamPage = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

@@ -29,7 +29,7 @@ export interface MetadataSyncResult {
   readonly warnings: readonly string[];
 }
 
-interface ProjectScope {
+export interface ProjectScope {
   readonly tenantId: string;
   readonly organizationId: string;
   readonly projectId: string;
@@ -291,6 +291,21 @@ async function latestBoardsSync(tenantId: string, teamId: string): Promise<strin
   return data?.last_synced_at ?? null;
 }
 
+/** Refreshes the project's work item types and states when they are stale. */
+export async function ensureProcessMetadataFresh(
+  scope: ProjectScope,
+  client: AzureDevOpsClient,
+  nowMs: number = Date.now(),
+): Promise<readonly string[]> {
+  const typesAt = await latestTypesSync(scope.tenantId, scope.projectId);
+  if (!isMetadataStale(typesAt, nowMs)) return [];
+  try {
+    return (await syncProjectProcessMetadata(scope, client)).warnings;
+  } catch {
+    return ["process_metadata_unavailable"];
+  }
+}
+
 /**
  * Refreshes stale process and board metadata before a work item sync. A
  * failure here never fails the sync: states then resolve through the
@@ -301,19 +316,8 @@ export async function ensureMetadataFresh(
   client: AzureDevOpsClient,
   nowMs: number = Date.now(),
 ): Promise<readonly string[]> {
-  const warnings: string[] = [];
-  const [typesAt, boardsAt] = await Promise.all([
-    latestTypesSync(scope.tenantId, scope.projectId),
-    latestBoardsSync(scope.tenantId, scope.teamId),
-  ]);
-
-  if (isMetadataStale(typesAt, nowMs)) {
-    try {
-      warnings.push(...(await syncProjectProcessMetadata(scope, client)).warnings);
-    } catch {
-      warnings.push("process_metadata_unavailable");
-    }
-  }
+  const warnings: string[] = [...(await ensureProcessMetadataFresh(scope, client, nowMs))];
+  const boardsAt = await latestBoardsSync(scope.tenantId, scope.teamId);
   if (isMetadataStale(boardsAt, nowMs)) {
     try {
       warnings.push(...(await syncTeamBoardMetadata(scope, client)).warnings);

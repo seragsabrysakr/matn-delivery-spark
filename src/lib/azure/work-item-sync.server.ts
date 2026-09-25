@@ -18,15 +18,8 @@ import {
   WORK_ITEM_ADVANCE_BUDGET_MS,
   WORK_ITEM_REQUEST_TIMEOUT_MS,
 } from "./wiql";
-import { resolveProcessMapping, type ProcessMappingRow } from "./process-mapping";
-import { diffWorkItem, mapAzureWorkItem, type AzureIdentityLike } from "./workitem-map";
-import { boardColumnEnteredAt } from "./metadata-rules";
-import {
-  ensureMetadataFresh,
-  loadAzureStateIndex,
-  recordStateResolutionGaps,
-  type StateResolutionGap,
-} from "./metadata-sync.server";
+import { ensureMetadataFresh } from "./metadata-sync.server";
+import { loadWorkItemReference, persistWorkItemBatch } from "./work-item-persist.server";
 import { ensureConnection } from "./sync.server";
 import type { ResolvedTeamIteration } from "@/lib/workspace/context.server";
 
@@ -155,51 +148,6 @@ export async function startWorkItemSync(
   };
 }
 
-interface Loaded {
-  readonly mapping: ReturnType<typeof resolveProcessMapping>;
-  readonly memberByDescriptor: Map<string, string>;
-  readonly memberByUniqueName: Map<string, string>;
-}
-
-async function loadReferenceData(target: ResolvedTeamIteration): Promise<Loaded> {
-  const [mappingRow, members, azureStates] = await Promise.all([
-    target.processMappingId
-      ? supabaseAdmin
-          .from("core_process_mappings")
-          .select(
-            "work_item_type_aliases, state_category_map, done_states, active_states, blocked_fields, estimate_fields, severity_field, bug_handling_mode",
-          )
-          .eq("tenant_id", target.tenantId)
-          .eq("id", target.processMappingId)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-    supabaseAdmin
-      .from("core_members")
-      .select("id, azure_descriptor, azure_unique_name")
-      .eq("tenant_id", target.tenantId)
-      .eq("organization_id", target.organizationId),
-    loadAzureStateIndex(target.tenantId, target.projectId),
-  ]);
-
-  const memberByDescriptor = new Map<string, string>();
-  const memberByUniqueName = new Map<string, string>();
-  for (const member of members.data ?? []) {
-    if (member.azure_descriptor) memberByDescriptor.set(String(member.azure_descriptor), member.id);
-    if (member.azure_unique_name)
-      memberByUniqueName.set(String(member.azure_unique_name).toLowerCase(), member.id);
-  }
-
-  return {
-    mapping: resolveProcessMapping(
-      (mappingRow.data as ProcessMappingRow | null) ?? null,
-      target.processTemplateKind,
-      azureStates,
-    ),
-    memberByDescriptor,
-    memberByUniqueName,
-  };
-}
-
 /**
  * Performs one bounded slice of work and checkpoints. Callers keep invoking
  * until `phase === "done"`, which makes the whole sprint sync interruptible.
@@ -252,15 +200,8 @@ export async function advanceWorkItemSync(
     );
   }
 
-  const { mapping, memberByDescriptor, memberByUniqueName } = await loadReferenceData(target);
-
-  const resolveMember = (ref: AzureIdentityLike | null | undefined): string | null => {
-    if (!ref) return null;
-    if (ref.descriptor && memberByDescriptor.has(ref.descriptor))
-      return memberByDescriptor.get(ref.descriptor)!;
-    if (ref.uniqueName) return memberByUniqueName.get(ref.uniqueName.toLowerCase()) ?? null;
-    return null;
-  };
+  const reference = await loadWorkItemReference(target);
+  const { mapping } = reference;
 
   try {
     if (cursor.phase === "discover") {
@@ -294,116 +235,23 @@ export async function advanceWorkItemSync(
           value?: { id: number; rev?: number; fields: Record<string, unknown> }[];
         }>("workItemsBatch", target.azureProjectId, buildWorkItemsBatchBody(batch));
 
-        const existing = await supabaseAdmin
-          .from("az_work_items")
-          .select("*")
-          .eq("tenant_id", target.tenantId)
-          .eq("organization_id", target.organizationId)
-          .in("azure_work_item_id", batch);
-        if (existing.error) throw new AzureDevOpsError("unknown");
-        const existingById = new Map(
-          (existing.data ?? []).map((row) => [
-            Number(row.azure_work_item_id),
-            row as Record<string, unknown>,
-          ]),
-        );
-
-        let inserted = 0;
-        let updated = 0;
-        let unchanged = 0;
-        let failed = 0;
-        const seenAt = new Date().toISOString();
-        const gaps: StateResolutionGap[] = [];
-
-        for (const raw of response.value ?? []) {
-          const mapped = mapAzureWorkItem(raw, mapping, {
+        const result = await persistWorkItemBatch({
+          tenantId: target.tenantId,
+          organizationId: target.organizationId,
+          projectId: target.projectId,
+          raws: response.value ?? [],
+          reference,
+          contextFor: () => ({
             projectId: target.projectId,
             teamId: target.teamId,
             iterationId: target.iterationId,
             teamIterationId: target.teamIterationId,
-            resolveMember,
+            resolveMember: reference.resolveMember,
             organizationBaseUrl: target.organizationBaseUrl,
             azureProjectName: target.azureProjectName,
-          });
-
-          if (mapped.stateCategorySource === "fallback" || mapped.stateCategorySource === "none") {
-            gaps.push({
-              azureType: mapped.payload.azure_work_item_type,
-              state: mapped.payload.state,
-              source: mapped.stateCategorySource,
-              category: mapped.payload.state_category,
-            });
-          }
-
-          const prior = existingById.get(mapped.azureWorkItemId);
-          const columnEnteredAt = boardColumnEnteredAt(
-            prior
-              ? {
-                  boardColumn: prior["board_column"] as string | null,
-                  enteredAt: prior["board_column_entered_at"] as string | null,
-                }
-              : null,
-            {
-              boardColumn: mapped.payload.board_column,
-              changedAtSource: mapped.payload.changed_at_source,
-            },
-          );
-          const blockedSince = mapped.payload.is_blocked
-            ? ((prior?.["blocked_since"] as string | null) ??
-              mapped.payload.state_change_date ??
-              seenAt)
-            : null;
-
-          if (!prior) {
-            const { error } = await supabaseAdmin.from("az_work_items").insert({
-              tenant_id: target.tenantId,
-              organization_id: target.organizationId,
-              azure_work_item_id: mapped.azureWorkItemId,
-              ...mapped.payload,
-              blocked_since: blockedSince,
-              board_column_entered_at: columnEnteredAt,
-              last_seen_at: seenAt,
-              last_synced_at: seenAt,
-            });
-            if (error) failed += 1;
-            else inserted += 1;
-            continue;
-          }
-
-          const diff = diffWorkItem(
-            { ...prior, blocked_since: prior["blocked_since"] },
-            {
-              ...mapped.payload,
-            },
-          );
-          const blockedChanged = (prior["blocked_since"] ?? null) !== blockedSince;
-          const columnEntryChanged = (prior["board_column_entered_at"] ?? null) !== columnEnteredAt;
-
-          if (diff.kind === "unchanged" && !blockedChanged && !columnEntryChanged) {
-            // Freshness only: never counted as an update.
-            await supabaseAdmin
-              .from("az_work_items")
-              .update({ last_seen_at: seenAt, last_synced_at: seenAt })
-              .eq("id", prior["id"] as string);
-            unchanged += 1;
-            continue;
-          }
-
-          const { error } = await supabaseAdmin
-            .from("az_work_items")
-            .update({
-              ...(diff.kind === "update" ? diff.patch : {}),
-              blocked_since: blockedSince,
-              board_column_entered_at: columnEnteredAt,
-              last_seen_at: seenAt,
-              last_synced_at: seenAt,
-            })
-            .eq("id", prior["id"] as string);
-          if (error) failed += 1;
-          else updated += 1;
-        }
-
-        await recordStateResolutionGaps(target.tenantId, target.projectId, gaps);
+          }),
+        });
+        const { inserted, updated, unchanged, failed } = result;
 
         cursor = {
           ...cursor,
