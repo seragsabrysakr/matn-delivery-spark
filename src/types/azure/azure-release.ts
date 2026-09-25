@@ -6,7 +6,13 @@ export interface AzureDeployment {
   readonly releaseId?: number;
   readonly attempt: number;
   readonly deploymentStatus:
-    | "notDeployed" | "inProgress" | "succeeded" | "partiallySucceeded" | "failed" | "all" | "undefined";
+    | "notDeployed"
+    | "inProgress"
+    | "succeeded"
+    | "partiallySucceeded"
+    | "failed"
+    | "all"
+    | "undefined";
   readonly operationStatus?: string;
   readonly queuedOn?: string;
   readonly startedOn?: string;
@@ -25,7 +31,8 @@ export interface AzureEnvironment {
 
 export interface AzureApproval {
   readonly id: number;
-  readonly status: "pending" | "approved" | "rejected" | "reassigned" | "skipped" | "canceled" | "undefined";
+  readonly status:
+    "pending" | "approved" | "rejected" | "reassigned" | "skipped" | "canceled" | "undefined";
   readonly approver?: AzureIdentityRef;
   readonly modifiedOn?: string;
   readonly comments?: string;

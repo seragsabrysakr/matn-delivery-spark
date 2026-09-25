@@ -1,5 +1,11 @@
 import type {
-  HealthStatus, KpiValue, Localized, Measure, Recommendation, RiskSignal, Uuid,
+  HealthStatus,
+  KpiValue,
+  Localized,
+  Measure,
+  Recommendation,
+  RiskSignal,
+  Uuid,
 } from "@/types/domain";
 import type { DashboardContractBase, Section } from "./shared";
 import type { SprintConfidenceResult } from "@/types/domain/kpi";
@@ -52,7 +58,11 @@ export interface EngineeringHealthContract {
   readonly medianReviewHours: Measure;
   readonly buildSuccessRate: Measure;
   readonly failedTests: number;
-  readonly deployment: { readonly status: HealthStatus; readonly label: Localized; readonly note: Localized };
+  readonly deployment: {
+    readonly status: HealthStatus;
+    readonly label: Localized;
+    readonly note: Localized;
+  };
 }
 
 /** Payload backing the approved Overview page. */

@@ -22,7 +22,8 @@ export function isAllowedReadPostKind(kind: string): kind is AzureReadPostKind {
 
 /** Escapes a WIQL string literal. Control characters are rejected outright. */
 export function escapeWiqlLiteral(value: string): string {
-  if (typeof value !== "string" || value.length === 0) throw new AzureDevOpsError("invalid_configuration");
+  if (typeof value !== "string" || value.length === 0)
+    throw new AzureDevOpsError("invalid_configuration");
   // eslint-disable-next-line no-control-regex
   if (/[\u0000-\u001f]/.test(value)) throw new AzureDevOpsError("invalid_configuration");
   return value.replace(/'/g, "''");
@@ -98,7 +99,8 @@ export function buildWorkItemsBatchBody(
   ids: readonly number[],
   extraFields: readonly string[] = [],
 ): { ids: number[]; fields: string[] } {
-  if (ids.length === 0 || ids.length > MAX_BATCH_IDS) throw new AzureDevOpsError("invalid_configuration");
+  if (ids.length === 0 || ids.length > MAX_BATCH_IDS)
+    throw new AzureDevOpsError("invalid_configuration");
   const fields = Array.from(new Set([...WORK_ITEM_BATCH_FIELDS, ...extraFields]));
   return { ids: [...ids], fields };
 }

@@ -53,7 +53,11 @@ export class AzureDevOpsError extends Error {
 
   constructor(
     code: AzureErrorCode,
-    options: { httpStatus?: number | null; retryAfterSeconds?: number | null; detail?: string } = {},
+    options: {
+      httpStatus?: number | null;
+      retryAfterSeconds?: number | null;
+      detail?: string;
+    } = {},
   ) {
     super(SAFE_MESSAGES[code]);
     this.name = "AzureDevOpsError";
@@ -75,7 +79,12 @@ export class AzureDevOpsError extends Error {
 /** Maps any thrown value to a sanitized failure. Never leaks provider text. */
 export function toAzureFailure(error: unknown): AzureFailure {
   if (error instanceof AzureDevOpsError) return error.toFailure();
-  return { code: "unknown", message: SAFE_MESSAGES.unknown, httpStatus: null, retryAfterSeconds: null };
+  return {
+    code: "unknown",
+    message: SAFE_MESSAGES.unknown,
+    httpStatus: null,
+    retryAfterSeconds: null,
+  };
 }
 
 export function statusToCode(status: number): AzureErrorCode {

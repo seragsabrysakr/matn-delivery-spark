@@ -46,15 +46,16 @@ export function domainStatus(counts: DomainCounts, tally?: ScopeTally): DomainSt
     : 0;
   if (
     counts.failed === 0 &&
-    (!tally || (
-      tally.attempted === tally.expected &&
-      tally.completed === tally.expected &&
-      tally.failed === 0 &&
-      tally.remainingContinuationTokens === 0
-    ))
-  ) return "complete";
+    (!tally ||
+      (tally.attempted === tally.expected &&
+        tally.completed === tally.expected &&
+        tally.failed === 0 &&
+        tally.remainingContinuationTokens === 0))
+  )
+    return "complete";
   const hasSuccess =
-    counts.inserted + counts.updated + counts.unchanged > 0 || (tally ? tally.completed > 0 : false);
+    counts.inserted + counts.updated + counts.unchanged > 0 ||
+    (tally ? tally.completed > 0 : false);
   return hasSuccess ? "partial" : "failed";
 }
 
@@ -63,13 +64,25 @@ export function finalizeScopedDomain(
   counts: DomainCounts,
   tally: ScopeTally,
   nowIso: string,
-): { readonly counts: DomainCounts; readonly status: DomainStatus; readonly incompleteScopes: number } {
+): {
+  readonly counts: DomainCounts;
+  readonly status: DomainStatus;
+  readonly incompleteScopes: number;
+} {
   const status = domainStatus(counts, tally);
   const complete = status === "complete";
   return {
-    counts: { ...counts, complete, freshnessAt: complete ? (counts.freshnessAt ?? nowIso) : counts.freshnessAt },
+    counts: {
+      ...counts,
+      complete,
+      freshnessAt: complete ? (counts.freshnessAt ?? nowIso) : counts.freshnessAt,
+    },
     status,
-    incompleteScopes: Math.max(0, tally.expected - tally.completed, tally.attempted - tally.completed),
+    incompleteScopes: Math.max(
+      0,
+      tally.expected - tally.completed,
+      tally.attempted - tally.completed,
+    ),
   };
 }
 
@@ -80,7 +93,6 @@ export interface JobState extends SyncRunReport {
   /** Scope progress per scoped domain, persisted so resumed runs stay accurate. */
   readonly scopes?: Readonly<Partial<Record<SyncDomain, ScopeTally>>>;
 }
-
 
 /** Time budget for one interactive advance call; well under the hosting deadline. */
 export const ADVANCE_BUDGET_MS = 15_000;
@@ -107,12 +119,17 @@ export function nextCursor(cursor: JobCursor, unitsRemaining: boolean): JobCurso
  * Tombstones are only allowed after a domain reached the end of a complete,
  * failure-free scan. Partial, timed-out or failed domains never tombstone.
  */
-export function canTombstone(counts: Pick<DomainCounts, "failed" | "complete">, scanReachedEnd: boolean): boolean {
+export function canTombstone(
+  counts: Pick<DomainCounts, "failed" | "complete">,
+  scanReachedEnd: boolean,
+): boolean {
   return scanReachedEnd && counts.complete && counts.failed === 0;
 }
 
 /** Derives the terminal status of a finished run from its per-domain counts. */
-export function deriveRunStatus(domains: Readonly<Record<SyncDomain, DomainCounts>>): SyncRunReport["status"] {
+export function deriveRunStatus(
+  domains: Readonly<Record<SyncDomain, DomainCounts>>,
+): SyncRunReport["status"] {
   const anyComplete = JOB_DOMAIN_ORDER.some((d) => domains[d].complete);
   const allComplete = JOB_DOMAIN_ORDER.every((d) => domains[d].complete);
   if (allComplete) return "succeeded";

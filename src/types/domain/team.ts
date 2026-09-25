@@ -1,4 +1,11 @@
-import type { IsoTimestamp, Localized, RecordMeta, SourceTracked, TenantScoped, Uuid } from "./common";
+import type {
+  IsoTimestamp,
+  Localized,
+  RecordMeta,
+  SourceTracked,
+  TenantScoped,
+  Uuid,
+} from "./common";
 
 /** Azure DevOps team inside a project. Current-state record. */
 export interface Team extends TenantScoped, RecordMeta, SourceTracked {

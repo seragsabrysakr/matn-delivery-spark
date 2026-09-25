@@ -18,10 +18,15 @@ interface VerifiedIdentity {
   readonly displayName: string;
 }
 
-const reject = (reason: BootstrapRejectionReason): BootstrapResult => ({ status: "rejected", reason });
+const reject = (reason: BootstrapRejectionReason): BootstrapResult => ({
+  status: "rejected",
+  reason,
+});
 
 /** Resolves the caller's verified identity from Auth. Never trusts client input. */
-async function resolveVerifiedIdentity(authUserId: string | null | undefined): Promise<VerifiedIdentity | BootstrapRejectionReason> {
+async function resolveVerifiedIdentity(
+  authUserId: string | null | undefined,
+): Promise<VerifiedIdentity | BootstrapRejectionReason> {
   if (!authUserId) return "unauthenticated";
   const { data, error } = await supabaseAdmin.auth.admin.getUserById(authUserId);
   if (error || !data?.user) return "unauthenticated";
@@ -29,7 +34,10 @@ async function resolveVerifiedIdentity(authUserId: string | null | undefined): P
   if (!user.email_confirmed_at) return "email_unverified";
   const email = (user.email ?? "").trim().toLowerCase();
   if (email === "") return "invalid_identity";
-  const metaName = typeof user.user_metadata?.["display_name"] === "string" ? (user.user_metadata["display_name"] as string) : "";
+  const metaName =
+    typeof user.user_metadata?.["display_name"] === "string"
+      ? (user.user_metadata["display_name"] as string)
+      : "";
   return { authUserId, email, displayName: metaName.trim() || email.split("@")[0]! };
 }
 

@@ -10,7 +10,10 @@ const teamsBody = (n: number, offset = 0) =>
   new Response(
     JSON.stringify({
       count: n,
-      value: Array.from({ length: n }, (_, i) => ({ id: `t${offset + i}`, name: `Team ${offset + i}` })),
+      value: Array.from({ length: n }, (_, i) => ({
+        id: `t${offset + i}`,
+        name: `Team ${offset + i}`,
+      })),
     }),
     { status: 200, headers: { "content-type": "application/json" } },
   );
@@ -138,13 +141,21 @@ describe("domain dependency status", () => {
       teams: { complete: false, failed: 4 },
     });
     expect(blockingDependency("teams", state)).toBeNull();
-    for (const domain of ["iterations", "teamIterations", "members", "teamMemberships"] as SyncDomain[]) {
+    for (const domain of [
+      "iterations",
+      "teamIterations",
+      "members",
+      "teamMemberships",
+    ] as SyncDomain[]) {
       expect(blockingDependency(domain, state)).toBe("teams");
     }
   });
 
   it("blocked domains are never complete, never fresh and never tombstoned", () => {
-    const blocked = blockedCounts({ ...emptyCounts(), complete: true, freshnessAt: "2026-01-01" }, "teams");
+    const blocked = blockedCounts(
+      { ...emptyCounts(), complete: true, freshnessAt: "2026-01-01" },
+      "teams",
+    );
     expect(blocked.complete).toBe(false);
     expect(blocked.freshnessAt).toBeNull();
     expect(blocked.blocked).toBe(true);

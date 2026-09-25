@@ -1,4 +1,10 @@
-import type { DataQualityIssue, Localized, Recommendation, RiskSignal, SyncRun } from "@/types/domain";
+import type {
+  DataQualityIssue,
+  Localized,
+  Recommendation,
+  RiskSignal,
+  SyncRun,
+} from "@/types/domain";
 import type { ReleaseReadinessResult, SprintConfidenceResult } from "@/types/domain/kpi";
 import type { DashboardContractBase, Section } from "./shared";
 

@@ -111,12 +111,18 @@ export function TeamLoadCard({ members }: { members: TeamMemberLoad[] }) {
                           <div
                             className={cn(
                               "h-full rounded-full",
-                              ratio > 1.1 ? "bg-critical" : ratio > 0.95 ? "bg-warning" : "bg-success",
+                              ratio > 1.1
+                                ? "bg-critical"
+                                : ratio > 0.95
+                                  ? "bg-warning"
+                                  : "bg-success",
                             )}
                             style={{ width: `${Math.min(100, ratio * 100)}%` }}
                           />
                         </div>
-                        <StatusPill status={signalStatus[m.signal]}>{t(signalKey[m.signal])}</StatusPill>
+                        <StatusPill status={signalStatus[m.signal]}>
+                          {t(signalKey[m.signal])}
+                        </StatusPill>
                       </div>
                     )}
                   </td>
@@ -144,7 +150,11 @@ export function TeamLoadCard({ members }: { members: TeamMemberLoad[] }) {
                 <div className="rounded-md border border-border bg-surface px-2.5 py-1.5">
                   <div className="text-muted-foreground">{t("team.capacity")}</div>
                   <div className="tabular-nums text-foreground">
-                    {m.capacityHours === null ? t("common.na") : <Iso>{hours(m.capacityHours)}</Iso>}
+                    {m.capacityHours === null ? (
+                      t("common.na")
+                    ) : (
+                      <Iso>{hours(m.capacityHours)}</Iso>
+                    )}
                   </div>
                 </div>
                 <div className={cn("rounded-md px-2.5 py-1.5", heatClass(ratio))}>
@@ -163,7 +173,12 @@ export function TeamLoadCard({ members }: { members: TeamMemberLoad[] }) {
                 </div>
                 <div className="rounded-md border border-border bg-surface px-2.5 py-1.5">
                   <div className="text-muted-foreground">{t("team.blocked")}</div>
-                  <div className={cn("tabular-nums", m.blockedItems > 0 ? "text-critical" : "text-foreground")}>
+                  <div
+                    className={cn(
+                      "tabular-nums",
+                      m.blockedItems > 0 ? "text-critical" : "text-foreground",
+                    )}
+                  >
                     {m.blockedItems}
                   </div>
                 </div>

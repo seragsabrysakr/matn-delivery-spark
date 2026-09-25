@@ -40,13 +40,7 @@ export interface Iteration {
   totalDays: number;
 }
 
-export type KpiId =
-  | "confidence"
-  | "scope"
-  | "expected"
-  | "scopeChange"
-  | "blockers"
-  | "release";
+export type KpiId = "confidence" | "scope" | "expected" | "scopeChange" | "blockers" | "release";
 
 /** Structured facts behind a real-mode KPI explanation. The browser formats
  * these; it never invents numbers of its own. */
@@ -121,13 +115,7 @@ export interface Risk {
   adoUrl: string;
 }
 
-export type FunnelStageId =
-  | "backlog"
-  | "ready"
-  | "development"
-  | "review"
-  | "testing"
-  | "done";
+export type FunnelStageId = "backlog" | "ready" | "development" | "review" | "testing" | "done";
 
 export interface FunnelStage {
   id: FunnelStageId;

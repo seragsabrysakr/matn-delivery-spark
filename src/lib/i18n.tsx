@@ -141,7 +141,10 @@ export const dictionary = {
   "trajectory.day": { ar: "اليوم", en: "Day" },
 
   "risks.title": { ar: "أهم المخاطر", en: "Critical Risks" },
-  "risks.subtitle": { ar: "مرتّبة حسب الأثر على تاريخ التسليم.", en: "Ordered by impact on the delivery date." },
+  "risks.subtitle": {
+    ar: "مرتّبة حسب الأثر على تاريخ التسليم.",
+    en: "Ordered by impact on the delivery date.",
+  },
   "risks.owner": { ar: "المسؤول", en: "Owner" },
   "risks.age": { ar: "العمر", en: "Age" },
   "risks.days": { ar: "{a} يوم", en: "{a} days" },
@@ -160,7 +163,10 @@ export const dictionary = {
   },
 
   "funnel.title": { ar: "مسار التسليم", en: "Delivery Funnel" },
-  "funnel.subtitle": { ar: "توزيع عناصر العمل على مراحل التنفيذ.", en: "Work item distribution across execution stages." },
+  "funnel.subtitle": {
+    ar: "توزيع عناصر العمل على مراحل التنفيذ.",
+    en: "Work item distribution across execution stages.",
+  },
   "funnel.backlog": { ar: "قائمة الأعمال", en: "Backlog" },
   "funnel.ready": { ar: "جاهز", en: "Ready" },
   "funnel.development": { ar: "التطوير", en: "Development" },
@@ -188,7 +194,10 @@ export const dictionary = {
   "team.hours": { ar: "ساعة", en: "h" },
 
   "eng.title": { ar: "الصحة الهندسية", en: "Engineering Health" },
-  "eng.subtitle": { ar: "إشارات المراجعة والبناء والنشر.", en: "Review, build, and deployment signals." },
+  "eng.subtitle": {
+    ar: "إشارات المراجعة والبناء والنشر.",
+    en: "Review, build, and deployment signals.",
+  },
   "eng.activePrs": { ar: "طلبات الدمج النشطة", en: "Active pull requests" },
   "eng.stalePrs": { ar: "طلبات دمج راكدة", en: "Stale pull requests" },
   "eng.reviewTime": { ar: "وسيط زمن المراجعة", en: "Median review time" },
@@ -196,9 +205,15 @@ export const dictionary = {
   "eng.failedTests": { ar: "اختبارات فاشلة", en: "Failed tests" },
   "eng.deployment": { ar: "حالة النشر", en: "Deployment status" },
   "eng.deploy.blocked": { ar: "النشر متوقف", en: "Deployment blocked" },
-  "eng.deploy.note": { ar: "آخر نشر ناجح إلى بيئة الاختبار قبل ١٩ ساعة.", en: "Last successful staging deploy 19 hours ago." },
+  "eng.deploy.note": {
+    ar: "آخر نشر ناجح إلى بيئة الاختبار قبل ١٩ ساعة.",
+    en: "Last successful staging deploy 19 hours ago.",
+  },
   "eng.deploy.unknown": { ar: "حالة النشر غير معروفة", en: "Deployment status unknown" },
-  "eng.deploy.notSynced": { ar: "لم تتم مزامنة بيانات النشر بعد.", en: "Deployment data has not been synchronized yet." },
+  "eng.deploy.notSynced": {
+    ar: "لم تتم مزامنة بيانات النشر بعد.",
+    en: "Deployment data has not been synchronized yet.",
+  },
   "real.mode.badge": { ar: "بيانات حقيقية", en: "Live data" },
   "real.mode.mock": { ar: "بيانات تجريبية", en: "Sample data" },
   "real.sync.action": { ar: "مزامنة السبرنت الحالي", en: "Sync current sprint" },
@@ -222,7 +237,10 @@ export const dictionary = {
   "real.state.partial": { ar: "مزامنة جزئية", en: "Partially synchronized" },
   "real.state.stale": { ar: "بيانات قديمة", en: "Data stale" },
   "real.state.failed": { ar: "فشلت المزامنة", en: "Sync failed" },
-  "real.sprintDates.unavailable": { ar: "تواريخ السبرنت غير متاحة", en: "Sprint dates unavailable" },
+  "real.sprintDates.unavailable": {
+    ar: "تواريخ السبرنت غير متاحة",
+    en: "Sprint dates unavailable",
+  },
   "real.sync.reportTitle": { ar: "نتيجة مزامنة عناصر العمل", en: "Work item sync result" },
   "real.sync.report": {
     ar: "تم اكتشاف {a} عنصرًا · قراءة {b} · إضافة {c} · تحديث {d} · دون تغيير {e} · خارج السبرنت {f} · فشل {g}",
@@ -235,7 +253,10 @@ export const dictionary = {
   "overview.copilot.comingSoon": { ar: "قريبًا", en: "Coming soon" },
 
   "common.na": { ar: "غير متاح", en: "N/A" },
-  "kpi.unavailable": { ar: "لا يوجد مصدر بيانات موثوق لهذا المؤشر بعد.", en: "No trustworthy source for this indicator yet." },
+  "kpi.unavailable": {
+    ar: "لا يوجد مصدر بيانات موثوق لهذا المؤشر بعد.",
+    en: "No trustworthy source for this indicator yet.",
+  },
   "kpi.coverage": { ar: "تغطية البيانات {a}%", en: "Data coverage {a}%" },
   "kpi.coverageLow": {
     ar: "تغطية البيانات أقل من الحد الأدنى، لذلك لا تُعرض درجة الثقة.",
@@ -332,11 +353,13 @@ export const dictionary = {
   "real.component.scopeStability": { ar: "استقرار النطاق", en: "Scope stability" },
   "real.component.dataCompleteness": { ar: "اكتمال البيانات", en: "Data completeness" },
 
-
   "eng.hours": { ar: "ساعة", en: "h" },
 
   "actions.title": { ar: "الإجراءات الموصى بها", en: "Recommended Actions" },
-  "actions.subtitle": { ar: "مرتّبة حسب الأثر المتوقع على السبرنت.", en: "Ranked by expected impact on the sprint." },
+  "actions.subtitle": {
+    ar: "مرتّبة حسب الأثر المتوقع على السبرنت.",
+    en: "Ranked by expected impact on the sprint.",
+  },
   "actions.impact": { ar: "الأثر المتوقع", en: "Expected impact" },
   "actions.reason": { ar: "السبب", en: "Reason" },
   "actions.items": { ar: "عناصر مرتبطة", en: "Related items" },
@@ -384,25 +407,37 @@ export const dictionary = {
   "placeholder.planned": { ar: "المخطط لهذه الصفحة", en: "Planned for this page" },
 
   "delivery.title": { ar: "التسليم", en: "Delivery" },
-  "delivery.subtitle": { ar: "تتبّع النطاق والتدفق والالتزامات عبر السبرنتات.", en: "Track scope, flow, and commitments across sprints." },
+  "delivery.subtitle": {
+    ar: "تتبّع النطاق والتدفق والالتزامات عبر السبرنتات.",
+    en: "Track scope, flow, and commitments across sprints.",
+  },
   "delivery.p1": { ar: "تحليل تدفّق العمل وزمن الدورة", en: "Flow and cycle-time analysis" },
   "delivery.p2": { ar: "سجل تغيّرات النطاق", en: "Scope change ledger" },
   "delivery.p3": { ar: "التزامات الإصدار والمعالم", en: "Release and milestone commitments" },
 
   "teamPage.title": { ar: "الفريق", en: "Team" },
-  "teamPage.subtitle": { ar: "السعة والتوزيع وأنماط التعاون.", en: "Capacity, distribution, and collaboration patterns." },
+  "teamPage.subtitle": {
+    ar: "السعة والتوزيع وأنماط التعاون.",
+    en: "Capacity, distribution, and collaboration patterns.",
+  },
   "teamPage.p1": { ar: "تخطيط السعة لكل سبرنت", en: "Per-sprint capacity planning" },
   "teamPage.p2": { ar: "توزيع العمل ونقاط الاختناق", en: "Work distribution and bottlenecks" },
   "teamPage.p3": { ar: "أنماط المراجعة والتعاون", en: "Review and collaboration patterns" },
 
   "engPage.title": { ar: "الهندسة", en: "Engineering" },
-  "engPage.subtitle": { ar: "جودة الشيفرة وخطوط البناء والنشر.", en: "Code quality, pipelines, and deployments." },
+  "engPage.subtitle": {
+    ar: "جودة الشيفرة وخطوط البناء والنشر.",
+    en: "Code quality, pipelines, and deployments.",
+  },
   "engPage.p1": { ar: "صحة خطوط البناء", en: "Pipeline health" },
   "engPage.p2": { ar: "زمن مراجعة طلبات الدمج", en: "Pull request review latency" },
   "engPage.p3": { ar: "استقرار الاختبارات والانحدار", en: "Test stability and regressions" },
 
   "intel.title": { ar: "الذكاء التحليلي", en: "Intelligence" },
-  "intel.subtitle": { ar: "تفسيرات وتنبؤات ومساعد التسليم.", en: "Explanations, forecasts, and the delivery copilot." },
+  "intel.subtitle": {
+    ar: "تفسيرات وتنبؤات ومساعد التسليم.",
+    en: "Explanations, forecasts, and the delivery copilot.",
+  },
   "intel.p1": { ar: "تفسير أسباب تعثّر السبرنت", en: "Root-cause explanation for sprint slippage" },
   "intel.p2": { ar: "سيناريوهات ماذا لو", en: "What-if scenarios" },
   "intel.p3": { ar: "مساعد التسليم بالحوار", en: "Conversational delivery copilot" },
@@ -441,7 +476,10 @@ export const dictionary = {
   "auth.password": { ar: "كلمة المرور", en: "Password" },
   "auth.submit": { ar: "دخول", en: "Sign in" },
   "auth.pending": { ar: "جارٍ الدخول…", en: "Signing in…" },
-  "auth.failed": { ar: "تعذّر تسجيل الدخول. تحقّق من البيانات وحاول مجددًا.", en: "Sign-in failed. Check your details and try again." },
+  "auth.failed": {
+    ar: "تعذّر تسجيل الدخول. تحقّق من البيانات وحاول مجددًا.",
+    en: "Sign-in failed. Check your details and try again.",
+  },
   "auth.mode.signIn": { ar: "تسجيل الدخول", en: "Sign in" },
   "auth.mode.signUp": { ar: "إنشاء حساب", en: "Sign up" },
   "auth.signUp.submit": { ar: "إنشاء الحساب", en: "Create account" },
@@ -505,8 +543,10 @@ export const dictionary = {
   "onboarding.error.invalid_name": { ar: "اسم غير صالح.", en: "Invalid workspace name." },
   "onboarding.error.invalid_slug": { ar: "معرّف غير صالح.", en: "Invalid workspace slug." },
   "onboarding.error.invalid_identity": { ar: "هوية غير صالحة.", en: "Invalid identity." },
-  "onboarding.error.unknown": { ar: "تعذّر إكمال العملية.", en: "The operation could not be completed." },
-
+  "onboarding.error.unknown": {
+    ar: "تعذّر إكمال العملية.",
+    en: "The operation could not be completed.",
+  },
 
   "azure.title": { ar: "اتصال Azure DevOps", en: "Azure DevOps Connection" },
   "azure.subtitle": {
@@ -526,7 +566,10 @@ export const dictionary = {
   "azure.discover": { ar: "استكشاف المشاريع", en: "Discover projects" },
   "azure.sync": { ar: "تشغيل مزامنة الأساس", en: "Run foundation sync" },
   "azure.running": { ar: "جارٍ التنفيذ…", en: "Working…" },
-  "azure.activeRun": { ar: "توجد مزامنة نشطة الآن.", en: "A synchronization run is already active." },
+  "azure.activeRun": {
+    ar: "توجد مزامنة نشطة الآن.",
+    en: "A synchronization run is already active.",
+  },
   "azure.noPermission": {
     ar: "لا تملك صلاحية تشغيل المزامنة. تواصل مع مسؤول المؤسسة.",
     en: "You are not allowed to run synchronization. Contact your tenant admin.",
@@ -536,7 +579,10 @@ export const dictionary = {
     en: "Server-side Azure DevOps secrets are not configured yet.",
   },
   "azure.projects": { ar: "المشاريع المتاحة", en: "Discoverable projects" },
-  "azure.projectsEmpty": { ar: "لا توجد مشاريع مقروءة بهذه الصلاحيات.", en: "No readable projects with these credentials." },
+  "azure.projectsEmpty": {
+    ar: "لا توجد مشاريع مقروءة بهذه الصلاحيات.",
+    en: "No readable projects with these credentials.",
+  },
   "azure.discoveryFailed": { ar: "فشل استكشاف المشاريع", en: "Project discovery failed" },
   "azure.discoveryPartial": {
     ar: "تم عرض نتائج جزئية؛ لم تُقرأ جميع الصفحات.",
@@ -546,7 +592,10 @@ export const dictionary = {
   "azure.run.queued": { ar: "المزامنة في قائمة الانتظار.", en: "Synchronization queued." },
   "azure.run.running": { ar: "المزامنة قيد التنفيذ…", en: "Synchronization running…" },
   "azure.run.succeeded": { ar: "اكتملت المزامنة بنجاح.", en: "Synchronization completed." },
-  "azure.run.partial": { ar: "اكتملت المزامنة جزئيًا.", en: "Synchronization completed partially." },
+  "azure.run.partial": {
+    ar: "اكتملت المزامنة جزئيًا.",
+    en: "Synchronization completed partially.",
+  },
   "azure.run.failed": { ar: "فشلت المزامنة.", en: "Synchronization failed." },
   "azure.run.skipped": { ar: "تم تخطي المزامنة.", en: "Synchronization skipped." },
   "azure.lastRun": { ar: "آخر تشغيل", en: "Last run" },
@@ -574,24 +623,63 @@ export const dictionary = {
   "azure.domain.teamMemberships": { ar: "عضويات الفرق", en: "Team memberships" },
   "azure.next.none": { ar: "لا يلزم أي إجراء.", en: "No action needed." },
   "azure.next.retry_sync": { ar: "أعد تشغيل المزامنة.", en: "Re-run the synchronization." },
-  "azure.next.fix_credentials": { ar: "راجع بيانات الاعتماد على الخادم.", en: "Review the server-side credentials." },
-  "azure.next.wait_and_retry": { ar: "انتظر قليلًا ثم أعد المحاولة.", en: "Wait a moment, then retry." },
+  "azure.next.fix_credentials": {
+    ar: "راجع بيانات الاعتماد على الخادم.",
+    en: "Review the server-side credentials.",
+  },
+  "azure.next.wait_and_retry": {
+    ar: "انتظر قليلًا ثم أعد المحاولة.",
+    en: "Wait a moment, then retry.",
+  },
   "azure.next.contact_admin": { ar: "تواصل مع مسؤول المؤسسة.", en: "Contact your tenant admin." },
-  "azure.error.not_configured": { ar: "لم تُضبط بيانات الاتصال.", en: "The connection is not configured." },
-  "azure.error.invalid_credentials": { ar: "رفض Azure DevOps بيانات الاعتماد.", en: "Azure DevOps rejected the credentials." },
-  "azure.error.insufficient_permissions": { ar: "الصلاحيات غير كافية للقراءة.", en: "The credentials lack the required read scopes." },
-  "azure.error.organization_not_found": { ar: "تعذّر العثور على المؤسسة.", en: "The organization was not found." },
+  "azure.error.not_configured": {
+    ar: "لم تُضبط بيانات الاتصال.",
+    en: "The connection is not configured.",
+  },
+  "azure.error.invalid_credentials": {
+    ar: "رفض Azure DevOps بيانات الاعتماد.",
+    en: "Azure DevOps rejected the credentials.",
+  },
+  "azure.error.insufficient_permissions": {
+    ar: "الصلاحيات غير كافية للقراءة.",
+    en: "The credentials lack the required read scopes.",
+  },
+  "azure.error.organization_not_found": {
+    ar: "تعذّر العثور على المؤسسة.",
+    en: "The organization was not found.",
+  },
   "azure.error.throttled": { ar: "تم تقييد الطلبات مؤقتًا.", en: "Requests are being throttled." },
   "azure.error.timeout": { ar: "انتهت مهلة الطلب.", en: "The request timed out." },
-  "azure.error.unavailable": { ar: "الخدمة غير متاحة حاليًا.", en: "The service is temporarily unavailable." },
-  "azure.error.partial_sync": { ar: "اكتملت المزامنة جزئيًا.", en: "The synchronization completed partially." },
+  "azure.error.unavailable": {
+    ar: "الخدمة غير متاحة حاليًا.",
+    en: "The service is temporarily unavailable.",
+  },
+  "azure.error.partial_sync": {
+    ar: "اكتملت المزامنة جزئيًا.",
+    en: "The synchronization completed partially.",
+  },
   "azure.error.conflict": { ar: "توجد مزامنة نشطة بالفعل.", en: "Another run is already active." },
-  "azure.error.forbidden": { ar: "غير مصرّح لك بهذه العملية.", en: "You are not authorized for this operation." },
-  "azure.error.missing_configuration": { ar: "لم تُضبط بيانات الاتصال.", en: "The connection is not configured." },
-  "azure.error.invalid_configuration": { ar: "قيمة اسم المؤسسة غير صالحة.", en: "The configured organization value is invalid." },
+  "azure.error.forbidden": {
+    ar: "غير مصرّح لك بهذه العملية.",
+    en: "You are not authorized for this operation.",
+  },
+  "azure.error.missing_configuration": {
+    ar: "لم تُضبط بيانات الاتصال.",
+    en: "The connection is not configured.",
+  },
+  "azure.error.invalid_configuration": {
+    ar: "قيمة اسم المؤسسة غير صالحة.",
+    en: "The configured organization value is invalid.",
+  },
   "azure.error.request_timeout": { ar: "انتهت مهلة الطلب.", en: "The request timed out." },
-  "azure.error.network_unreachable": { ar: "تعذّر الوصول إلى Azure DevOps من الخادم.", en: "Azure DevOps could not be reached from the server." },
-  "azure.error.provider_unavailable": { ar: "الخدمة غير متاحة حاليًا.", en: "The service is temporarily unavailable." },
+  "azure.error.network_unreachable": {
+    ar: "تعذّر الوصول إلى Azure DevOps من الخادم.",
+    en: "Azure DevOps could not be reached from the server.",
+  },
+  "azure.error.provider_unavailable": {
+    ar: "الخدمة غير متاحة حاليًا.",
+    en: "The service is temporarily unavailable.",
+  },
   "azure.error.unknown": { ar: "حدث خطأ غير متوقع.", en: "An unexpected error occurred." },
 
   "tp.title": { ar: "الفريق", en: "Team" },
@@ -625,13 +713,19 @@ export const dictionary = {
   "tp.na": { ar: "غير متاح", en: "N/A" },
   "tp.capacity.notConfigured": { ar: "السعة غير مُعدّة", en: "Capacity not configured" },
   "tp.coverage.noEstimates": { ar: "بلا تقديرات: {a}", en: "Unestimated: {a}" },
-  "tp.coverage.stageAge": { ar: "وسيط العمر في المرحلة الحالية: {a}", en: "Median age in current stage: {a}" },
+  "tp.coverage.stageAge": {
+    ar: "وسيط العمر في المرحلة الحالية: {a}",
+    en: "Median age in current stage: {a}",
+  },
   "tp.coverage.noStageAge": { ar: "عمر المرحلة غير متاح", en: "Stage age unavailable" },
   "tp.sort.label": { ar: "ترتيب حسب", en: "Sort by" },
   "tp.sort.name": { ar: "الاسم", en: "Display name" },
 
   "tp.dist.title": { ar: "توزيع العمل", en: "Work distribution" },
-  "tp.dist.subtitle": { ar: "توزيع فعلي حسب الحالة والنوع والإسناد.", en: "Real distribution by state, type, and assignment." },
+  "tp.dist.subtitle": {
+    ar: "توزيع فعلي حسب الحالة والنوع والإسناد.",
+    en: "Real distribution by state, type, and assignment.",
+  },
   "tp.dist.byState": { ar: "حسب فئة الحالة", en: "By state category" },
   "tp.dist.byType": { ar: "حسب نوع العنصر", en: "By work item type" },
   "tp.dist.byAssignment": { ar: "الإسناد", en: "Assignment" },
@@ -698,8 +792,14 @@ export const dictionary = {
     ar: "تغطية التقديرات {a}٪ فقط، وهي أقل من الحد المفيد للتحليل (٦٠٪).",
     en: "Estimate coverage is only {a}%, below the 60% threshold useful for analysis.",
   },
-  "tp.notice.partial": { ar: "المزامنة جزئية؛ قد تكون بعض العناصر ناقصة.", en: "Sync is partial; some items may be missing." },
-  "tp.notice.stale": { ar: "آخر مزامنة لعناصر العمل تجاوزت ٢٤ ساعة.", en: "The last work item sync is more than 24 hours old." },
+  "tp.notice.partial": {
+    ar: "المزامنة جزئية؛ قد تكون بعض العناصر ناقصة.",
+    en: "Sync is partial; some items may be missing.",
+  },
+  "tp.notice.stale": {
+    ar: "آخر مزامنة لعناصر العمل تجاوزت ٢٤ ساعة.",
+    en: "The last work item sync is more than 24 hours old.",
+  },
   "tp.notice.missingNotZero": {
     ar: "البيانات الناقصة تظهر كـ«غير متاح» ولا تُعامل كأداء صفري.",
     en: "Missing data is shown as N/A and is never treated as zero performance.",
@@ -714,13 +814,21 @@ export const dictionary = {
     ar: "لا توجد عناصر عمل مزامَنة لهذا السبرنت بعد. شغّل المزامنة من النظرة العامة.",
     en: "No synchronized work items for this sprint yet. Run the sync from Overview.",
   },
-  "tp.empty.noMembers": { ar: "لا يوجد أعضاء مزامَنون لهذا الفريق.", en: "No synchronized members for this team." },
-  "tp.empty.noFiltered": { ar: "لا توجد عناصر مطابقة للتصفية.", en: "No items match the current filters." },
-  "tp.error.forbidden": { ar: "لا تملك صلاحية عرض هذا الفريق.", en: "You do not have access to this team." },
+  "tp.empty.noMembers": {
+    ar: "لا يوجد أعضاء مزامَنون لهذا الفريق.",
+    en: "No synchronized members for this team.",
+  },
+  "tp.empty.noFiltered": {
+    ar: "لا توجد عناصر مطابقة للتصفية.",
+    en: "No items match the current filters.",
+  },
+  "tp.error.forbidden": {
+    ar: "لا تملك صلاحية عرض هذا الفريق.",
+    en: "You do not have access to this team.",
+  },
   "tp.lastSync": { ar: "آخر مزامنة لعناصر العمل", en: "Last work item sync" },
   "tp.lastSync.never": { ar: "لم تتم بعد", en: "Never" },
 } satisfies Dict;
-
 
 export type TKey = keyof typeof dictionary;
 

@@ -12,8 +12,10 @@ export interface Repository extends TenantScoped, RecordMeta, SourceTracked {
 }
 
 export type PullRequestStatus = "active" | "completed" | "abandoned" | "notSet";
-export type ReviewVote = "approved" | "approvedWithSuggestions" | "noVote" | "waitingForAuthor" | "rejected";
-export type PolicyStatus = "approved" | "queued" | "running" | "rejected" | "broken" | "notApplicable" | "unknown";
+export type ReviewVote =
+  "approved" | "approvedWithSuggestions" | "noVote" | "waitingForAuthor" | "rejected";
+export type PolicyStatus =
+  "approved" | "queued" | "running" | "rejected" | "broken" | "notApplicable" | "unknown";
 
 export interface PullRequestReview extends TenantScoped, RecordMeta {
   readonly id: Uuid;
@@ -45,7 +47,8 @@ export interface PullRequest extends TenantScoped, RecordMeta, SourceTracked {
   readonly completedAt: IsoTimestamp | null;
   readonly abandonedAt: IsoTimestamp | null;
   readonly lastActivityAt: IsoTimestamp;
-  readonly mergeStatus: "succeeded" | "conflicts" | "queued" | "rejectedByPolicy" | "notSet" | "failure";
+  readonly mergeStatus:
+    "succeeded" | "conflicts" | "queued" | "rejectedByPolicy" | "notSet" | "failure";
   readonly policyStatus: PolicyStatus;
   readonly linkedWorkItemIds: readonly Uuid[];
   readonly reviewerCount: number;

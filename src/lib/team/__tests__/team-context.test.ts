@@ -36,7 +36,9 @@ beforeEach(() => {
 describe("team iteration context validation", () => {
   it("rejects a team iteration that is not visible in the caller's tenant", async () => {
     tables["core_team_iterations"] = [];
-    await expect(requireTeamIteration(contextFor(["tenant_admin"]), TEAM_ITERATION)).rejects.toMatchObject({
+    await expect(
+      requireTeamIteration(contextFor(["tenant_admin"]), TEAM_ITERATION),
+    ).rejects.toMatchObject({
       code: "forbidden",
     });
   });
@@ -57,7 +59,9 @@ describe("team iteration context validation", () => {
     tables["core_user_project_scopes"] = [{ project_id: "other-project", expires_at: null }];
     tables["core_user_team_scopes"] = [{ team_id: "other-team", expires_at: null }];
 
-    await expect(requireTeamIteration(contextFor(["contributor"]), TEAM_ITERATION)).rejects.toMatchObject({
+    await expect(
+      requireTeamIteration(contextFor(["contributor"]), TEAM_ITERATION),
+    ).rejects.toMatchObject({
       code: "forbidden",
     });
   });

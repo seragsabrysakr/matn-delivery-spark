@@ -1,4 +1,11 @@
-import type { CustomFields, Localized, RecordMeta, SourceTracked, TenantScoped, Uuid } from "./common";
+import type {
+  CustomFields,
+  Localized,
+  RecordMeta,
+  SourceTracked,
+  TenantScoped,
+  Uuid,
+} from "./common";
 
 /** A person identity resolved from Azure DevOps. Current-state record. */
 export interface TeamMember extends TenantScoped, RecordMeta, SourceTracked {

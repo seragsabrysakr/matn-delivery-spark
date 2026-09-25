@@ -19,7 +19,15 @@ describe("foundation domain status invariants", () => {
   });
 
   it("treats a project scope with zero teams and a successful response as complete", () => {
-    expect(domainStatus(counts({}), { expected: 1, attempted: 1, completed: 1, failed: 0, remainingContinuationTokens: 0 })).toBe("complete");
+    expect(
+      domainStatus(counts({}), {
+        expected: 1,
+        attempted: 1,
+        completed: 1,
+        failed: 0,
+        remainingContinuationTokens: 0,
+      }),
+    ).toBe("complete");
   });
 
   it("marks partial only when some scope is incomplete or failed", () => {
@@ -33,17 +41,27 @@ describe("foundation domain status invariants", () => {
   });
 
   it("marks failed when no scope succeeded and failures exist", () => {
-    expect(domainStatus(counts({ failed: 2 }), { expected: 2, attempted: 2, completed: 0, failed: 2, remainingContinuationTokens: 0 })).toBe("failed");
+    expect(
+      domainStatus(counts({ failed: 2 }), {
+        expected: 2,
+        attempted: 2,
+        completed: 0,
+        failed: 2,
+        remainingContinuationTokens: 0,
+      }),
+    ).toBe("failed");
   });
 
   it("cannot finalize before every expected scope is attempted", () => {
-    expect(domainStatus(counts({ unchanged: 7 }), {
-      expected: 4,
-      attempted: 3,
-      completed: 3,
-      failed: 0,
-      remainingContinuationTokens: 0,
-    })).toBe("partial");
+    expect(
+      domainStatus(counts({ unchanged: 7 }), {
+        expected: 4,
+        attempted: 3,
+        completed: 3,
+        failed: 0,
+        remainingContinuationTokens: 0,
+      }),
+    ).toBe("partial");
   });
 
   it("marks blocked when a dependency is not complete", () => {
@@ -69,7 +87,9 @@ describe("foundation domain status invariants", () => {
   it("keeps read = inserted + updated + unchanged + failed for every domain shape", () => {
     expect(countsBalance(counts({ discovered: 7, inserted: 7 }))).toBe(true);
     expect(countsBalance(counts({ discovered: 4, unchanged: 4 }))).toBe(true);
-    expect(countsBalance(counts({ discovered: 4, updated: 1, unchanged: 2, failed: 1 }))).toBe(true);
+    expect(countsBalance(counts({ discovered: 4, updated: 1, unchanged: 2, failed: 1 }))).toBe(
+      true,
+    );
   });
 });
 

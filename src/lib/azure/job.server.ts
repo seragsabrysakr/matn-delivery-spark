@@ -13,7 +13,13 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { AzureDevOpsClient } from "./client.server";
 import { AzureDevOpsError, toAzureFailure } from "./errors";
-import { emptyCounts, SYNC_DOMAINS, type DomainCounts, type SyncDomain, type SyncRunReport } from "./contracts";
+import {
+  emptyCounts,
+  SYNC_DOMAINS,
+  type DomainCounts,
+  type SyncDomain,
+  type SyncRunReport,
+} from "./contracts";
 import { discoverAzureProjectsBounded } from "./discovery.server";
 import { readProjectTeams } from "./teams.server";
 import { diffProject, mutableProjectPayload } from "./project-upsert";
@@ -42,7 +48,10 @@ type Json = Database["public"]["Tables"]["ops_sync_runs"]["Row"]["details"];
 type Mutable<T> = { -readonly [K in keyof T]: T[K] };
 
 const blankDomains = (): Record<SyncDomain, DomainCounts> =>
-  Object.fromEntries(SYNC_DOMAINS.map((d) => [d, emptyCounts()])) as Record<SyncDomain, DomainCounts>;
+  Object.fromEntries(SYNC_DOMAINS.map((d) => [d, emptyCounts()])) as Record<
+    SyncDomain,
+    DomainCounts
+  >;
 
 const sumCounts = (domains: Record<SyncDomain, DomainCounts>): DomainCounts => {
   const totals: Mutable<DomainCounts> = { ...emptyCounts() };
@@ -123,13 +132,19 @@ const fromState = (state: JobState): WorkingState => ({
   error: state.error,
 });
 
-const bump = (state: WorkingState, domain: SyncDomain, patch: Partial<Mutable<DomainCounts>>): void => {
+const bump = (
+  state: WorkingState,
+  domain: SyncDomain,
+  patch: Partial<Mutable<DomainCounts>>,
+): void => {
   state.domains[domain] = { ...state.domains[domain], ...patch };
 };
 
 const add = (state: WorkingState, domain: SyncDomain, key: keyof DomainCounts, value = 1): void => {
   const current = state.domains[domain];
-  bump(state, domain, { [key]: (current[key] as number) + value } as Partial<Mutable<DomainCounts>>);
+  bump(state, domain, { [key]: (current[key] as number) + value } as Partial<
+    Mutable<DomainCounts>
+  >);
 };
 
 const tally = (state: WorkingState, domain: SyncDomain): ScopeTally => {
@@ -188,7 +203,9 @@ async function checkpoint(tenantId: string, state: WorkingState): Promise<void> 
       error_count: snapshot.totals.failed,
       details: snapshot as unknown as Json,
       updated_at: new Date().toISOString(),
-      ...(state.completedAt ? { finished_at: state.completedAt, finalized_at: state.completedAt } : {}),
+      ...(state.completedAt
+        ? { finished_at: state.completedAt, finalized_at: state.completedAt }
+        : {}),
     })
     .eq("tenant_id", tenantId)
     .eq("id", state.runId);
@@ -284,7 +301,7 @@ export async function startFoundationJob(input: StartJobInput): Promise<StartJob
     );
 
     if (decision.kind === "reuse" && activeRun) {
-      return { state: (activeRun.details as unknown as JobState), reused: true };
+      return { state: activeRun.details as unknown as JobState, reused: true };
     }
     // Stale or finished: reclaim the lock so a fresh run can start.
     await supabaseAdmin
@@ -381,7 +398,13 @@ export async function advanceFoundationJob(
     let units = 0;
     while (state.cursor && Date.now() < deadline) {
       const activeCursor = state.cursor;
-      const more = await runUnit(tenantId, organizationId, state, client, options.readTeams ?? readProjectTeams);
+      const more = await runUnit(
+        tenantId,
+        organizationId,
+        state,
+        client,
+        options.readTeams ?? readProjectTeams,
+      );
 
       // A scoped domain boundary is a two-step durable transition: first store
       // the final scope facts, then reload those facts and derive completion.
@@ -579,7 +602,12 @@ async function runUnit(
       freshnessAt: nowIso,
     });
     if (canTombstone(state.domains.projects, scanReachedEnd)) {
-      const missing = await tombstone("core_projects", tenantId, { organization_id: organizationId }, nowIso);
+      const missing = await tombstone(
+        "core_projects",
+        tenantId,
+        { organization_id: organizationId },
+        nowIso,
+      );
       bump(state, "projects", { missing });
       state.scannedDomains.push("projects");
     } else if (!scanReachedEnd) {
@@ -616,11 +644,16 @@ async function runUnit(
       // Scope-level incompleteness, not a record failure: it is tracked by the
       // scope tally so `read = inserted + updated + unchanged + failed` holds.
       failedHere += 1;
-      state.warnings.push(`teams_${read.status}:${project.azure_project_id}:${read.warning ?? "unknown"}`);
+      state.warnings.push(
+        `teams_${read.status}:${project.azure_project_id}:${read.warning ?? "unknown"}`,
+      );
     }
 
     for (const team of read.teams) {
-      const fieldValues = await client.getTeamFieldValues(project.azure_project_id, team.azureTeamId);
+      const fieldValues = await client.getTeamFieldValues(
+        project.azure_project_id,
+        team.azureTeamId,
+      );
       const settings = await client.getTeamSettings(project.azure_project_id, team.azureTeamId);
       const source = {
         azureTeamId: team.azureTeamId,
@@ -718,7 +751,10 @@ async function runUnit(
     }
     let scopeOk = true;
     try {
-      const iterations = await client.listTeamIterations(team.core_projects.azure_project_id, team.azure_team_id);
+      const iterations = await client.listTeamIterations(
+        team.core_projects.azure_project_id,
+        team.azure_team_id,
+      );
       add(state, "iterations", "discovered", iterations.length);
       for (const iteration of iterations) {
         const phase = iterationPhase(iteration, new Date());
@@ -813,7 +849,10 @@ async function runUnit(
     }
     let memberScopeOk = true;
     try {
-      const members = await client.listTeamMembers(team.core_projects.azure_project_id, team.azure_team_id);
+      const members = await client.listTeamMembers(
+        team.core_projects.azure_project_id,
+        team.azure_team_id,
+      );
       add(state, "members", "discovered", members.length);
       const memberIds: string[] = [];
       for (const entry of members) {

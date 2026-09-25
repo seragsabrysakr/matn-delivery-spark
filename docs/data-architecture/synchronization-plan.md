@@ -10,7 +10,7 @@ Dependencies force this order; each stage completes before the next begins.
 2. Projects (+ process template properties)
 3. Teams (+ team settings, area paths, working days)
 4. Iteration nodes per project (`core_iterations`)
-4b. Team iteration subscriptions and team settings — working days, time zone, days off, `selectedForSync` (`core_team_iterations`)
+   4b. Team iteration subscriptions and team settings — working days, time zone, days off, `selectedForSync` (`core_team_iterations`)
 5. Members (team memberships, identity resolution)
 6. Capacity (per team, per iteration)
 7. Current work items (WIQL by project, batched fetch)
@@ -46,22 +46,22 @@ Proposed schedules: work items and PRs every 15 minutes; builds, deployments and
 
 ## Secure scheduled trigger
 
-| Control | Rule |
-|---|---|
-| Method | `POST` only |
-| Payload | `timestamp`, `nonce`, `idempotencyKey`, `tenantId`, `organizationId`, `scope`, `logicalDate`, `keyId` |
-| Authentication | `HMAC-SHA256` signature header, constant-time comparison, `keyId` selects the active secret version |
-| Secret storage | encrypted secret store only — never in migration SQL, seeds, the database, logs or the client bundle |
-| Clock skew | configurable window, default ±300 s; outside → reject `clock_skew` |
-| Replay | nonce table with 7-day TTL; reused nonce or idempotency key → reject |
-| Concurrency | one active `ops_sync_locks` row per organization, with heartbeat and auto-expiry |
-| Duration | hard `maxExecutionSeconds`; the run checkpoints and resumes rather than exceeding it |
-| Batching | resumable batches driven by `SyncRun.resumeCursor` |
-| Rotation | overlapping key versions; old `keyId` accepted for one rotation window, then removed |
-| Audit | every accepted and rejected trigger writes `aud_audit_events` with the outcome and reason |
-| Rate limiting | per organization and per source IP on the route |
-| Errors | opaque codes; Azure credentials, tokens and upstream bodies are never returned |
-| Exposure | never referenced from client-side code |
+| Control        | Rule                                                                                                  |
+| -------------- | ----------------------------------------------------------------------------------------------------- |
+| Method         | `POST` only                                                                                           |
+| Payload        | `timestamp`, `nonce`, `idempotencyKey`, `tenantId`, `organizationId`, `scope`, `logicalDate`, `keyId` |
+| Authentication | `HMAC-SHA256` signature header, constant-time comparison, `keyId` selects the active secret version   |
+| Secret storage | encrypted secret store only — never in migration SQL, seeds, the database, logs or the client bundle  |
+| Clock skew     | configurable window, default ±300 s; outside → reject `clock_skew`                                    |
+| Replay         | nonce table with 7-day TTL; reused nonce or idempotency key → reject                                  |
+| Concurrency    | one active `ops_sync_locks` row per organization, with heartbeat and auto-expiry                      |
+| Duration       | hard `maxExecutionSeconds`; the run checkpoints and resumes rather than exceeding it                  |
+| Batching       | resumable batches driven by `SyncRun.resumeCursor`                                                    |
+| Rotation       | overlapping key versions; old `keyId` accepted for one rotation window, then removed                  |
+| Audit          | every accepted and rejected trigger writes `aud_audit_events` with the outcome and reason             |
+| Rate limiting  | per organization and per source IP on the route                                                       |
+| Errors         | opaque codes; Azure credentials, tokens and upstream bodies are never returned                        |
+| Exposure       | never referenced from client-side code                                                                |
 
 **Scheduler choice is not final.** pg_cron can only carry a secret if that secret is readable from the database session, which contradicts "secret store only". Unless the production target provides a database-side vault the app trusts, an **external scheduler holding the signing key** (platform scheduler or a managed cron service calling the signed route) is the preferred alternative. The decision is deferred until the production hosting target is confirmed; both options satisfy the controls above, only the key custody differs.
 
@@ -79,13 +79,13 @@ The previous 23:55 local run is replaced:
 
 ## Source deletion and access revocation
 
-| Signal | Interpretation | Action |
-|---|---|---|
-| `404` on a previously synced item, first observation | unverified | mark `awaiting_verification`, keep `active`, retry on the next run |
-| `404` confirmed on a second, separate verification | deleted at source | set `sourceStatus = "deleted"`, `isDeleted = true`, `deletedAtSource = now` |
-| `403` | access revoked, **not** deletion | set `sourceStatus = "inaccessible"`, `accessRevokedAt = now` |
-| item absent from a list/WIQL result | insufficient evidence | direct-fetch verification required before any tombstone |
-| ambiguous (mixed 403/404, scope change during the run) | undetermined | keep `unknown`, raise `deletion_vs_access_ambiguous` |
+| Signal                                                 | Interpretation                   | Action                                                                      |
+| ------------------------------------------------------ | -------------------------------- | --------------------------------------------------------------------------- |
+| `404` on a previously synced item, first observation   | unverified                       | mark `awaiting_verification`, keep `active`, retry on the next run          |
+| `404` confirmed on a second, separate verification     | deleted at source                | set `sourceStatus = "deleted"`, `isDeleted = true`, `deletedAtSource = now` |
+| `403`                                                  | access revoked, **not** deletion | set `sourceStatus = "inaccessible"`, `accessRevokedAt = now`                |
+| item absent from a list/WIQL result                    | insufficient evidence            | direct-fetch verification required before any tombstone                     |
+| ambiguous (mixed 403/404, scope change during the run) | undetermined                     | keep `unknown`, raise `deletion_vs_access_ambiguous`                        |
 
 Rules: revisions, snapshots and audit history are **never** deleted. Current-state rows are tombstoned, not removed. `lastSeenAt` advances on every successful read. KPI calculations exclude tombstoned items **from the effective date forward** — historical values keep the items that were real at the time. Restoration is supported: a later successful read clears the tombstone and records the restore.
 
@@ -93,14 +93,14 @@ Rules: revisions, snapshots and audit history are **never** deleted. Current-sta
 
 Freshness is computed **per domain** (`FreshnessReport`), never as a single global flag.
 
-| Domain | Current | Delayed | Stale | Unavailable |
-|---|---|---|---|---|
-| Work items | ≤ 30 min | 31–120 min | > 120 min | never synced or last run failed |
-| Capacity | ≤ 2 h | 2–8 h | > 8 h | not configured in Azure |
-| Repositories | ≤ 24 h | 24–48 h | > 48 h | no repositories |
-| Pull requests | ≤ 30 min | 31–120 min | > 120 min | no repositories |
-| Builds | ≤ 60 min | 1–4 h | > 4 h | no pipelines |
-| Deployments | ≤ 2 h | 2–8 h | > 8 h | no environments |
-| Tests | ≤ 2 h | 2–12 h | > 12 h | no test runs |
+| Domain        | Current  | Delayed    | Stale     | Unavailable                     |
+| ------------- | -------- | ---------- | --------- | ------------------------------- |
+| Work items    | ≤ 30 min | 31–120 min | > 120 min | never synced or last run failed |
+| Capacity      | ≤ 2 h    | 2–8 h      | > 8 h     | not configured in Azure         |
+| Repositories  | ≤ 24 h   | 24–48 h    | > 48 h    | no repositories                 |
+| Pull requests | ≤ 30 min | 31–120 min | > 120 min | no repositories                 |
+| Builds        | ≤ 60 min | 1–4 h      | > 4 h     | no pipelines                    |
+| Deployments   | ≤ 2 h    | 2–8 h      | > 8 h     | no environments                 |
+| Tests         | ≤ 2 h    | 2–12 h     | > 12 h    | no test runs                    |
 
 `partial` applies when a domain synced only some projects or ended `partially_completed`. The overall status is the worst domain status, and the UI must name which domains are behind — it may never state that everything is current when only work items are.

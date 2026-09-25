@@ -4,9 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const uuid = z.string().uuid();
 
-const teamIterationInput = z
-  .object({ teamIterationId: uuid, tenantId: uuid.optional() })
-  .strict();
+const teamIterationInput = z.object({ teamIterationId: uuid, tenantId: uuid.optional() }).strict();
 
 /** Tenant-scoped selector options plus the server-resolved current sprint. */
 export const getWorkspaceSelectors = createServerFn({ method: "GET" })
@@ -46,7 +44,8 @@ export const startSprintWorkItemSync = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => teamIterationInput.parse(data))
   .handler(async ({ context, data }) => {
-    const { resolveTenantContext, assertCanRunSync, writeAudit } = await import("@/lib/azure/authz.server");
+    const { resolveTenantContext, assertCanRunSync, writeAudit } =
+      await import("@/lib/azure/authz.server");
     const { requireTeamIteration } = await import("./context.server");
     const { startWorkItemSync } = await import("@/lib/azure/work-item-sync.server");
     const { toAzureFailure } = await import("@/lib/azure/errors");
@@ -73,7 +72,10 @@ export const startSprintWorkItemSync = createServerFn({ method: "POST" })
 export const advanceSprintWorkItemSync = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({ teamIterationId: uuid, runId: uuid, tenantId: uuid.optional() }).strict().parse(data),
+    z
+      .object({ teamIterationId: uuid, runId: uuid, tenantId: uuid.optional() })
+      .strict()
+      .parse(data),
   )
   .handler(async ({ context, data }) => {
     const { resolveTenantContext, assertCanRunSync } = await import("@/lib/azure/authz.server");
@@ -94,7 +96,8 @@ export const getSprintWorkItemSyncStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => teamIterationInput.parse(data))
   .handler(async ({ context, data }) => {
-    const { resolveTenantContext, assertCanReadSyncStatus } = await import("@/lib/azure/authz.server");
+    const { resolveTenantContext, assertCanReadSyncStatus } =
+      await import("@/lib/azure/authz.server");
     const { requireTeamIteration } = await import("./context.server");
     const { getWorkItemSyncStatus } = await import("@/lib/azure/work-item-sync.server");
     const { toAzureFailure } = await import("@/lib/azure/errors");

@@ -99,7 +99,8 @@ export interface SyncRunReport {
   readonly domains: Readonly<Record<SyncDomain, DomainCounts>>;
   readonly warnings: readonly string[];
   readonly partialDomains: readonly SyncDomain[];
-  readonly nextSafeAction: "none" | "retry_sync" | "fix_credentials" | "wait_and_retry" | "contact_admin";
+  readonly nextSafeAction:
+    "none" | "retry_sync" | "fix_credentials" | "wait_and_retry" | "contact_admin";
   readonly error: AzureFailure | null;
 }
 

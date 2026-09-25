@@ -39,7 +39,12 @@ export interface WorkspaceSelectors {
   };
 }
 
-const FULL_ACCESS_ROLES = ["platform_admin", "tenant_admin", "executive_viewer", "delivery_manager"] as const;
+const FULL_ACCESS_ROLES = [
+  "platform_admin",
+  "tenant_admin",
+  "executive_viewer",
+  "delivery_manager",
+] as const;
 
 const hasFullAccess = (context: TenantContext): boolean =>
   context.roles.some((role) => (FULL_ACCESS_ROLES as readonly string[]).includes(role));
@@ -92,7 +97,8 @@ export async function loadWorkspaceSelectors(context: TenantContext): Promise<Wo
     .eq("tenant_id", context.tenantId)
     .eq("is_deleted", false)
     .order("name_en");
-  if (scope.projectIds) projectQuery = projectQuery.in("id", scope.projectIds.length ? scope.projectIds : [""]);
+  if (scope.projectIds)
+    projectQuery = projectQuery.in("id", scope.projectIds.length ? scope.projectIds : [""]);
   const projectRows = await projectQuery;
   if (projectRows.error) throw new AzureDevOpsError("unknown");
 
@@ -130,11 +136,18 @@ export async function loadWorkspaceSelectors(context: TenantContext): Promise<Wo
     project_id: string;
     iteration_id: string;
     is_current: boolean;
-    core_iterations: { name_en: string; name_ar: string; start_date: string | null; finish_date: string | null } | null;
+    core_iterations: {
+      name_en: string;
+      name_ar: string;
+      start_date: string | null;
+      finish_date: string | null;
+    } | null;
   };
 
   const today = cairoToday();
-  const teamIterations: TeamIterationOption[] = ((iterationRows.data ?? []) as unknown as IterationJoin[])
+  const teamIterations: TeamIterationOption[] = (
+    (iterationRows.data ?? []) as unknown as IterationJoin[]
+  )
     .map((row) => ({
       id: row.id,
       teamId: row.team_id,
@@ -144,11 +157,16 @@ export async function loadWorkspaceSelectors(context: TenantContext): Promise<Wo
       nameAr: row.core_iterations?.name_ar ?? "تكرار",
       startDate: row.core_iterations?.start_date ?? null,
       finishDate: row.core_iterations?.finish_date ?? null,
-      isCurrent: containsDate(row.core_iterations?.start_date ?? null, row.core_iterations?.finish_date ?? null, today),
+      isCurrent: containsDate(
+        row.core_iterations?.start_date ?? null,
+        row.core_iterations?.finish_date ?? null,
+        today,
+      ),
     }))
     .sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""));
 
-  const current = teamIterations.find((it) => it.isCurrent) ?? teamIterations[teamIterations.length - 1] ?? null;
+  const current =
+    teamIterations.find((it) => it.isCurrent) ?? teamIterations[teamIterations.length - 1] ?? null;
   const defaultTeam = current
     ? (teamRows.data ?? []).find((t) => t.id === current.teamId)
     : (teamRows.data ?? [])[0];
@@ -157,7 +175,11 @@ export async function loadWorkspaceSelectors(context: TenantContext): Promise<Wo
     : (projectRows.data ?? [])[0];
 
   return {
-    organizations: (orgQuery.data ?? []).map((o) => ({ id: o.id, nameEn: o.name_en, nameAr: o.name_ar })),
+    organizations: (orgQuery.data ?? []).map((o) => ({
+      id: o.id,
+      nameEn: o.name_en,
+      nameAr: o.name_ar,
+    })),
     projects: (projectRows.data ?? []).map((p) => ({
       id: p.id,
       organizationId: p.organization_id,
@@ -214,7 +236,9 @@ export async function requireTeamIteration(
   // composite keys to iterations and teams), so those are read explicitly.
   const { data, error } = await supabaseAdmin
     .from("core_team_iterations")
-    .select("id, tenant_id, organization_id, project_id, team_id, iteration_id, time_zone, working_weekdays")
+    .select(
+      "id, tenant_id, organization_id, project_id, team_id, iteration_id, time_zone, working_weekdays",
+    )
     .eq("tenant_id", context.tenantId)
     .eq("id", teamIterationId)
     .maybeSingle();
@@ -224,8 +248,10 @@ export async function requireTeamIteration(
   const row = data;
 
   const scope = await resolveScope(context);
-  if (scope.projectIds && !scope.projectIds.includes(row.project_id)) throw new AzureDevOpsError("forbidden");
-  if (scope.teamIds && !scope.teamIds.includes(row.team_id)) throw new AzureDevOpsError("forbidden");
+  if (scope.projectIds && !scope.projectIds.includes(row.project_id))
+    throw new AzureDevOpsError("forbidden");
+  if (scope.teamIds && !scope.teamIds.includes(row.team_id))
+    throw new AzureDevOpsError("forbidden");
 
   const [iteration, project, team, organization] = await Promise.all([
     supabaseAdmin
@@ -280,4 +306,3 @@ export async function requireTeamIteration(
     processTemplateKind: project.data.process_template_kind,
   };
 }
-

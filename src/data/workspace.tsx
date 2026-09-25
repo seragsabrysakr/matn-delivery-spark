@@ -33,7 +33,6 @@ import {
 } from "@/lib/workspace/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
 
-
 export type PreviewState = "normal" | "loading" | "empty" | "error" | "stale" | "partial";
 
 /** Real synchronized data and mock data are never blended. */
@@ -86,7 +85,6 @@ type Ctx = {
   sprintDatesUnavailable: boolean;
 };
 
-
 const WorkspaceContext = createContext<Ctx | null>(null);
 
 const MAX_SYNC_ADVANCES = 40;
@@ -102,7 +100,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [syncReport, setSyncReport] = useState<WorkItemSyncReport | null>(null);
   const [syncFailed, setSyncFailed] = useState(false);
-
 
   // Protected server functions need a bearer token: never call them during SSR
   // or while signed out (that throws "No authorization header provided").
@@ -129,7 +126,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     staleTime: 60_000,
   });
 
-
   const selectors =
     selectorsQuery.data?.ok && selectorsQuery.data.selectors.teamIterations.length > 0
       ? selectorsQuery.data.selectors
@@ -150,7 +146,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     });
   }, [selectors, touched]);
 
-  const realSelectionReady = Boolean(selectors && filters.iterationId && selectors.teamIterations.some((it) => it.id === filters.iterationId));
+  const realSelectionReady = Boolean(
+    selectors &&
+    filters.iterationId &&
+    selectors.teamIterations.some((it) => it.id === filters.iterationId),
+  );
 
   const overviewQuery = useQuery({
     queryKey: ["workspace", "overview", filters.iterationId, tick],
@@ -194,7 +194,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           next.teamId = teams.find((x) => x.projectId === next.projectId)?.id ?? prev.teamId;
         }
         if (key !== "iterationId") {
-          next.iterationId = iterations.find((x) => x.teamId === next.teamId)?.id ?? prev.iterationId;
+          next.iterationId =
+            iterations.find((x) => x.teamId === next.teamId)?.id ?? prev.iterationId;
         }
         return next;
       });
@@ -214,10 +215,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const total = realOverview?.sprint.totalWorkingDays ?? 0;
     const current = realOverview?.sprint.currentWorkingDay ?? 0;
     return {
-      organizations: selectors.organizations.map((o) => ({ id: o.id, name: { ar: o.nameAr, en: o.nameEn } })),
+      organizations: selectors.organizations.map((o) => ({
+        id: o.id,
+        name: { ar: o.nameAr, en: o.nameEn },
+      })),
       projects: selectors.projects
         .filter((p) => !filters.organizationId || p.organizationId === filters.organizationId)
-        .map((p) => ({ id: p.id, organizationId: p.organizationId, name: { ar: p.nameAr, en: p.nameEn } })),
+        .map((p) => ({
+          id: p.id,
+          organizationId: p.organizationId,
+          name: { ar: p.nameAr, en: p.nameEn },
+        })),
       teams: selectors.teams
         .filter((t) => !filters.projectId || t.projectId === filters.projectId)
         .map((t) => ({ id: t.id, projectId: t.projectId, name: { ar: t.nameAr, en: t.nameEn } })),
@@ -242,7 +250,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     if (previewState === "empty") {
       return { ...base, kpis: [], risks: [], funnel: [], teamLoad: [], actions: [] };
     }
-    if (previewState === "stale") return { ...base, freshness: "stale" as const, lastSyncMinutesAgo: 96 };
+    if (previewState === "stale")
+      return { ...base, freshness: "stale" as const, lastSyncMinutesAgo: 96 };
     if (previewState === "partial") {
       return { ...base, freshness: "partial" as const, actions: base.actions.slice(0, 1) };
     }
@@ -255,7 +264,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setSyncMessage(null);
     setSyncReport(null);
     try {
-      const started = await startSprintWorkItemSync({ data: { teamIterationId: filters.iterationId } });
+      const started = await startSprintWorkItemSync({
+        data: { teamIterationId: filters.iterationId },
+      });
       if (!started.ok) {
         setSyncMessage(started.failure.message);
         setSyncFailed(true);
@@ -289,7 +300,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         detached: c.removedFromSprint,
         failed: c.failed,
         truncated: c.truncated,
-        status: status.status === "partial" ? "partial" : status.status === "failed" ? "failed" : "succeeded",
+        status:
+          status.status === "partial"
+            ? "partial"
+            : status.status === "failed"
+              ? "failed"
+              : "succeeded",
       });
       await queryClient.invalidateQueries({ queryKey: ["workspace", "overview"] });
       setTick((t) => t + 1);
@@ -357,7 +373,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       sprintDatesUnavailable: mode === "real" && Boolean(unavailable["sprintCalendar"]),
     };
   }, [
-
     mode,
     filters,
     previewState,
@@ -377,7 +392,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     options,
     syncReport,
     syncFailed,
-
   ]);
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;

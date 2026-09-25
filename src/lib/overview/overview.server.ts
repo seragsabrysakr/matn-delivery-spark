@@ -81,7 +81,10 @@ async function loadMembers(target: ResolvedTeamIteration): Promise<MemberFact[]>
   ]);
 
   const capacityByMember = new Map(
-    (capacity.data ?? []).map((row) => [row.member_id, row.net_capacity_hours === null ? null : Number(row.net_capacity_hours)]),
+    (capacity.data ?? []).map((row) => [
+      row.member_id,
+      row.net_capacity_hours === null ? null : Number(row.net_capacity_hours),
+    ]),
   );
 
   return (members.data ?? []).map((row) => ({
@@ -117,7 +120,12 @@ export async function persistDailySnapshot(
   facts: readonly RealWorkItemFact[],
 ): Promise<void> {
   const today = cairoToday();
-  const calendar = sprintCalendar(target.startDate, target.finishDate, today, target.workingWeekdays);
+  const calendar = sprintCalendar(
+    target.startDate,
+    target.finishDate,
+    today,
+    target.workingWeekdays,
+  );
   if (!calendar) return;
 
   const scope = computeScopeCompletion(facts);
@@ -144,7 +152,11 @@ export async function persistDailySnapshot(
     working_day_index: calendar.currentWorkingDay,
     total_working_days: calendar.totalWorkingDays,
     blocked_count: blocked,
-    item_counts: { scope_total: scope.total, scope_completed: scope.completed, total: facts.length },
+    item_counts: {
+      scope_total: scope.total,
+      scope_completed: scope.completed,
+      total: facts.length,
+    },
     metrics: {
       scope_completion_percent: scope.percent ?? 0,
       expected_completion_percent: calendar.expectedCompletionPercent,
@@ -153,19 +165,29 @@ export async function persistDailySnapshot(
   };
 
   if (existing.data) {
-    await supabaseAdmin.from("an_daily_iteration_snapshots").update(payload).eq("id", existing.data.id);
+    await supabaseAdmin
+      .from("an_daily_iteration_snapshots")
+      .update(payload)
+      .eq("id", existing.data.id);
     return;
   }
   await supabaseAdmin.from("an_daily_iteration_snapshots").insert(payload);
 }
 
-export async function buildRealOverview(target: ResolvedTeamIteration): Promise<RealOverviewPayload> {
+export async function buildRealOverview(
+  target: ResolvedTeamIteration,
+): Promise<RealOverviewPayload> {
   const [facts, members] = await Promise.all([loadFacts(target), loadMembers(target)]);
   await persistDailySnapshot(target, facts);
   const history = await loadHistory(target);
 
   const today = cairoToday();
-  const calendar = sprintCalendar(target.startDate, target.finishDate, today, target.workingWeekdays);
+  const calendar = sprintCalendar(
+    target.startDate,
+    target.finishDate,
+    today,
+    target.workingWeekdays,
+  );
 
   const lastSync = await supabaseAdmin
     .from("az_work_items")

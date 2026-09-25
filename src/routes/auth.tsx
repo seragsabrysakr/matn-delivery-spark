@@ -11,7 +11,10 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — MATN Delivery Intelligence" },
-      { name: "description", content: "Sign in to manage the Azure DevOps connection for MATN Delivery Intelligence." },
+      {
+        name: "description",
+        content: "Sign in to manage the Azure DevOps connection for MATN Delivery Intelligence.",
+      },
       { property: "og:title", content: "Sign in — MATN Delivery Intelligence" },
       {
         property: "og:description",
@@ -60,7 +63,10 @@ function AuthPage() {
       return;
     }
 
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     setPending(false);
     if (signInError) {
       setError(t("auth.failed"));
@@ -73,13 +79,14 @@ function AuthPage() {
     void navigate({ to: "/onboarding" });
   };
 
-
   return (
     <main dir={dir} className="grid min-h-dvh place-items-center bg-background px-4 py-10">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>{mode === "signIn" ? t("auth.title") : t("auth.mode.signUp")}</CardTitle>
-          <CardDescription>{mode === "signIn" ? t("auth.subtitle") : t("auth.signUp.subtitle")}</CardDescription>
+          <CardDescription>
+            {mode === "signIn" ? t("auth.subtitle") : t("auth.signUp.subtitle")}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-4 grid grid-cols-2 gap-2">
@@ -150,7 +157,6 @@ function AuthPage() {
                   : t("auth.signUp.submit")}
             </Button>
           </form>
-
         </CardContent>
       </Card>
     </main>

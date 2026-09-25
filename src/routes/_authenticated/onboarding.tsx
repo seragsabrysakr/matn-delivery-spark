@@ -14,11 +14,16 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
     meta: [
       { title: "Create workspace — MATN Delivery Intelligence" },
-      { name: "description", content: "Create the first MATN Delivery Intelligence workspace and become its administrator." },
+      {
+        name: "description",
+        content:
+          "Create the first MATN Delivery Intelligence workspace and become its administrator.",
+      },
       { property: "og:title", content: "Create workspace — MATN Delivery Intelligence" },
       {
         property: "og:description",
-        content: "Create the first MATN Delivery Intelligence workspace and become its administrator.",
+        content:
+          "Create the first MATN Delivery Intelligence workspace and become its administrator.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -38,7 +43,10 @@ function OnboardingPage() {
   const [tenantSlug, setTenantSlug] = useState("matn");
   const [error, setError] = useState<string | null>(null);
 
-  const state = useQuery({ queryKey: ["bootstrap-state"], queryFn: () => fetchState({ data: undefined }) });
+  const state = useQuery({
+    queryKey: ["bootstrap-state"],
+    queryFn: () => fetchState({ data: undefined }),
+  });
 
   const mutation = useMutation({
     mutationFn: () => bootstrap({ data: { tenantName, tenantSlug } }),
@@ -61,16 +69,25 @@ function OnboardingPage() {
   };
 
   const body = () => {
-    if (state.isPending) return <p className="text-sm text-muted-foreground">{t("onboarding.checking")}</p>;
+    if (state.isPending)
+      return <p className="text-sm text-muted-foreground">{t("onboarding.checking")}</p>;
     if (state.data && !state.data.emailVerified) {
-      return <p role="alert" className="text-sm text-muted-foreground">{t("auth.unverified")}</p>;
+      return (
+        <p role="alert" className="text-sm text-muted-foreground">
+          {t("auth.unverified")}
+        </p>
+      );
     }
     if (state.data?.hasMembership) {
       void navigate({ to: "/settings/azure" });
       return null;
     }
     if (state.data?.hasRealTenant) {
-      return <p role="alert" className="text-sm text-muted-foreground">{t("onboarding.needsInvite")}</p>;
+      return (
+        <p role="alert" className="text-sm text-muted-foreground">
+          {t("onboarding.needsInvite")}
+        </p>
+      );
     }
     return (
       <form
@@ -83,11 +100,22 @@ function OnboardingPage() {
       >
         <div className="space-y-1.5">
           <Label htmlFor="tenantName">{t("onboarding.name")}</Label>
-          <Input id="tenantName" required value={tenantName} onChange={(e) => setTenantName(e.target.value)} />
+          <Input
+            id="tenantName"
+            required
+            value={tenantName}
+            onChange={(e) => setTenantName(e.target.value)}
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="tenantSlug">{t("onboarding.slug")}</Label>
-          <Input id="tenantSlug" required dir="ltr" value={tenantSlug} onChange={(e) => setTenantSlug(e.target.value)} />
+          <Input
+            id="tenantSlug"
+            required
+            dir="ltr"
+            value={tenantSlug}
+            onChange={(e) => setTenantSlug(e.target.value)}
+          />
           <p className="text-xs text-muted-foreground">{t("onboarding.slugHint")}</p>
         </div>
         {error ? (

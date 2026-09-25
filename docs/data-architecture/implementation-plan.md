@@ -5,18 +5,21 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 ## Architecture Decision Records
 
 ### ADR-001: Lovable React frontend (TanStack Start)
+
 - **Context**: An executive command center needs bilingual RTL/LTR rendering, SSR-friendly SEO, and fast iteration with a small team.
 - **Decision**: Keep the approved Phase 1 TanStack Start + React + Tailwind frontend as the single client.
 - **Consequences**: One deployment target, server functions available for backend logic, no separate BFF; Phase 1 visual work is preserved unchanged.
 - **Alternatives**: Power BI embedded (weak Arabic RTL and custom UX), Next.js rewrite (no benefit, loses approved work), native mobile (out of scope).
 
 ### ADR-002: Supabase PostgreSQL as the analytics store
+
 - **Context**: We need relational integrity, time-series snapshots, row-level tenant isolation and generated types.
 - **Decision**: Store all normalized, historical and calculated data in Supabase PostgreSQL with RLS.
 - **Consequences**: Strong constraints and SQL-based KPI computation; volume management (partitioning) needed for revisions and KPI values.
 - **Alternatives**: Direct Azure Analytics OData queries (no history control, throttling, no cross-source joins), a document store (weak relational integrity), a data warehouse (overkill for the first release).
 
 ### ADR-003: Server-side integration layer for Azure DevOps
+
 - **Context**: PATs and OAuth tokens must never reach the browser; syncs are long-running and scheduled.
 - **Decision**: Run all Azure DevOps access server-side. On this TanStack Start stack that means `createServerFn` for app-internal calls and server routes under `src/routes/api/public/*` for scheduled/cron triggers — no Supabase Edge Functions.
 - **Consequences**: Secrets stay in backend configuration; workers must respect Worker runtime limits (bounded batch sizes, resumable runs).
@@ -24,36 +27,42 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Alternatives**: Client-side calls (unacceptable, leaks credentials), Supabase Edge Functions (not used on this stack), a separate container service (extra operations for no current benefit).
 
 ### ADR-004: REST API before runtime MCP
+
 - **Context**: Azure DevOps offers a stable REST surface; MCP-based agent access is attractive but immature for scheduled bulk sync.
 - **Decision**: Use REST (api-version 7.1) for all synchronization in this release; revisit MCP later for interactive copilot queries only.
 - **Consequences**: Predictable pagination, throttling and error handling; MCP can be added later on top of the same normalized store.
 - **Alternatives**: MCP-first (unproven throughput, weaker cursor semantics), Analytics OData only (limited entities, no PR/build depth).
 
 ### ADR-005: Immutable revisions and daily snapshots
+
 - **Context**: Trends, burndown and scope-change history cannot be reconstructed from current state alone.
 - **Decision**: Persist Azure revisions as immutable rows, derive transitions and scope-change events, and write append-only daily snapshots.
 - **Consequences**: Trustworthy history, larger storage, retention/partitioning required; a later sync can fill gaps but never rewrite a closed day.
 - **Alternatives**: Recompute from Azure on demand (slow, throttled, lossy after edits), current-state-only (no trends).
 
 ### ADR-006: Process-template normalization through configuration
+
 - **Context**: Agile, Scrum, CMMI, Basic and custom inherited processes name types, states and estimate fields differently.
 - **Decision**: Normalize through a per-project `ProcessMapping` record; preserve unmapped fields in a JSON-safe `customFields` bag.
 - **Consequences**: New customers onboard by configuration, not code; mapping quality becomes a data-quality concern with explicit `unknown_*` issues.
 - **Alternatives**: Hardcoding one template (breaks the second tenant), per-customer code branches (unmaintainable).
 
 ### ADR-007: Transparent, versioned KPI calculations
+
 - **Context**: Executives must trust and challenge every number; formulas will evolve.
 - **Decision**: Every KPI has a documented formula, configurable thresholds and a `calculationVersion` stored with each value; Sprint Confidence and Release Readiness expose their components and gates.
 - **Consequences**: Historical values remain explainable across formula changes; slightly larger payloads and more catalog maintenance.
 - **Alternatives**: Opaque AI score (rejected — unauditable), hardcoded thresholds (rejected — not tenant-specific).
 
 ### ADR-008: Read-only integration for the first release
+
 - **Context**: Write-back to Azure DevOps carries real operational risk and demands full audit and permission handling.
 - **Decision**: The first release is strictly read-only; write intents are modeled (`WriteBackIntent`) but not implemented.
 - **Consequences**: Zero risk of corrupting customer work items; recommendations remain advisory; write-back becomes a separate, gated project.
 - **Alternatives**: Immediate write-back (rejected), agent-driven changes (rejected — no confirmation, audit or verification path yet).
 
 ### ADR-009: Phase 2.1 architecture corrections
+
 - **Context**: Review of the Phase 2 specification found five structural gaps: tenant foreign keys were declared composite without candidate keys, iterations conflated the Azure node with team configuration, project/team-limited roles had no storage, the scheduler's secret custody was unspecified, and source deletion was indistinguishable from lost access.
 - **Decision**:
   1. **Composite tenant integrity** — every tenant-owned parent declares `UNIQUE (tenant_id, id)`; every tenant-owned child references `(tenant_id, parent_id)`. Cross-tenant rows fail on a foreign key, before RLS. A CI invariant test asserts each composite FK has a matching candidate key.
@@ -65,7 +74,8 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Alternatives**: Rely on RLS alone (rejected — a service-role bug bypasses it), keep per-team iteration duplicates (rejected — divergent dates), roles without scope tables (rejected — cannot express Delivery Manager or Read-only Viewer), unauthenticated cron route behind an obscure path (rejected).
 
 ### ADR-010: Same-project structural integrity and canonical team-sprint reference
-- **Context**: Phase 2.1 made cross-*tenant* rows impossible, but inside one tenant a team from project A could still be paired with an iteration from project B. Separately, several contracts still selected `teamId` and `iterationId` independently, allowing pairs with no corresponding `TeamIteration`. The KPI override uniqueness relied on a COALESCE sentinel uuid, and the active-grant index treated an expired row as active.
+
+- **Context**: Phase 2.1 made cross-_tenant_ rows impossible, but inside one tenant a team from project A could still be paired with an iteration from project B. Separately, several contracts still selected `teamId` and `iterationId` independently, allowing pairs with no corresponding `TeamIteration`. The KPI override uniqueness relied on a COALESCE sentinel uuid, and the active-grant index treated an expired row as active.
 - **Decision**:
   1. **Canonical reference** — `teamIterationId` is the only persisted team-sprint relationship across capacity, load, all daily snapshots, KPI values, risk signals and recommendations. `teamId` / `iterationId` survive only as documented derived convenience values.
   2. **Project-composite keys** — `core_teams` and `core_iterations` gain `UNIQUE (tenant_id, project_id, id)`; `core_team_iterations` carries an immutable `project_id` and references both parents through it, so a cross-project pair fails with `23503`. Project-scoped children follow the same pattern; KPI overrides and process mappings add `CHECK (team_id IS NULL OR project_id IS NOT NULL)` plus the project-composite team FK.
@@ -75,21 +85,23 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Alternatives**: Application-level validation (rejected — bypassable by sync workers and service-role code), triggers (rejected — heavier and still procedural), RLS-only enforcement (rejected — service-role paths bypass it), a `now()`-aware unique index (impossible — index predicates must be immutable).
 
 ### ADR-011: Tenant-scoped identity and explicit demo lifecycle (Phase 3.1)
+
 - **Context**: The applied Phase 3 helpers resolved identity from `auth.uid()` alone. `current_core_user_id()`, `current_tenant_id()`, `has_role(role)` and `is_platform_admin()` each picked an arbitrary `core_users` row when one auth account belonged to more than one tenant, so a role held in tenant A satisfied a policy evaluated on a tenant B row. Migration 14 also seeded a demo tenant unconditionally as part of the production migration chain.
 - **Decision**:
   1. **Tenant-scoped identity** — identity resolution always takes the row's tenant as an argument: `current_core_user_id(target_tenant_id)`, `has_role(target_tenant_id, target_role)`, `is_tenant_platform_admin(target_tenant_id)`. `current_tenant_id()` and the zero/one-argument variants are dropped, not deprecated in place, so no policy can accidentally keep using them. Every RLS policy passes the row's own `tenant_id`.
-  2. **Model B for `platform_admin`** — platform administration remains a *tenant-scoped* role rather than a global superuser. Cross-tenant administration is an out-of-band service-role operation, so no single browser session can ever read two tenants.
+  2. **Model B for `platform_admin`** — platform administration remains a _tenant-scoped_ role rather than a global superuser. Cross-tenant administration is an out-of-band service-role operation, so no single browser session can ever read two tenants.
   3. **Multi-tenant membership is legal** — the global unique index on `core_users.auth_user_id` is replaced by `UNIQUE (tenant_id, auth_user_id)`. Isolation is now enforced by the tenant argument, not by forbidding the situation.
-  4. **Read-only client roles** — `authenticated` holds `SELECT` only on prefixed tables, and RLS is `ENABLE`d *and* `FORCE`d everywhere. All writes go through audited security-definer functions or the service role.
+  4. **Read-only client roles** — `authenticated` holds `SELECT` only on prefixed tables, and RLS is `ENABLE`d _and_ `FORCE`d everywhere. All writes go through audited security-definer functions or the service role.
   5. **Member-detail authorization** — `can_view_member_detail()` grants detail to management roles with team access; `is_own_member_record()` additionally lets a contributor read their own member row and utilization. Executive viewers stay aggregate-only.
   6. **Explicit demo lifecycle** — no migration seeds data. `seed_demo_tenant()` / `remove_demo_tenant()` remain service-role-only development operations; removal matches on the deterministic demo id, slug and `is_demo = true`. `purge_ci_tenant()` cleans automated-test fixtures under the reserved `ci-` slug prefix.
 - **Consequences**: Every policy is one argument longer and helper results are no longer cacheable per session; in exchange dual-tenant membership is safe by construction, and a fresh production database contains no fabricated rows. `dblink` is installed for the test harness only and is revoked from `PUBLIC`, `anon` and `authenticated`.
 - **Alternatives**: Keep a session-level "current tenant" GUC (rejected — client-settable and easily forgotten in a policy), forbid multi-tenant auth accounts with a global unique index (rejected — a legitimate consultant/partner case, and the constraint hid the bug rather than fixing it), global `platform_admin` (rejected — one compromised session would expose every tenant).
 
 ### ADR-012: Read-only Azure DevOps foundation sync on the app server (Phase 4 / 5A)
+
 - **Context**: The first live integration must read organizations, projects, teams, iterations, members and memberships from Azure DevOps without exposing the credential, without duplicating work under concurrent operators, and without deleting real rows when the provider is briefly unavailable.
 - **Decision**:
-  1. **App-server only** — synchronization runs in TanStack `createServerFn` handlers (`src/lib/azure/*`), not in a database function and not in an edge function. The PAT is read from `process.env` inside handlers; `ops_sync_connections.secret_ref` stores the secret's *name*.
+  1. **App-server only** — synchronization runs in TanStack `createServerFn` handlers (`src/lib/azure/*`), not in a database function and not in an edge function. The PAT is read from `process.env` inside handlers; `ops_sync_connections.secret_ref` stores the secret's _name_.
   2. **GET-only client** — one typed client, `api-version=7.1`, continuation-token paging with a hard page ceiling, bounded concurrency, and retry that honours `Retry-After`. Errors are mapped to a closed `AzureErrorCode` set with fixed user-facing text; provider bodies never reach the browser.
   3. **Identity from the token** — the tenant is resolved from `auth.uid()` through `core_users`; an ambiguous multi-tenant match without an explicit tenant is `forbidden`. Sync requires `platform_admin` or `tenant_admin`; every operation is audited.
   4. **One active run per organization** — enforced structurally by a partial unique index on `ops_sync_locks (tenant_id, organization_id) WHERE released_at IS NULL`, with a 30-minute lock reclaim. A losing caller gets a `skipped` report, never a duplicate run.

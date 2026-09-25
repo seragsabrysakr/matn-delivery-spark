@@ -10,7 +10,10 @@ import {
 } from "../job-rules";
 import { emptyCounts, SYNC_DOMAINS, type DomainCounts, type SyncDomain } from "../contracts";
 
-const counts = (patch: Partial<DomainCounts> = {}): DomainCounts => ({ ...emptyCounts(), ...patch });
+const counts = (patch: Partial<DomainCounts> = {}): DomainCounts => ({
+  ...emptyCounts(),
+  ...patch,
+});
 
 describe("job cursor", () => {
   it("starts at the organization domain", () => {
@@ -22,7 +25,10 @@ describe("job cursor", () => {
   });
 
   it("skips paired domains driven by their owner domain", () => {
-    expect(nextCursor({ domain: "iterations", index: 0 }, false)).toEqual({ domain: "members", index: 0 });
+    expect(nextCursor({ domain: "iterations", index: 0 }, false)).toEqual({
+      domain: "members",
+      index: 0,
+    });
     expect(nextCursor({ domain: "members", index: 0 }, false)).toBeNull();
   });
 
@@ -47,7 +53,10 @@ describe("tombstone safety", () => {
 describe("run status", () => {
   it("derives succeeded, partial and failed", () => {
     const all = (complete: boolean) =>
-      Object.fromEntries(SYNC_DOMAINS.map((d) => [d, counts({ complete })])) as Record<SyncDomain, DomainCounts>;
+      Object.fromEntries(SYNC_DOMAINS.map((d) => [d, counts({ complete })])) as Record<
+        SyncDomain,
+        DomainCounts
+      >;
     expect(deriveRunStatus(all(true))).toBe("succeeded");
     expect(deriveRunStatus(all(false))).toBe("failed");
     const mixed = { ...all(false), projects: counts({ complete: true }) };
@@ -61,26 +70,40 @@ describe("duplicate start handling", () => {
 
   it("reuses a live run instead of starting a second one", () => {
     expect(
-      decideStart({ runId: "r1", status: "running", heartbeatAt: iso(-5_000), expiresAt: iso(60_000) }, now),
+      decideStart(
+        { runId: "r1", status: "running", heartbeatAt: iso(-5_000), expiresAt: iso(60_000) },
+        now,
+      ),
     ).toEqual({ kind: "reuse", runId: "r1" });
   });
 
   it("reclaims a stale or expired run", () => {
     expect(
       decideStart(
-        { runId: "r1", status: "running", heartbeatAt: iso(-RUN_STALE_MS - 1_000), expiresAt: iso(60_000) },
+        {
+          runId: "r1",
+          status: "running",
+          heartbeatAt: iso(-RUN_STALE_MS - 1_000),
+          expiresAt: iso(60_000),
+        },
         now,
       ).kind,
     ).toBe("reclaim");
     expect(
-      decideStart({ runId: "r1", status: "queued", heartbeatAt: iso(-1_000), expiresAt: iso(-1) }, now).kind,
+      decideStart(
+        { runId: "r1", status: "queued", heartbeatAt: iso(-1_000), expiresAt: iso(-1) },
+        now,
+      ).kind,
     ).toBe("reclaim");
   });
 
   it("starts fresh with no active run or a finished one", () => {
     expect(decideStart(null, now)).toEqual({ kind: "start" });
     expect(
-      decideStart({ runId: "r1", status: "succeeded", heartbeatAt: iso(-1_000), expiresAt: iso(60_000) }, now),
+      decideStart(
+        { runId: "r1", status: "succeeded", heartbeatAt: iso(-1_000), expiresAt: iso(60_000) },
+        now,
+      ),
     ).toEqual({ kind: "start" });
   });
 

@@ -45,18 +45,30 @@ describe("azure settings ui state", () => {
   });
 
   it("shows no readable projects only for a complete empty response", () => {
-    expect(deriveAzureUiState({ ...base, discovery: discovery({ status: "complete", projectCount: 0 }) }).showEmptyProjects).toBe(true);
-    expect(deriveAzureUiState({ ...base, discovery: discovery({ status: "partial", projectCount: 0 }) }).showEmptyProjects).toBe(false);
+    expect(
+      deriveAzureUiState({ ...base, discovery: discovery({ status: "complete", projectCount: 0 }) })
+        .showEmptyProjects,
+    ).toBe(true);
+    expect(
+      deriveAzureUiState({ ...base, discovery: discovery({ status: "partial", projectCount: 0 }) })
+        .showEmptyProjects,
+    ).toBe(false);
   });
 
   it("flags partial discovery separately", () => {
-    const ui = deriveAzureUiState({ ...base, discovery: discovery({ status: "partial", projectCount: 3 }) });
+    const ui = deriveAzureUiState({
+      ...base,
+      discovery: discovery({ status: "partial", projectCount: 3 }),
+    });
     expect(ui.showPartialDiscovery).toBe(true);
     expect(ui.discoveryError).toBeNull();
   });
 
   it("clears the stale discovery error when a later attempt succeeds", () => {
-    const failed = deriveAzureUiState({ ...base, discovery: discovery({ status: "failed", warning: "request_timeout" }) });
+    const failed = deriveAzureUiState({
+      ...base,
+      discovery: discovery({ status: "failed", warning: "request_timeout" }),
+    });
     expect(failed.discoveryError).toBe("request_timeout");
     const retried = deriveAzureUiState({
       ...base,

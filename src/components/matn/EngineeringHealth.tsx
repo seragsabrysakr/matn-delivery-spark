@@ -37,10 +37,19 @@ export function EngineeringHealthCard({ data }: { data: EngineeringHealth }) {
     <SectionCard
       title={t("eng.title")}
       subtitle={t("eng.subtitle")}
-      action={<StatusPill status={data.deployment.status}>{t(data.deployment.labelKey as TKey)}</StatusPill>}
+      action={
+        <StatusPill status={data.deployment.status}>
+          {t(data.deployment.labelKey as TKey)}
+        </StatusPill>
+      }
     >
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <Metric icon={GitPullRequest} labelKey="eng.activePrs" value={String(data.activePullRequests)} status="neutral" />
+        <Metric
+          icon={GitPullRequest}
+          labelKey="eng.activePrs"
+          value={String(data.activePullRequests)}
+          status="neutral"
+        />
         <Metric
           icon={TimerReset}
           labelKey="eng.stalePrs"

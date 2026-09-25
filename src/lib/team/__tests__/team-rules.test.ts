@@ -118,7 +118,14 @@ describe("team calculations", () => {
   it("never leaks email, descriptor, custom fields, or provider payloads", () => {
     const rows = buildWorkItemRows(facts, members, NOW);
     const serialized = JSON.stringify({ rows, members: computeMemberRows(facts, members, NOW) });
-    for (const forbidden of ["email", "descriptor", "customFields", "custom_fields", "authUserId", "raw"]) {
+    for (const forbidden of [
+      "email",
+      "descriptor",
+      "customFields",
+      "custom_fields",
+      "authUserId",
+      "raw",
+    ]) {
       expect(serialized).not.toContain(forbidden);
     }
   });

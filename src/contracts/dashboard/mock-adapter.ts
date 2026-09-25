@@ -79,7 +79,11 @@ function emptySection<T>(data: T): Section<T> {
   return { availability: "empty", data, reason: null };
 }
 
-function domainFreshness(status: FreshnessStatus, ageMinutes: number, now: string): DomainFreshness {
+function domainFreshness(
+  status: FreshnessStatus,
+  ageMinutes: number,
+  now: string,
+): DomainFreshness {
   return { status, lastSyncedAt: now, ageMinutes };
 }
 
@@ -165,7 +169,11 @@ function toRiskSignal(risk: Risk, ctx: DashboardContext, now: string): RiskSigna
   };
 }
 
-function toRecommendations(snapshot: DeliverySnapshot, ctx: DashboardContext, now: string): Recommendation[] {
+function toRecommendations(
+  snapshot: DeliverySnapshot,
+  ctx: DashboardContext,
+  now: string,
+): Recommendation[] {
   return snapshot.actions.map((action) => ({
     id: action.id,
     tenantId: ctx.tenantId,
@@ -321,7 +329,8 @@ export function toOverviewContract({
     trajectory: ready(toTrajectory(snapshot, iteration)),
     criticalRisks: risks.length > 0 ? ready(risks) : emptySection<readonly RiskSignal[]>([]),
     funnel: funnel.length > 0 ? ready(funnel) : emptySection<readonly FunnelStageContract[]>([]),
-    teamLoad: teamLoad.length > 0 ? ready(teamLoad) : emptySection<readonly TeamLoadEntryContract[]>([]),
+    teamLoad:
+      teamLoad.length > 0 ? ready(teamLoad) : emptySection<readonly TeamLoadEntryContract[]>([]),
     engineering: ready(toEngineering(snapshot)),
     recommendedActions:
       actions.length > 0 ? ready(actions) : emptySection<readonly Recommendation[]>([]),

@@ -72,7 +72,8 @@ export class AzureDevOpsClient {
     this.maxRetries = options.maxRetries ?? 3;
     // Bind the global: an unbound `fetch` reference throws "Illegal invocation"
     // in the deployed worker runtime, which surfaced as a generic timeout.
-    this.fetchImpl = options.fetchImpl ?? ((input: RequestInfo | URL, init?: RequestInit) => fetch(input, init));
+    this.fetchImpl =
+      options.fetchImpl ?? ((input: RequestInfo | URL, init?: RequestInit) => fetch(input, init));
     this.sleep = options.sleep ?? defaultSleep;
     this.random = options.random ?? Math.random;
   }
@@ -83,7 +84,8 @@ export class AzureDevOpsClient {
   }
 
   private buildUrl(path: string, options: AzureRequestOptions, continuationToken?: string): string {
-    const base = options.baseUrl ?? `https://dev.azure.com/${encodeURIComponent(this.organization)}`;
+    const base =
+      options.baseUrl ?? `https://dev.azure.com/${encodeURIComponent(this.organization)}`;
     const url = new URL(`${base}${path.startsWith("/") ? path : `/${path}`}`);
     for (const [key, value] of Object.entries(options.query ?? {})) {
       if (value !== undefined) url.searchParams.set(key, String(value));
@@ -100,7 +102,11 @@ export class AzureDevOpsClient {
   }
 
   /** Single GET with sanitized errors and bounded retries. */
-  async get<T>(path: string, options: AzureRequestOptions = {}, continuationToken?: string): Promise<{
+  async get<T>(
+    path: string,
+    options: AzureRequestOptions = {},
+    continuationToken?: string,
+  ): Promise<{
     body: T;
     continuationToken: string | null;
   }> {
@@ -137,8 +143,12 @@ export class AzureDevOpsClient {
         const token = response.headers.get("x-ms-continuationtoken");
         // A sign-in redirect body means the credential was rejected silently.
         const contentType = response.headers.get("content-type") ?? "";
-        if (!contentType.includes("json")) throw new AzureDevOpsError("invalid_credentials", { httpStatus: 203 });
-        return { body: (await response.json()) as T, continuationToken: token && token.length > 0 ? token : null };
+        if (!contentType.includes("json"))
+          throw new AzureDevOpsError("invalid_credentials", { httpStatus: 203 });
+        return {
+          body: (await response.json()) as T,
+          continuationToken: token && token.length > 0 ? token : null,
+        };
       }
 
       const retryAfterHeader = response.headers.get("retry-after");
@@ -162,7 +172,11 @@ export class AzureDevOpsClient {
     const items: T[] = [];
     let token: string | undefined;
     for (let page = 0; page < this.maxPages; page += 1) {
-      const { body, continuationToken } = await this.get<AzureListResponse<T>>(path, options, token);
+      const { body, continuationToken } = await this.get<AzureListResponse<T>>(
+        path,
+        options,
+        token,
+      );
       items.push(...(body.value ?? []));
       const next = continuationToken ?? body.continuationToken ?? null;
       if (!next) return items;
@@ -223,7 +237,8 @@ export class AzureDevOpsClient {
 
       if (response.ok) {
         const contentType = response.headers.get("content-type") ?? "";
-        if (!contentType.includes("json")) throw new AzureDevOpsError("invalid_credentials", { httpStatus: 203 });
+        if (!contentType.includes("json"))
+          throw new AzureDevOpsError("invalid_credentials", { httpStatus: 203 });
         return (await response.json()) as T;
       }
 
@@ -242,7 +257,6 @@ export class AzureDevOpsClient {
   }
 
   listProjects(signal?: AbortSignal): Promise<AzureProject[]> {
-
     return this.list<AzureProject>("/_apis/projects", { query: { $top: 200 }, signal });
   }
 
@@ -253,14 +267,22 @@ export class AzureDevOpsClient {
     });
   }
 
-  listTeamIterations(projectId: string, teamId: string, signal?: AbortSignal): Promise<AzureIteration[]> {
+  listTeamIterations(
+    projectId: string,
+    teamId: string,
+    signal?: AbortSignal,
+  ): Promise<AzureIteration[]> {
     return this.list<AzureIteration>(
       `/${encodeURIComponent(projectId)}/${encodeURIComponent(teamId)}/_apis/work/teamsettings/iterations`,
       { signal },
     );
   }
 
-  async getTeamSettings(projectId: string, teamId: string, signal?: AbortSignal): Promise<AzureTeamSettings | null> {
+  async getTeamSettings(
+    projectId: string,
+    teamId: string,
+    signal?: AbortSignal,
+  ): Promise<AzureTeamSettings | null> {
     try {
       const { body } = await this.get<AzureTeamSettings>(
         `/${encodeURIComponent(projectId)}/${encodeURIComponent(teamId)}/_apis/work/teamsettings`,
@@ -288,7 +310,11 @@ export class AzureDevOpsClient {
     }
   }
 
-  listTeamMembers(projectId: string, teamId: string, signal?: AbortSignal): Promise<{ identity: AzureIdentityRef }[]> {
+  listTeamMembers(
+    projectId: string,
+    teamId: string,
+    signal?: AbortSignal,
+  ): Promise<{ identity: AzureIdentityRef }[]> {
     return this.list<{ identity: AzureIdentityRef }>(
       `/_apis/projects/${encodeURIComponent(projectId)}/teams/${encodeURIComponent(teamId)}/members`,
       { query: { $top: 200 }, signal },

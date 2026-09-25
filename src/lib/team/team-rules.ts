@@ -7,12 +7,7 @@
  */
 
 export type TeamStateCategory =
-  | "proposed"
-  | "inProgress"
-  | "resolved"
-  | "completed"
-  | "removed"
-  | "unknown";
+  "proposed" | "inProgress" | "resolved" | "completed" | "removed" | "unknown";
 
 export type TeamAccessLevel = "memberDetail" | "selfOnly" | "aggregate";
 
@@ -110,7 +105,11 @@ export interface TeamSummary {
 
 export interface TeamDistribution {
   readonly byStateCategory: readonly { readonly key: string; readonly count: number }[];
-  readonly byType: readonly { readonly key: string; readonly azureType: string; readonly count: number }[];
+  readonly byType: readonly {
+    readonly key: string;
+    readonly azureType: string;
+    readonly count: number;
+  }[];
   readonly assignment: { readonly assigned: number; readonly unassigned: number };
 }
 
@@ -146,7 +145,9 @@ function median(values: readonly number[]): number | null {
   if (values.length === 0) return null;
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 1 ? sorted[mid]! : Math.round(((sorted[mid - 1]! + sorted[mid]!) / 2) * 10) / 10;
+  return sorted.length % 2 === 1
+    ? sorted[mid]!
+    : Math.round(((sorted[mid - 1]! + sorted[mid]!) / 2) * 10) / 10;
 }
 
 const pct = (num: number, den: number): number | null =>
@@ -224,7 +225,10 @@ export function computeMemberRows(
       }
 
       const activeItems = mine.filter((f) => isActive(f.stateCategory));
-      const effort = activeItems.reduce((sum, f) => sum + (hasPositiveEstimate(f) ? (f.estimate ?? 0) : 0), 0);
+      const effort = activeItems.reduce(
+        (sum, f) => sum + (hasPositiveEstimate(f) ? (f.estimate ?? 0) : 0),
+        0,
+      );
       const hasEffortData = activeItems.some(hasPositiveEstimate);
       const hasCapacity = typeof member.capacityHours === "number" && member.capacityHours > 0;
 
@@ -245,7 +249,8 @@ export function computeMemberRows(
           coveredItems: ages.length,
         },
         capacityHours: hasCapacity ? member.capacityHours : null,
-        utilizationPercent: hasCapacity && hasEffortData ? pct(effort, member.capacityHours as number) : null,
+        utilizationPercent:
+          hasCapacity && hasEffortData ? pct(effort, member.capacityHours as number) : null,
         coverage: {
           hasCapacity,
           hasEffortData,
@@ -264,7 +269,10 @@ export function computeDistribution(facts: readonly TeamWorkItemFact[]): TeamDis
   for (const f of facts) {
     stateCounts.set(f.stateCategory, (stateCounts.get(f.stateCategory) ?? 0) + 1);
     const existing = typeCounts.get(f.alias);
-    typeCounts.set(f.alias, { azureType: existing?.azureType ?? f.azureType, count: (existing?.count ?? 0) + 1 });
+    typeCounts.set(f.alias, {
+      azureType: existing?.azureType ?? f.azureType,
+      count: (existing?.count ?? 0) + 1,
+    });
     if (f.assignedToMemberId) assigned += 1;
   }
 

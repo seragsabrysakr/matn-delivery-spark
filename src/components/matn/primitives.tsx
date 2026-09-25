@@ -69,10 +69,7 @@ export function SectionCard({
 }) {
   return (
     <section
-      className={cn(
-        "flex flex-col rounded-lg border border-border bg-card shadow-card",
-        className,
-      )}
+      className={cn("flex flex-col rounded-lg border border-border bg-card shadow-card", className)}
     >
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border px-4 py-3 sm:px-5 sm:py-4">
         <div className="min-w-0">
@@ -155,7 +152,11 @@ export function Notice({
       <AlertTriangle
         className={cn(
           "mt-0.5 size-4 shrink-0",
-          tone === "critical" ? "text-critical" : tone === "warning" ? "text-warning" : "text-muted-foreground",
+          tone === "critical"
+            ? "text-critical"
+            : tone === "warning"
+              ? "text-warning"
+              : "text-muted-foreground",
         )}
         aria-hidden
       />

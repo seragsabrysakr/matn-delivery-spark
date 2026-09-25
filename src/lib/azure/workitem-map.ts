@@ -81,7 +81,8 @@ export interface MapWorkItemContext {
   readonly azureProjectName: string;
 }
 
-const str = (v: unknown): string | null => (typeof v === "string" && v.trim().length > 0 ? v : null);
+const str = (v: unknown): string | null =>
+  typeof v === "string" && v.trim().length > 0 ? v : null;
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
 const iso = (v: unknown): string | null => {
   const s = str(v);
@@ -126,13 +127,21 @@ export function resolveEstimate(
   for (const field of mapping.estimateFields) {
     const value = num(fields[field]);
     if (value !== null) {
-      const unit = field.endsWith("StoryPoints") ? "storyPoints" : field.endsWith("Effort") ? "effort" : "storyPoints";
+      const unit = field.endsWith("StoryPoints")
+        ? "storyPoints"
+        : field.endsWith("Effort")
+          ? "effort"
+          : "storyPoints";
       return { estimate: value, unit, sourceField: field };
     }
   }
   const remaining = num(fields["Microsoft.VSTS.Scheduling.RemainingWork"]);
   if (remaining !== null) {
-    return { estimate: remaining, unit: "hours", sourceField: "Microsoft.VSTS.Scheduling.RemainingWork" };
+    return {
+      estimate: remaining,
+      unit: "hours",
+      sourceField: "Microsoft.VSTS.Scheduling.RemainingWork",
+    };
   }
   return { estimate: null, unit: null, sourceField: null };
 }
@@ -153,7 +162,12 @@ export function mapAzureWorkItem(
   const nowFallback = new Date(0).toISOString();
 
   const tagsRaw = str(f["System.Tags"]);
-  const tags = tagsRaw ? tagsRaw.split(";").map((tag) => tag.trim()).filter(Boolean) : [];
+  const tags = tagsRaw
+    ? tagsRaw
+        .split(";")
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+    : [];
 
   const excludedBug = alias === "bug" && mapping.bugHandlingMode === "excluded";
   const countsTowardScope = !excludedBug && alias !== "task" && stateCategory !== "removed";
@@ -218,7 +232,8 @@ const same = (a: unknown, b: unknown): boolean => {
   }
   if (a === null || a === undefined) return b === null || b === undefined;
   if (typeof a === "number" || typeof b === "number") return Number(a) === Number(b);
-  if (typeof a === "object" || typeof b === "object") return JSON.stringify(a) === JSON.stringify(b);
+  if (typeof a === "object" || typeof b === "object")
+    return JSON.stringify(a) === JSON.stringify(b);
   return a === b;
 };
 

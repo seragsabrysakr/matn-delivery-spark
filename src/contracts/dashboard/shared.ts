@@ -3,7 +3,12 @@
  * The UI owns the loading state; the contract describes data availability.
  */
 import type {
-  CalculationStamp, FreshnessReport, HealthStatus, IsoTimestamp, Localized, Uuid,
+  CalculationStamp,
+  FreshnessReport,
+  HealthStatus,
+  IsoTimestamp,
+  Localized,
+  Uuid,
 } from "@/types/domain";
 
 /** Which selection produced this payload. */

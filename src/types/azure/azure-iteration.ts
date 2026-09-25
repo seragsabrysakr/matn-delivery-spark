@@ -15,7 +15,7 @@ export interface AzureIteration {
 /** GET .../teamsettings — weekdays and backlog iteration defaults. */
 export interface AzureTeamSettings {
   readonly workingDays: readonly (
-    | "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday"
+    "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday"
   )[];
   readonly backlogIteration: { readonly id: string; readonly path?: string };
   readonly defaultIteration?: { readonly id: string; readonly path?: string };

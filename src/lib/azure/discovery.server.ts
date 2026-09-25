@@ -41,7 +41,8 @@ interface RawProject {
   readonly lastUpdateTime?: unknown;
 }
 
-const str = (value: unknown): string | null => (typeof value === "string" && value.length > 0 ? value : null);
+const str = (value: unknown): string | null =>
+  typeof value === "string" && value.length > 0 ? value : null;
 
 /** Projects the wire payload down to the six safe fields. */
 export function sanitizeProject(raw: RawProject): DiscoveredProject | null {
@@ -101,7 +102,8 @@ export async function discoverAzureProjectsBounded(
 
   const pat = (options.pat ?? "").trim();
   const organization = normalizeOrganization(options.organization);
-  if (!pat || !(options.organization ?? "").trim()) return result("failed", "missing_configuration");
+  if (!pat || !(options.organization ?? "").trim())
+    return result("failed", "missing_configuration");
   if (!organization) return result("failed", "invalid_configuration");
 
   const authorization = `Basic ${btoa(`:${pat}`)}`;
@@ -117,8 +119,10 @@ export async function discoverAzureProjectsBounded(
       ? `${base}&continuationToken=${encodeURIComponent(continuationToken)}`
       : base;
 
-    let outcome: { kind: "ok"; body: unknown; token: string | null } | { kind: "error"; warning: AzureErrorCode } | null =
-      null;
+    let outcome:
+      | { kind: "ok"; body: unknown; token: string | null }
+      | { kind: "error"; warning: AzureErrorCode }
+      | null = null;
 
     for (let attempt = 0; attempt <= 1; attempt += 1) {
       const controller = new AbortController();
@@ -136,9 +140,10 @@ export async function discoverAzureProjectsBounded(
         // Aborts are our own timeout and are never retried.
         outcome = {
           kind: "error",
-          warning: name === "AbortError" || name === "TimeoutError" || controller.signal.aborted
-            ? "request_timeout"
-            : "network_unreachable",
+          warning:
+            name === "AbortError" || name === "TimeoutError" || controller.signal.aborted
+              ? "request_timeout"
+              : "network_unreachable",
         };
         break;
       } finally {
@@ -184,7 +189,8 @@ export async function discoverAzureProjectsBounded(
     }
 
     const bodyToken = (outcome.body as { continuationToken?: unknown })?.continuationToken;
-    continuationToken = outcome.token || (typeof bodyToken === "string" && bodyToken ? bodyToken : null);
+    continuationToken =
+      outcome.token || (typeof bodyToken === "string" && bodyToken ? bodyToken : null);
     if (!continuationToken) return result("complete", null);
   }
 

@@ -9,7 +9,8 @@ export interface PullRequestSummary {
   readonly authorName: string | null;
   readonly ageHours: number;
   readonly isStale: boolean;
-  readonly staleReason: "inactivity" | "awaitingReview" | "changesRequested" | "conflict" | "policy" | null;
+  readonly staleReason:
+    "inactivity" | "awaitingReview" | "changesRequested" | "conflict" | "policy" | null;
 }
 
 export interface BuildTrendPoint {

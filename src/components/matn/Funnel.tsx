@@ -23,13 +23,18 @@ export function FunnelCard({ stages }: { stages: FunnelStage[] }) {
           <li key={stage.id} className="flex min-w-0 flex-1 items-center gap-2">
             <div className="min-w-0 flex-1 rounded-md border border-border bg-surface p-3">
               <div className="flex items-center gap-1.5">
-                <span className={cn("size-1.5 shrink-0 rounded-full", statusDot[stage.status])} aria-hidden />
+                <span
+                  className={cn("size-1.5 shrink-0 rounded-full", statusDot[stage.status])}
+                  aria-hidden
+                />
                 <span className="min-w-0 truncate text-xs font-medium text-muted-foreground">
                   {t(`funnel.${stage.id}` as TKey)}
                 </span>
               </div>
               <div className="mt-1.5 flex items-baseline gap-1.5">
-                <Iso className="text-2xl font-semibold tabular-nums text-foreground">{stage.count}</Iso>
+                <Iso className="text-2xl font-semibold tabular-nums text-foreground">
+                  {stage.count}
+                </Iso>
                 <span className="text-[11px] text-muted-foreground">{t("funnel.items")}</span>
               </div>
               <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-border">

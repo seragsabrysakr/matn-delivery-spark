@@ -29,7 +29,11 @@ const client = new AzureDevOpsClient({
   maxRetries: 0,
 });
 
-const teamReader = async ({ azureProjectId }: { azureProjectId: string }): Promise<TeamReadResult> => {
+const teamReader = async ({
+  azureProjectId,
+}: {
+  azureProjectId: string;
+}): Promise<TeamReadResult> => {
   const index = projectRows.findIndex((project) => project.azure_project_id === azureProjectId);
   const count = projectSizes[index] ?? 0;
   return {
@@ -65,7 +69,12 @@ async function seedTeamsCursor(runId: string, startedAt: string): Promise<void> 
     cursor: { domain: "teams", index: 0 },
     domains: {
       ...details.domains,
-      organization: { ...details.domains.organization, discovered: 1, unchanged: 1, complete: true },
+      organization: {
+        ...details.domains.organization,
+        discovered: 1,
+        unchanged: 1,
+        complete: true,
+      },
       projects: { ...details.domains.projects, discovered: 4, unchanged: 4, complete: true },
     },
     scannedDomains: ["organization", "projects"],
@@ -123,18 +132,21 @@ integration.sequential("Teams persisted finalization", () => {
       })
       .select("id")
       .single();
-    if (organizationError || !organization) throw organizationError ?? new Error("Missing organization");
+    if (organizationError || !organization)
+      throw organizationError ?? new Error("Missing organization");
     organizationId = organization.id;
     const { data: projects, error: projectsError } = await supabaseAdmin
       .from("core_projects")
-      .insert(projectSizes.map((_, index) => ({
-        tenant_id: tenantId,
-        organization_id: organizationId,
-        azure_project_id: `project-${index + 1}`,
-        azure_project_name: `Project ${index + 1}`,
-        name_en: `Project ${index + 1}`,
-        name_ar: `Project ${index + 1}`,
-      })))
+      .insert(
+        projectSizes.map((_, index) => ({
+          tenant_id: tenantId,
+          organization_id: organizationId,
+          azure_project_id: `project-${index + 1}`,
+          azure_project_name: `Project ${index + 1}`,
+          name_en: `Project ${index + 1}`,
+          name_ar: `Project ${index + 1}`,
+        })),
+      )
       .select("id, azure_project_id");
     if (projectsError || !projects) throw projectsError ?? new Error("Missing projects");
     projectRows = projects.sort((a, b) => a.id.localeCompare(b.id));

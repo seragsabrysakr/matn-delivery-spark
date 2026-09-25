@@ -1,9 +1,22 @@
 import type { IsoTimestamp, JsonValue, Localized, RecordMeta, TenantScoped, Uuid } from "./common";
 
 export type SyncEntityKind =
-  | "organizations" | "projects" | "teams" | "iterations" | "members" | "capacity"
-  | "workItems" | "workItemRevisions" | "repositories" | "pullRequests"
-  | "pipelines" | "builds" | "deployments" | "testRuns" | "snapshots" | "kpis";
+  | "organizations"
+  | "projects"
+  | "teams"
+  | "iterations"
+  | "members"
+  | "capacity"
+  | "workItems"
+  | "workItemRevisions"
+  | "repositories"
+  | "pullRequests"
+  | "pipelines"
+  | "builds"
+  | "deployments"
+  | "testRuns"
+  | "snapshots"
+  | "kpis";
 
 export type AuthMode = "pat_readonly" | "entra_oauth_user" | "entra_service_principal";
 
@@ -22,7 +35,8 @@ export interface SyncConnection extends TenantScoped, RecordMeta {
   readonly maxConcurrency: number;
 }
 
-export type SyncRunStatus = "queued" | "running" | "partially_completed" | "completed" | "failed" | "canceled";
+export type SyncRunStatus =
+  "queued" | "running" | "partially_completed" | "completed" | "failed" | "canceled";
 
 export interface SyncError {
   readonly entityKind: SyncEntityKind;
@@ -85,7 +99,8 @@ export interface SourceDisappearanceOutcome {
   readonly azureId: string;
   readonly entityId: Uuid | null;
   readonly httpStatus: 403 | 404 | null;
-  readonly action: "tombstoned" | "marked_inaccessible" | "awaiting_verification" | "restored" | "issue_raised";
+  readonly action:
+    "tombstoned" | "marked_inaccessible" | "awaiting_verification" | "restored" | "issue_raised";
   readonly verificationPass: 1 | 2;
   readonly effectiveAt: IsoTimestamp;
   /** History (revisions, snapshots, audit) is never deleted, only excluded forward. */
@@ -95,13 +110,30 @@ export interface SourceDisappearanceOutcome {
 export type DataQualitySeverity = "critical" | "warning" | "info";
 
 export type DataQualityRuleId =
-  | "missing_project_mapping" | "unknown_state" | "unknown_work_item_type" | "missing_estimate"
-  | "missing_owner" | "invalid_iteration_dates" | "finish_before_start" | "duplicate_azure_id"
-  | "broken_parent_relation" | "cross_project_child" | "unknown_identity" | "negative_capacity"
-  | "revision_gap" | "estimate_change_without_revision" | "snapshot_gap"
-  | "deletion_vs_access_ambiguous" | "unverified_disappearance" | "access_revoked"
-  | "orphan_team_iteration" | "duplicate_active_scope" | "kpi_override_conflict"
-  | "inconsistent_sprint_duration" | "kpi_input_missing" | "partial_synchronization";
+  | "missing_project_mapping"
+  | "unknown_state"
+  | "unknown_work_item_type"
+  | "missing_estimate"
+  | "missing_owner"
+  | "invalid_iteration_dates"
+  | "finish_before_start"
+  | "duplicate_azure_id"
+  | "broken_parent_relation"
+  | "cross_project_child"
+  | "unknown_identity"
+  | "negative_capacity"
+  | "revision_gap"
+  | "estimate_change_without_revision"
+  | "snapshot_gap"
+  | "deletion_vs_access_ambiguous"
+  | "unverified_disappearance"
+  | "access_revoked"
+  | "orphan_team_iteration"
+  | "duplicate_active_scope"
+  | "kpi_override_conflict"
+  | "inconsistent_sprint_duration"
+  | "kpi_input_missing"
+  | "partial_synchronization";
 
 export interface DataQualityIssue extends TenantScoped {
   readonly id: Uuid;

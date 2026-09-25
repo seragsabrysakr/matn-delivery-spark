@@ -25,12 +25,14 @@ export const Route = createFileRoute("/team")({
       { title: "Team Capacity — MATN Delivery Intelligence" },
       {
         name: "description",
-        content: "Live team workload, work distribution, and estimate coverage for the selected sprint.",
+        content:
+          "Live team workload, work distribution, and estimate coverage for the selected sprint.",
       },
       { property: "og:title", content: "Team Capacity — MATN Delivery Intelligence" },
       {
         property: "og:description",
-        content: "Live team workload, work distribution, and estimate coverage for the selected sprint.",
+        content:
+          "Live team workload, work distribution, and estimate coverage for the selected sprint.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -63,14 +65,18 @@ function TeamPage() {
       <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4">
         <header className="flex flex-col gap-1">
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-            <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">{t("tp.title")}</h1>
+            <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+              {t("tp.title")}
+            </h1>
             <span className="inline-flex items-center rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted-foreground">
               {mode === "real" ? t("real.mode.badge") : t("real.mode.mock")}
             </span>
             {payload ? (
               <>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-0.5 text-[11px] text-muted-foreground">
-                  <Iso className="font-medium text-foreground">{payload.context.projectName[locale]}</Iso>
+                  <Iso className="font-medium text-foreground">
+                    {payload.context.projectName[locale]}
+                  </Iso>
                   <span aria-hidden>·</span>
                   <Iso>{payload.context.teamName[locale]}</Iso>
                   <span aria-hidden>·</span>
@@ -96,7 +102,11 @@ function TeamPage() {
         </header>
 
         {mode !== "real" ? (
-          <Notice tone="neutral" title={t("tp.empty.noItems")} body={t("tp.notice.missingNotZero")} />
+          <Notice
+            tone="neutral"
+            title={t("tp.empty.noItems")}
+            body={t("tp.notice.missingNotZero")}
+          />
         ) : query.isLoading || workspaceLoading ? (
           <SectionCard title={t("tp.title")}>
             <LoadingBlock rows={6} />
@@ -145,7 +155,8 @@ function TeamBody({ payload }: { payload: Payload }) {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return workItems.filter((w) => {
-      if (q && !w.title.toLowerCase().includes(q) && !String(w.azureWorkItemId).includes(q)) return false;
+      if (q && !w.title.toLowerCase().includes(q) && !String(w.azureWorkItemId).includes(q))
+        return false;
       if (member !== "all" && w.assignedMemberId !== member) return false;
       if (state !== "all" && w.stateCategory !== state) return false;
       if (type !== "all" && w.alias !== type) return false;
@@ -159,7 +170,12 @@ function TeamBody({ payload }: { payload: Payload }) {
   const notices = useMemo(() => {
     const out: { key: string; title: string; body: string; tone: "warning" | "neutral" }[] = [];
     if (!summary.capacityAvailable)
-      out.push({ key: "cap", tone: "neutral", title: t("tp.capacity.notConfigured"), body: t("tp.notice.capacity") });
+      out.push({
+        key: "cap",
+        tone: "neutral",
+        title: t("tp.capacity.notConfigured"),
+        body: t("tp.notice.capacity"),
+      });
     if (summary.unassignedItems > 0)
       out.push({
         key: "assign",
@@ -178,9 +194,19 @@ function TeamBody({ payload }: { payload: Payload }) {
         body: t("tp.notice.estimate", { a: n(summary.estimateCoveragePercent) }),
       });
     if (context.dataState === "partial")
-      out.push({ key: "partial", tone: "warning", title: t("real.state.partial"), body: t("tp.notice.partial") });
+      out.push({
+        key: "partial",
+        tone: "warning",
+        title: t("real.state.partial"),
+        body: t("tp.notice.partial"),
+      });
     if (context.dataState === "stale")
-      out.push({ key: "stale", tone: "warning", title: t("real.state.stale"), body: t("tp.notice.stale") });
+      out.push({
+        key: "stale",
+        tone: "warning",
+        title: t("real.state.stale"),
+        body: t("tp.notice.stale"),
+      });
     return out;
   }, [summary, context.dataState, t, n]);
 
@@ -219,7 +245,10 @@ function TeamBody({ payload }: { payload: Payload }) {
     {
       key: "coverage",
       label: t("tp.card.estimateCoverage"),
-      value: summary.estimateCoveragePercent === null ? t("tp.na") : `${n(summary.estimateCoveragePercent)}%`,
+      value:
+        summary.estimateCoveragePercent === null
+          ? t("tp.na")
+          : `${n(summary.estimateCoveragePercent)}%`,
       hint: t("tp.card.scoped", { a: n(summary.scopedItems) }),
     },
   ];
@@ -272,7 +301,9 @@ function TeamBody({ payload }: { payload: Payload }) {
           bodyClassName="p-0"
         >
           {sortedMembers.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-muted-foreground">{t("tp.empty.noMembers")}</div>
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+              {t("tp.empty.noMembers")}
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[720px] text-sm">
@@ -294,7 +325,12 @@ function TeamBody({ payload }: { payload: Payload }) {
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-2">
                           {m.avatarUrl ? (
-                            <img src={m.avatarUrl} alt="" className="size-6 rounded-full" loading="lazy" />
+                            <img
+                              src={m.avatarUrl}
+                              alt=""
+                              className="size-6 rounded-full"
+                              loading="lazy"
+                            />
                           ) : (
                             <span className="grid size-6 place-items-center rounded-full bg-muted text-[10px] text-muted-foreground">
                               <Iso>{m.displayName.slice(0, 2)}</Iso>
@@ -303,15 +339,31 @@ function TeamBody({ payload }: { payload: Payload }) {
                           <Iso className="font-medium text-foreground">{m.displayName}</Iso>
                         </div>
                       </td>
-                      <td className="px-3 py-2.5"><Iso>{n(m.assigned)}</Iso></td>
-                      <td className="px-3 py-2.5"><Iso>{n(m.active)}</Iso></td>
-                      <td className="px-3 py-2.5"><Iso>{n(m.completed)}</Iso></td>
-                      <td className="px-3 py-2.5"><Iso>{n(m.blocked)}</Iso></td>
-                      <td className="px-3 py-2.5 text-muted-foreground">
-                        {m.capacityHours === null ? t("tp.na") : <Iso>{`${n(m.capacityHours)}h`}</Iso>}
+                      <td className="px-3 py-2.5">
+                        <Iso>{n(m.assigned)}</Iso>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <Iso>{n(m.active)}</Iso>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <Iso>{n(m.completed)}</Iso>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <Iso>{n(m.blocked)}</Iso>
                       </td>
                       <td className="px-3 py-2.5 text-muted-foreground">
-                        {m.utilizationPercent === null ? t("tp.na") : <Iso>{`${n(m.utilizationPercent)}%`}</Iso>}
+                        {m.capacityHours === null ? (
+                          t("tp.na")
+                        ) : (
+                          <Iso>{`${n(m.capacityHours)}h`}</Iso>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 text-muted-foreground">
+                        {m.utilizationPercent === null ? (
+                          t("tp.na")
+                        ) : (
+                          <Iso>{`${n(m.utilizationPercent)}%`}</Iso>
+                        )}
                       </td>
                       <td className="px-4 py-2.5 text-[11px] text-muted-foreground">
                         <div>{t("tp.coverage.noEstimates", { a: n(m.unestimated) })}</div>
@@ -320,7 +372,9 @@ function TeamBody({ payload }: { payload: Payload }) {
                             ? t("tp.coverage.noStageAge")
                             : t("tp.coverage.stageAge", { a: n(m.currentStageAge.medianDays) })}
                         </div>
-                        {!m.coverage.hasCapacity ? <div>{t("tp.capacity.notConfigured")}</div> : null}
+                        {!m.coverage.hasCapacity ? (
+                          <div>{t("tp.capacity.notConfigured")}</div>
+                        ) : null}
                       </td>
                     </tr>
                   ))}
@@ -336,7 +390,10 @@ function TeamBody({ payload }: { payload: Payload }) {
           <DistributionList
             title={t("tp.dist.byState")}
             total={summary.totalItems}
-            rows={distribution.byStateCategory.map((r) => ({ label: t(stateKey(r.key)), count: r.count }))}
+            rows={distribution.byStateCategory.map((r) => ({
+              label: t(stateKey(r.key)),
+              count: r.count,
+            }))}
           />
           <DistributionList
             title={t("tp.dist.byType")}
@@ -406,7 +463,11 @@ function TeamBody({ payload }: { payload: Payload }) {
                 </option>
               ))}
             </select>
-            <ToggleChip active={blockedOnly} onClick={() => setBlockedOnly((v) => !v)} label={t("tp.filter.blockedOnly")} />
+            <ToggleChip
+              active={blockedOnly}
+              onClick={() => setBlockedOnly((v) => !v)}
+              label={t("tp.filter.blockedOnly")}
+            />
             <ToggleChip
               active={unassignedOnly}
               onClick={() => setUnassignedOnly((v) => !v)}
@@ -420,7 +481,9 @@ function TeamBody({ payload }: { payload: Payload }) {
           </div>
 
           {filtered.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-muted-foreground">{t("tp.empty.noFiltered")}</div>
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+              {t("tp.empty.noFiltered")}
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-sm">
@@ -446,11 +509,15 @@ function TeamBody({ payload }: { payload: Payload }) {
                       }}
                       className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-surface focus:bg-surface focus:outline-none"
                     >
-                      <td className="px-4 py-2.5 text-muted-foreground"><Iso>{w.azureWorkItemId}</Iso></td>
+                      <td className="px-4 py-2.5 text-muted-foreground">
+                        <Iso>{w.azureWorkItemId}</Iso>
+                      </td>
                       <td className="max-w-80 px-3 py-2.5">
                         <div className="flex items-center gap-2">
                           <Iso className="truncate">{w.title}</Iso>
-                          {w.isBlocked ? <StatusPill status="critical">{t("tp.blocked")}</StatusPill> : null}
+                          {w.isBlocked ? (
+                            <StatusPill status="critical">{t("tp.blocked")}</StatusPill>
+                          ) : null}
                         </div>
                       </td>
                       <td className="px-3 py-2.5 text-muted-foreground">{t(typeKey(w.alias))}</td>
@@ -458,7 +525,11 @@ function TeamBody({ payload }: { payload: Payload }) {
                         {t(stateKey(w.stateCategory))} · <Iso>{w.state}</Iso>
                       </td>
                       <td className="px-3 py-2.5 text-muted-foreground">
-                        {w.assignedMemberName ? <Iso>{w.assignedMemberName}</Iso> : t("tp.unassigned")}
+                        {w.assignedMemberName ? (
+                          <Iso>{w.assignedMemberName}</Iso>
+                        ) : (
+                          t("tp.unassigned")
+                        )}
                       </td>
                       <td className="px-4 py-2.5 text-muted-foreground">
                         {w.hasEstimate ? <Iso>{n(w.estimate ?? 0)}</Iso> : t("tp.noEstimate")}
@@ -473,7 +544,10 @@ function TeamBody({ payload }: { payload: Payload }) {
       ) : null}
 
       <Sheet open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
-        <SheetContent side={locale === "ar" ? "left" : "right"} className="w-full max-w-md overflow-y-auto">
+        <SheetContent
+          side={locale === "ar" ? "left" : "right"}
+          className="w-full max-w-md overflow-y-auto"
+        >
           <SheetHeader>
             <SheetTitle>{t("tp.detail.title")}</SheetTitle>
           </SheetHeader>
@@ -498,19 +572,26 @@ function TeamBody({ payload }: { payload: Payload }) {
                     : t("tp.noEstimate")
                 }
               />
-              <DetailRow label={t("tp.blocked")} value={selected.isBlocked ? t("tp.blocked") : t("tp.na")} />
+              <DetailRow
+                label={t("tp.blocked")}
+                value={selected.isBlocked ? t("tp.blocked") : t("tp.na")}
+              />
               <DetailRow
                 label={t("tp.detail.changed")}
                 value={
                   selected.changedAtSource
-                    ? new Date(selected.changedAtSource).toLocaleString(locale === "ar" ? "ar-EG" : "en-GB")
+                    ? new Date(selected.changedAtSource).toLocaleString(
+                        locale === "ar" ? "ar-EG" : "en-GB",
+                      )
                     : t("tp.na")
                 }
               />
               <DetailRow
                 label={t("tp.detail.stageAge")}
                 value={
-                  selected.currentStageAgeDays === null ? t("tp.na") : `${n(selected.currentStageAgeDays)}`
+                  selected.currentStageAgeDays === null
+                    ? t("tp.na")
+                    : `${n(selected.currentStageAgeDays)}`
                 }
               />
               <p className="text-xs text-muted-foreground">{t("tp.detail.noDescription")}</p>
@@ -539,14 +620,24 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ToggleChip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+function ToggleChip({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
       className={`h-8 rounded-full border px-3 text-xs transition-colors ${
-        active ? "border-azure/40 bg-azure/10 text-azure" : "border-border bg-background text-muted-foreground"
+        active
+          ? "border-azure/40 bg-azure/10 text-azure"
+          : "border-border bg-background text-muted-foreground"
       }`}
     >
       {label}

@@ -105,10 +105,7 @@ export interface ScopeGrantRequest {
 
 /** Outcome of a grant attempt. The function is idempotent. */
 export type ScopeGrantOutcome =
-  | "created"
-  | "already_active"
-  | "replaced_expired"
-  | "replaced_revoked";
+  "created" | "already_active" | "replaced_expired" | "replaced_revoked";
 
 export interface ScopeGrantResult {
   readonly grantId: Uuid;

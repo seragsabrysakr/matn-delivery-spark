@@ -8,7 +8,13 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 
 const run = (fetchImpl: typeof fetch, overrides: Record<string, unknown> = {}) =>
-  validateAzureOrganization({ organization: ORG, pat: PAT, fetchImpl, sleep: async () => {}, ...overrides });
+  validateAzureOrganization({
+    organization: ORG,
+    pat: PAT,
+    fetchImpl,
+    sleep: async () => {},
+    ...overrides,
+  });
 
 describe("normalizeOrganization", () => {
   it("trims and accepts the real organization", () => {

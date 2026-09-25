@@ -15,5 +15,7 @@ export interface AzureWorkItemUpdate {
   readonly rev: number;
   readonly revisedDate: string;
   readonly revisedBy?: { readonly displayName: string; readonly descriptor?: string };
-  readonly fields?: Readonly<Record<string, { readonly oldValue?: unknown; readonly newValue?: unknown }>>;
+  readonly fields?: Readonly<
+    Record<string, { readonly oldValue?: unknown; readonly newValue?: unknown }>
+  >;
 }

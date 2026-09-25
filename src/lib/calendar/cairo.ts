@@ -83,7 +83,8 @@ export function sprintCalendar(
   const totalWorkingDays = countWorkingDays(start, finish, weekdays);
   if (totalWorkingDays <= 0) return null;
 
-  const clampedToday = toUtc(today) < toUtc(start) ? start : toUtc(today) > toUtc(finish) ? finish : today;
+  const clampedToday =
+    toUtc(today) < toUtc(start) ? start : toUtc(today) > toUtc(finish) ? finish : today;
   const elapsed = toUtc(today) < toUtc(start) ? 0 : countWorkingDays(start, clampedToday, weekdays);
   const currentWorkingDay = Math.min(Math.max(elapsed, 0), totalWorkingDays);
 

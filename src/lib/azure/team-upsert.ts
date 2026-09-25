@@ -54,7 +54,10 @@ const normText = (value: string | null | undefined): string | null => {
 };
 
 const normPaths = (values: readonly string[] | null | undefined): string[] =>
-  [...(values ?? [])].map((v) => v.trim()).filter((v) => v.length > 0).sort();
+  [...(values ?? [])]
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0)
+    .sort();
 
 export function mutableTeamPayload(source: TeamSourceFields): TeamMutablePayload {
   return {
@@ -69,7 +72,10 @@ export function mutableTeamPayload(source: TeamSourceFields): TeamMutablePayload
 }
 
 /** Returns null when the stored row already matches the source (unchanged). */
-export function diffTeam(existing: ExistingTeamRow, source: TeamSourceFields): TeamMutablePayload | null {
+export function diffTeam(
+  existing: ExistingTeamRow,
+  source: TeamSourceFields,
+): TeamMutablePayload | null {
   const next = mutableTeamPayload(source);
   const same =
     normText(existing.azure_team_name) === next.azure_team_name &&

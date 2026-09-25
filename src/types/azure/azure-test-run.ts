@@ -20,7 +20,7 @@ export interface AzureTestRun {
 export interface AzureTestResult {
   readonly id: number;
   readonly outcome?:
-    | "Passed" | "Failed" | "Blocked" | "NotExecuted" | "Warning" | "Error" | "Inconclusive" | "None";
+    "Passed" | "Failed" | "Blocked" | "NotExecuted" | "Warning" | "Error" | "Inconclusive" | "None";
   readonly testCaseTitle?: string;
   readonly durationInMs?: number;
   readonly associatedBugs?: readonly { readonly id: number }[];

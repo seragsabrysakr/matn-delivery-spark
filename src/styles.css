@@ -204,8 +204,12 @@
   box-shadow: var(--shadow-card);
 }
 
-html[dir="rtl"] body { font-family: "IBM Plex Sans Arabic", "Segoe UI", system-ui, sans-serif; }
-html[dir="ltr"] body { font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; }
+html[dir="rtl"] body {
+  font-family: "IBM Plex Sans Arabic", "Segoe UI", system-ui, sans-serif;
+}
+html[dir="ltr"] body {
+  font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,

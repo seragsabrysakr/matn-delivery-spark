@@ -31,9 +31,17 @@ export interface CronTriggerSignature {
 }
 
 export type CronRejectionReason =
-  | "missing_signature" | "unknown_key_id" | "invalid_signature" | "clock_skew"
-  | "replayed_nonce" | "duplicate_idempotency_key" | "rate_limited"
-  | "lock_held" | "disabled_connection" | "malformed_body" | "wrong_method";
+  | "missing_signature"
+  | "unknown_key_id"
+  | "invalid_signature"
+  | "clock_skew"
+  | "replayed_nonce"
+  | "duplicate_idempotency_key"
+  | "rate_limited"
+  | "lock_held"
+  | "disabled_connection"
+  | "malformed_body"
+  | "wrong_method";
 
 export interface CronTriggerOutcome {
   readonly accepted: boolean;
