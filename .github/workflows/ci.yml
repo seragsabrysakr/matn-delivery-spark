@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+
+      # bun.lock resolves packages from Lovable's private registry (403 outside
+      # Lovable) and bunfig.toml carries Lovable-specific install settings.
+      # Both stay committed untouched for Lovable's sandbox; CI drops them
+      # inside the job only and installs from the public npm registry.
+      - name: Install dependencies (public registry)
+        run: |
+          rm -f bunfig.toml bun.lock
+          bun install --registry https://registry.npmjs.org
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Unit tests
+        run: bun run test
+
+      - name: Build
+        run: bun run build
