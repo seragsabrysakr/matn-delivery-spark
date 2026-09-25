@@ -34,6 +34,9 @@ jobs:
           rm -f bunfig.toml bun.lock
           bun install --registry https://registry.npmjs.org
 
+      - name: Lint
+        run: bun run lint
+
       - name: Typecheck
         run: bun run typecheck
 
