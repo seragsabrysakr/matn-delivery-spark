@@ -74,7 +74,9 @@ function OverviewPage() {
                   {noSprintDates || (mode === "real" && !iteration.totalDays) ? (
                     <span>{t("real.sprintDates.unavailable")}</span>
                   ) : (
-                    <Iso>{t("overview.sprintDay", { a: iteration.currentDay, b: iteration.totalDays })}</Iso>
+                    <Iso>
+                      {t("overview.sprintDay", { a: iteration.currentDay, b: iteration.totalDays })}
+                    </Iso>
                   )}
                 </span>
               ) : null}
@@ -110,10 +112,14 @@ function OverviewPage() {
           </div>
         </header>
 
-        {syncMessage ? <Notice tone="warning" title={t("state.error.title")} body={syncMessage} /> : null}
+        {syncMessage ? (
+          <Notice tone="warning" title={t("state.error.title")} body={syncMessage} />
+        ) : null}
         {syncReport ? (
           <Notice
-            tone={syncReport.status === "succeeded" && !syncReport.truncated ? "neutral" : "warning"}
+            tone={
+              syncReport.status === "succeeded" && !syncReport.truncated ? "neutral" : "warning"
+            }
             title={t("real.sync.reportTitle")}
             body={`${t("real.sync.report", {
               a: syncReport.discoveredIds,
@@ -127,13 +133,19 @@ function OverviewPage() {
           />
         ) : null}
         {noWorkItems ? (
-          <Notice tone="neutral" title={t("real.unavailable.title")} body={t("real.unavailable.noWorkItems")} />
+          <Notice
+            tone="neutral"
+            title={t("real.unavailable.title")}
+            body={t("real.unavailable.noWorkItems")}
+          />
         ) : null}
         {noSprintDates ? (
-          <Notice tone="warning" title={t("real.unavailable.title")} body={t("real.unavailable.noSprintDates")} />
+          <Notice
+            tone="warning"
+            title={t("real.unavailable.title")}
+            body={t("real.unavailable.noSprintDates")}
+          />
         ) : null}
-
-
 
         {error ? (
           <SectionCard title={t("state.error.title")}>
@@ -145,11 +157,17 @@ function OverviewPage() {
               <Notice
                 tone="warning"
                 title={t("state.stale.title")}
-                body={t("state.stale.body", { a: t("common.minutes", { a: snapshot.lastSyncMinutesAgo }) })}
+                body={t("state.stale.body", {
+                  a: t("common.minutes", { a: snapshot.lastSyncMinutesAgo }),
+                })}
               />
             ) : null}
             {!loading && snapshot && snapshot.freshness === "partial" ? (
-              <Notice tone="neutral" title={t("state.partial.title")} body={t("state.partial.body")} />
+              <Notice
+                tone="neutral"
+                title={t("state.partial.title")}
+                body={t("state.partial.body")}
+              />
             ) : null}
 
             <KpiGrid kpis={snapshot?.kpis ?? []} loading={loading} />
@@ -199,12 +217,13 @@ function OverviewPage() {
                 </SectionCard>
               ) : engineeringUnavailable ? (
                 <SectionCard title={t("eng.title")}>
-                  <p className="text-[13px] text-muted-foreground">{t("real.unavailable.engineering")}</p>
+                  <p className="text-[13px] text-muted-foreground">
+                    {t("real.unavailable.engineering")}
+                  </p>
                 </SectionCard>
               ) : (
                 <EngineeringHealthCard data={snapshot.engineering} />
               )}
-
             </div>
 
             {loading || !snapshot ? (

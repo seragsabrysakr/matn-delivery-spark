@@ -96,7 +96,13 @@ describe("project idempotent upsert", () => {
     const second = makeStore();
     for (const p of projects) second.rows.set(p.azureProjectId, rowFrom(p));
     const counts = second.run(projects);
-    expect(counts).toMatchObject({ discovered: 4, inserted: 0, updated: 0, unchanged: 4, failed: 0 });
+    expect(counts).toMatchObject({
+      discovered: 4,
+      inserted: 0,
+      updated: 0,
+      unchanged: 4,
+      failed: 0,
+    });
   });
 
   it("count invariant always holds", () => {

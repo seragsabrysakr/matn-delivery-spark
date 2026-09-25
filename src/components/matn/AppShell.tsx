@@ -152,7 +152,11 @@ function ScopeFilters({ compact }: { compact?: boolean }) {
   const { options } = useWorkspace();
   return (
     <div className={cn("grid gap-1.5", compact ? "grid-cols-2" : "grid-cols-1")}>
-      <FilterSelect labelKey="shell.organization" filterKey="organizationId" items={options.organizations} />
+      <FilterSelect
+        labelKey="shell.organization"
+        filterKey="organizationId"
+        items={options.organizations}
+      />
       <FilterSelect labelKey="shell.project" filterKey="projectId" items={options.projects} />
       <FilterSelect labelKey="shell.team" filterKey="teamId" items={options.teams} />
       <FilterSelect labelKey="shell.sprint" filterKey="iterationId" items={options.iterations} />
@@ -195,10 +199,18 @@ function CollapsedScope({ onExpand }: { onExpand: () => void }) {
         </TooltipTrigger>
         <TooltipContent side={tipSide} className="max-w-56 text-xs">
           <span className="block font-medium">{t("brand.workspace")}</span>
-          <span className="block">{t("shell.organization")}: {scope.organization}</span>
-          <span className="block">{t("shell.project")}: {scope.project}</span>
-          <span className="block">{t("shell.team")}: {scope.team}</span>
-          <span className="block">{t("shell.sprint")}: {scope.sprint}</span>
+          <span className="block">
+            {t("shell.organization")}: {scope.organization}
+          </span>
+          <span className="block">
+            {t("shell.project")}: {scope.project}
+          </span>
+          <span className="block">
+            {t("shell.team")}: {scope.team}
+          </span>
+          <span className="block">
+            {t("shell.sprint")}: {scope.sprint}
+          </span>
         </TooltipContent>
       </Tooltip>
     </div>
@@ -255,17 +267,20 @@ function TopBar({ onOpenMobileNav }: { onOpenMobileNav: () => void }) {
 
   // In real mode the header reports the work-item data state, never a
   // Foundation-sync freshness value.
-  const label =
-    mode === "real"
-      ? t(`real.state.${dataState}` as TKey)
-      : t(freshnessKey(freshness));
-  const showLastSync = mode === "real" ? dataState === "current" || dataState === "stale" : Boolean(snapshot);
+  const label = mode === "real" ? t(`real.state.${dataState}` as TKey) : t(freshnessKey(freshness));
+  const showLastSync =
+    mode === "real" ? dataState === "current" || dataState === "stale" : Boolean(snapshot);
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
       <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-2.5 sm:px-6">
         <div className="flex items-center gap-2 lg:hidden">
-          <Button variant="ghost" size="icon" aria-label={t("shell.menu")} onClick={onOpenMobileNav}>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t("shell.menu")}
+            onClick={onOpenMobileNav}
+          >
             <Menu className="size-5" aria-hidden />
           </Button>
         </div>
@@ -280,7 +295,6 @@ function TopBar({ onOpenMobileNav }: { onOpenMobileNav: () => void }) {
               : ""}
           </span>
         </div>
-
 
         <div className="flex shrink-0 items-center gap-1">
           <div className="hidden sm:block">
@@ -310,7 +324,11 @@ function TopBar({ onOpenMobileNav }: { onOpenMobileNav: () => void }) {
             aria-label={theme === "dark" ? t("shell.theme.light") : t("shell.theme.dark")}
             onClick={toggleTheme}
           >
-            {theme === "dark" ? <Sun className="size-4" aria-hidden /> : <Moon className="size-4" aria-hidden />}
+            {theme === "dark" ? (
+              <Sun className="size-4" aria-hidden />
+            ) : (
+              <Moon className="size-4" aria-hidden />
+            )}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -397,7 +415,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         </aside>
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side={locale === "ar" ? "right" : "left"} className="w-[280px] bg-sidebar p-0">
+          <SheetContent
+            side={locale === "ar" ? "right" : "left"}
+            className="w-[280px] bg-sidebar p-0"
+          >
             <SheetTitle className="sr-only">{t("shell.menu")}</SheetTitle>
             <div className="flex h-[57px] items-center border-b border-sidebar-border px-4">
               <BrandMark />

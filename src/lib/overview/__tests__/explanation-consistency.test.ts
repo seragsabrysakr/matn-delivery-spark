@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { sprintCalendar } from "@/lib/calendar/cairo";
 import { dictionary, type Locale } from "@/lib/i18n";
-import { buildOverview, findExplanationContradictions, type RealWorkItemFact } from "../overview-rules";
+import {
+  buildOverview,
+  findExplanationContradictions,
+  type RealWorkItemFact,
+} from "../overview-rules";
 
 const fact = (over: Partial<RealWorkItemFact> = {}): RealWorkItemFact => ({
   id: "id-1",

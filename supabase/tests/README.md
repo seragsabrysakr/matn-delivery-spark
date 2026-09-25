@@ -4,16 +4,16 @@ Plain SQL, no pgTAP dependency. Every suite is self-contained: it builds its own
 clearly-fake fixtures (`is_demo = true`), asserts, and then either deletes the
 fixtures or aborts the surrounding transaction so nothing persists.
 
-| File | Covers |
-| --- | --- |
-| `01_tenant_isolation.sql` | cross-tenant inserts, cross-tenant scope grants, tenant re-parenting |
-| `02_project_integrity.sql` | cross-project team iteration / KPI override / process mapping / work item / snapshot, sentinel uuid rejection |
-| `03_roles_and_rls.sql` | project-limited delivery manager, team-limited team lead, aggregate-only executive viewer, tenant-limited admin, self role/scope elevation, expired scope |
-| `04_scope_grants.sql` | grant idempotency, expired close-and-replace, revoked replace, invalid expiry, cross-tenant grant, audit trail |
-| `05_immutability.sql` | revision update/delete, finalized snapshot update, audit update/delete, project re-parenting |
-| `06_schema_invariants.sql` | `tenant_id NOT NULL`, missing `tenant_id` detection, RLS enabled **and forced**, no `anon` grants, no client write privileges, empty pinned `search_path`, privileged functions restricted, composite FKs, KPI catalog seeded, ambiguous helpers removed, no demo tenant |
-| `07_cross_tenant_identity.sql` | **Phase 3.1** — one `auth.uid()` in two tenants: per-tenant identity resolution, role isolation (admin in A, contributor in B), non-member tenant denial, cross-tenant grant refusal |
-| `scripts/concurrency-grant-test.mjs` | **Phase 3.1** — genuinely parallel scope grants (suite 08) |
+| File                                 | Covers                                                                                                                                                                                                                                                                   |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `01_tenant_isolation.sql`            | cross-tenant inserts, cross-tenant scope grants, tenant re-parenting                                                                                                                                                                                                     |
+| `02_project_integrity.sql`           | cross-project team iteration / KPI override / process mapping / work item / snapshot, sentinel uuid rejection                                                                                                                                                            |
+| `03_roles_and_rls.sql`               | project-limited delivery manager, team-limited team lead, aggregate-only executive viewer, tenant-limited admin, self role/scope elevation, expired scope                                                                                                                |
+| `04_scope_grants.sql`                | grant idempotency, expired close-and-replace, revoked replace, invalid expiry, cross-tenant grant, audit trail                                                                                                                                                           |
+| `05_immutability.sql`                | revision update/delete, finalized snapshot update, audit update/delete, project re-parenting                                                                                                                                                                             |
+| `06_schema_invariants.sql`           | `tenant_id NOT NULL`, missing `tenant_id` detection, RLS enabled **and forced**, no `anon` grants, no client write privileges, empty pinned `search_path`, privileged functions restricted, composite FKs, KPI catalog seeded, ambiguous helpers removed, no demo tenant |
+| `07_cross_tenant_identity.sql`       | **Phase 3.1** — one `auth.uid()` in two tenants: per-tenant identity resolution, role isolation (admin in A, contributor in B), non-member tenant denial, cross-tenant grant refusal                                                                                     |
+| `scripts/concurrency-grant-test.mjs` | **Phase 3.1** — genuinely parallel scope grants (suite 08)                                                                                                                                                                                                               |
 
 ## Running
 

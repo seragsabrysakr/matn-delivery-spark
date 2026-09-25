@@ -68,7 +68,12 @@ export function TrajectoryCard({
       >
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--muted-foreground)" strokeOpacity={0.28} vertical={false} />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="var(--muted-foreground)"
+              strokeOpacity={0.28}
+              vertical={false}
+            />
             <XAxis
               dataKey="day"
               tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
@@ -83,7 +88,11 @@ export function TrajectoryCard({
               tickFormatter={(v) => `${v}%`}
             />
             <RTooltip
-              cursor={{ stroke: "var(--muted-foreground)", strokeOpacity: 0.4, strokeDasharray: "3 3" }}
+              cursor={{
+                stroke: "var(--muted-foreground)",
+                strokeOpacity: 0.4,
+                strokeDasharray: "3 3",
+              }}
               contentStyle={{
                 background: "var(--card)",
                 border: "1px solid var(--border)",
@@ -140,7 +149,12 @@ export function TrajectoryCard({
               stroke="var(--foreground)"
               strokeOpacity={0.45}
               strokeWidth={1.5}
-              label={{ value: t("trajectory.today"), position: "top", fontSize: 10, fill: "var(--muted-foreground)" }}
+              label={{
+                value: t("trajectory.today"),
+                position: "top",
+                fontSize: 10,
+                fill: "var(--muted-foreground)",
+              }}
             />
           </ComposedChart>
         </ResponsiveContainer>

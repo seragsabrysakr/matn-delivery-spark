@@ -43,7 +43,8 @@ export interface RecordMeta {
 }
 
 /** Whether a value could be computed, and why not. */
-export type ValueAvailability = "available" | "missing_source" | "not_applicable" | "insufficient_history";
+export type ValueAvailability =
+  "available" | "missing_source" | "not_applicable" | "insufficient_history";
 
 /** A numeric measure that may be legitimately unavailable. */
 export interface Measure {
@@ -76,7 +77,8 @@ export interface FreshnessReport {
 }
 
 /** Provenance of any value shown in the UI. */
-export type DataOrigin = "azure_source" | "normalized" | "history" | "calculated" | "ai_generated" | "mock";
+export type DataOrigin =
+  "azure_source" | "normalized" | "history" | "calculated" | "ai_generated" | "mock";
 
 /** Versioned calculation stamp so historical values stay explainable. */
 export interface CalculationStamp {
@@ -126,9 +128,15 @@ export interface SourceDisappearanceCheck {
 /** Tenant-configurable retention window, in days; null means indefinite. */
 export interface RetentionRule {
   readonly key:
-    | "work_item_revisions" | "daily_project_snapshots" | "daily_iteration_snapshots"
-    | "daily_team_snapshots" | "daily_member_snapshots" | "raw_payload_cache"
-    | "sync_run_details" | "audit_events" | "copilot_answers";
+    | "work_item_revisions"
+    | "daily_project_snapshots"
+    | "daily_iteration_snapshots"
+    | "daily_team_snapshots"
+    | "daily_member_snapshots"
+    | "raw_payload_cache"
+    | "sync_run_details"
+    | "audit_events"
+    | "copilot_answers";
   readonly defaultDays: number | null;
   readonly configuredDays: number | null;
   /** Records under legal hold are never removed, whatever the window says. */

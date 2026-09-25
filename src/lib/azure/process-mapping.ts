@@ -52,7 +52,16 @@ const DEFAULT_TYPES_BY_KIND: Record<ProcessTemplateKind, readonly string[]> = {
   scrum: ["Epic", "Feature", "Product Backlog Item", "Bug", "Task"],
   cmmi: ["Epic", "Feature", "Requirement", "Bug", "Task"],
   basic: ["Epic", "Issue", "Task"],
-  custom: ["Epic", "Feature", "User Story", "Product Backlog Item", "Requirement", "Issue", "Bug", "Task"],
+  custom: [
+    "Epic",
+    "Feature",
+    "User Story",
+    "Product Backlog Item",
+    "Requirement",
+    "Issue",
+    "Bug",
+    "Task",
+  ],
 };
 
 const DEFAULT_STATE_CATEGORY: Record<string, StateCategory> = {
@@ -84,13 +93,15 @@ const DEFAULT_BLOCKED_FIELDS = ["Microsoft.VSTS.Common.Blocked", "Microsoft.VSTS
 
 const asStringRecord = (value: unknown): Record<string, string> =>
   value && typeof value === "object" && !Array.isArray(value)
-    ? Object.fromEntries(
+    ? (Object.fromEntries(
         Object.entries(value as Record<string, unknown>).filter(([, v]) => typeof v === "string"),
-      ) as Record<string, string>
+      ) as Record<string, string>)
     : {};
 
 const asStringList = (value: readonly string[] | null | undefined): string[] =>
-  Array.isArray(value) ? value.filter((v): v is string => typeof v === "string" && v.length > 0) : [];
+  Array.isArray(value)
+    ? value.filter((v): v is string => typeof v === "string" && v.length > 0)
+    : [];
 
 export function resolveProcessMapping(
   row: ProcessMappingRow | null,
@@ -105,7 +116,8 @@ export function resolveProcessMapping(
   }
 
   const configuredTypes = Object.keys(configuredAliases);
-  const baseTypes = configuredTypes.length > 0 ? configuredTypes : [...DEFAULT_TYPES_BY_KIND[templateKind]];
+  const baseTypes =
+    configuredTypes.length > 0 ? configuredTypes : [...DEFAULT_TYPES_BY_KIND[templateKind]];
   const workItemTypes = baseTypes.filter(
     (type) => !(bugHandlingMode === "excluded" && type.toLowerCase() === "bug"),
   );

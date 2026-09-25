@@ -29,13 +29,17 @@ import type {
   SyncStatusResult,
 } from "./contracts";
 
-const organizationName = (): string | null => normalizeOrganization(process.env["AZURE_DEVOPS_ORGANIZATION"]);
+const organizationName = (): string | null =>
+  normalizeOrganization(process.env["AZURE_DEVOPS_ORGANIZATION"]);
 
 async function context(authUserId: string, tenantId: string | null): Promise<TenantContext> {
   return resolveTenantContext(authUserId, tenantId);
 }
 
-export async function readSyncStatus(authUserId: string, tenantId: string | null): Promise<SyncStatusResult> {
+export async function readSyncStatus(
+  authUserId: string,
+  tenantId: string | null,
+): Promise<SyncStatusResult> {
   const ctx = await context(authUserId, tenantId);
   assertCanReadSyncStatus(ctx);
   const org = organizationName();
@@ -76,10 +80,13 @@ export async function readSyncStatus(authUserId: string, tenantId: string | null
   return {
     configured,
     organization: org,
-    connectionStatus: (connection?.status ?? (configured ? "pending" : "unconfigured")) as ConnectionStatus,
+    connectionStatus: (connection?.status ??
+      (configured ? "pending" : "unconfigured")) as ConnectionStatus,
     lastVerifiedAt: connection?.last_verified_at ?? null,
     statusMessage: connection?.status_message ?? null,
-    activeRun: activeLock?.run_id ? { runId: activeLock.run_id, startedAt: activeLock.acquired_at ?? null } : null,
+    activeRun: activeLock?.run_id
+      ? { runId: activeLock.run_id, startedAt: activeLock.acquired_at ?? null }
+      : null,
     lastRun: report && typeof report === "object" && "runId" in report ? report : null,
     freshness,
     canValidate: canRunSync(ctx) && configured,
@@ -97,9 +104,10 @@ export async function validateConnection(
   const org = organizationName();
 
   if (!hasAzureSecrets() || !org) {
-    const code = org === null && process.env["AZURE_DEVOPS_ORGANIZATION"]?.trim()
-      ? "invalid_configuration"
-      : "missing_configuration";
+    const code =
+      org === null && process.env["AZURE_DEVOPS_ORGANIZATION"]?.trim()
+        ? "invalid_configuration"
+        : "missing_configuration";
     await writeAudit({
       tenantId: ctx.tenantId,
       actorUserId: ctx.coreUserId,
@@ -116,7 +124,8 @@ export async function validateConnection(
       checkedAt,
       error: new AzureDevOpsError(code).toFailure(),
       diagnostic: {
-        outcome: code === "invalid_configuration" ? "invalid_configuration" : "missing_configuration",
+        outcome:
+          code === "invalid_configuration" ? "invalid_configuration" : "missing_configuration",
         stage: "configuration",
         elapsedMs: 0,
         httpStatus: null,
@@ -187,7 +196,9 @@ export async function validateConnection(
     organization: org,
     accessibleProjectCount: diagnostic.projectCount,
     checkedAt,
-    error: code ? new AzureDevOpsError(code, { httpStatus: diagnostic.httpStatus }).toFailure() : null,
+    error: code
+      ? new AzureDevOpsError(code, { httpStatus: diagnostic.httpStatus }).toFailure()
+      : null,
     diagnostic,
   };
 }
@@ -219,7 +230,10 @@ export async function discoverProjects(
   return result;
 }
 
-export async function startFoundationSync(authUserId: string, tenantId: string | null): Promise<JobState> {
+export async function startFoundationSync(
+  authUserId: string,
+  tenantId: string | null,
+): Promise<JobState> {
   const ctx = await context(authUserId, tenantId);
   assertCanRunSync(ctx);
   const org = organizationName();

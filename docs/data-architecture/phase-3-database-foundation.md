@@ -10,22 +10,22 @@ Migrations are timestamped and applied in filename order; each is a single
 transaction and is re-runnable where meaningful (`IF NOT EXISTS`,
 `ON CONFLICT DO NOTHING`).
 
-| # | Contents |
-| --- | --- |
-| 01 | Extensions (`pgcrypto`, `citext`) and shared enums |
-| 02 | Immutability triggers, `core_tenants`, `core_users`, retention settings |
-| 03 | Organizations, projects, teams, iterations, team iterations, members, capacity, process mappings |
-| 04 | Roles and authorization scopes |
-| 05 | Azure normalized current state |
-| 06 | Azure immutable history (revisions, transitions, scope changes, raw payloads) |
-| 07 | Engineering tables (repositories, PRs, pipelines, builds, environments, deployments, tests) |
-| 08 | Analytics: KPI catalog, overrides, values, daily snapshots |
-| 09 | Intelligence: risk signals, recommendations, decisions, copilot answers |
-| 10 | Operations: connections, runs, cursors, locks, nonces, snapshot jobs, data quality |
-| 11 | `aud_audit_events` (append-only) |
-| 12 | Helper functions and privileged scope-grant functions |
-| 13 | Grants and RLS policies |
-| 14 | Global KPI catalog seed and development demo seed |
+| #   | Contents                                                                                         |
+| --- | ------------------------------------------------------------------------------------------------ |
+| 01  | Extensions (`pgcrypto`, `citext`) and shared enums                                               |
+| 02  | Immutability triggers, `core_tenants`, `core_users`, retention settings                          |
+| 03  | Organizations, projects, teams, iterations, team iterations, members, capacity, process mappings |
+| 04  | Roles and authorization scopes                                                                   |
+| 05  | Azure normalized current state                                                                   |
+| 06  | Azure immutable history (revisions, transitions, scope changes, raw payloads)                    |
+| 07  | Engineering tables (repositories, PRs, pipelines, builds, environments, deployments, tests)      |
+| 08  | Analytics: KPI catalog, overrides, values, daily snapshots                                       |
+| 09  | Intelligence: risk signals, recommendations, decisions, copilot answers                          |
+| 10  | Operations: connections, runs, cursors, locks, nonces, snapshot jobs, data quality               |
+| 11  | `aud_audit_events` (append-only)                                                                 |
+| 12  | Helper functions and privileged scope-grant functions                                            |
+| 13  | Grants and RLS policies                                                                          |
+| 14  | Global KPI catalog seed and development demo seed                                                |
 
 ### Extensions and justification
 
@@ -55,13 +55,13 @@ by a rollback; correct it with a new append-only record.
 
 ## Immutability mechanism per table
 
-| Table | Mechanism |
-| --- | --- |
-| `az_work_item_revisions`, `az_work_item_transitions`, `az_work_item_scope_changes`, `az_raw_payloads` | `tg_append_only` BEFORE UPDATE/DELETE trigger; no UPDATE/DELETE policy for `authenticated` |
-| `an_daily_*_snapshots` | `tg_block_update_when_finalized` — rows are freely rewritten until `finalized_at` is set, immutable afterwards |
-| `aud_audit_events`, `intel_recommendation_decisions` | append-only trigger, INSERT-only grants |
-| every tenant-owned table | `tg_prevent_column_change` guards `tenant_id`; project-owned children also guard `project_id` |
-| Azure natural identity (`azure_*_id`) | guarded by the same column-change trigger after first insert |
+| Table                                                                                                 | Mechanism                                                                                                      |
+| ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `az_work_item_revisions`, `az_work_item_transitions`, `az_work_item_scope_changes`, `az_raw_payloads` | `tg_append_only` BEFORE UPDATE/DELETE trigger; no UPDATE/DELETE policy for `authenticated`                     |
+| `an_daily_*_snapshots`                                                                                | `tg_block_update_when_finalized` — rows are freely rewritten until `finalized_at` is set, immutable afterwards |
+| `aud_audit_events`, `intel_recommendation_decisions`                                                  | append-only trigger, INSERT-only grants                                                                        |
+| every tenant-owned table                                                                              | `tg_prevent_column_change` guards `tenant_id`; project-owned children also guard `project_id`                  |
+| Azure natural identity (`azure_*_id`)                                                                 | guarded by the same column-change trigger after first insert                                                   |
 
 A CHECK constraint cannot compare OLD and NEW, so none is used for these rules.
 
@@ -133,12 +133,12 @@ already-applied migration file was edited.
 
 ## Correction migrations
 
-| # | Contents |
-| --- | --- |
-| 15 | Tenant-scoped identity: `UNIQUE (tenant_id, auth_user_id)` on `core_users`; `current_core_user_id(tenant_id)`, `has_role(tenant_id, role)`, `is_tenant_platform_admin(tenant_id)`, `is_own_member_record(tenant_id, member_id)`; `current_tenant_id()` and every ambiguous helper dropped; all RLS policies recreated passing the row's `tenant_id`; RLS forced and client writes revoked on every prefixed table |
-| 16 | Explicit demo lifecycle: hardened `remove_demo_tenant()` (matches deterministic id + `ci`/demo slug + `is_demo = true`), executed once to withdraw the Migration 14 auto-seed |
-| 17 | `dblink` for the test harness, revoked from `PUBLIC` / `anon` / `authenticated`, granted to `service_role` |
-| 18 | `purge_ci_tenant(uuid)` — service-role-only cleanup for `is_demo` tenants with the reserved `ci-` slug prefix |
+| #   | Contents                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 15  | Tenant-scoped identity: `UNIQUE (tenant_id, auth_user_id)` on `core_users`; `current_core_user_id(tenant_id)`, `has_role(tenant_id, role)`, `is_tenant_platform_admin(tenant_id)`, `is_own_member_record(tenant_id, member_id)`; `current_tenant_id()` and every ambiguous helper dropped; all RLS policies recreated passing the row's `tenant_id`; RLS forced and client writes revoked on every prefixed table |
+| 16  | Explicit demo lifecycle: hardened `remove_demo_tenant()` (matches deterministic id + `ci`/demo slug + `is_demo = true`), executed once to withdraw the Migration 14 auto-seed                                                                                                                                                                                                                                     |
+| 17  | `dblink` for the test harness, revoked from `PUBLIC` / `anon` / `authenticated`, granted to `service_role`                                                                                                                                                                                                                                                                                                        |
+| 18  | `purge_ci_tenant(uuid)` — service-role-only cleanup for `is_demo` tenants with the reserved `ci-` slug prefix                                                                                                                                                                                                                                                                                                     |
 
 ## Issue 1 — tenant-scoped identity
 
@@ -161,25 +161,25 @@ zero demo tenants (asserted by invariant 6.12).
 
 ## Member-detail authorization
 
-| Caller | Member rows and utilization |
-| --- | --- |
-| platform / tenant admin, delivery manager, team lead, QA release owner | full detail within their team scope |
-| contributor | their own member record and utilization only (`is_own_member_record`) |
-| executive viewer | aggregates only — no member rows |
-| non-member of the tenant | nothing |
+| Caller                                                                 | Member rows and utilization                                           |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| platform / tenant admin, delivery manager, team lead, QA release owner | full detail within their team scope                                   |
+| contributor                                                            | their own member record and utilization only (`is_own_member_record`) |
+| executive viewer                                                       | aggregates only — no member rows                                      |
+| non-member of the tenant                                               | nothing                                                               |
 
 ## Test results
 
-| Suite | Result |
-| --- | --- |
-| 01 tenant isolation | PASS |
-| 02 project integrity | PASS |
-| 03 roles and RLS | PASS |
-| 04 scope grants | PASS |
-| 05 immutability | PASS |
-| 06 schema invariants (12 checks, strict `search_path`, missing-`tenant_id` detection, forced RLS, no client writes) | PASS |
-| 07 cross-tenant identity regression (dual-tenant membership, role isolation, non-member denial) | PASS |
-| 08 scope-grant concurrency (two parallel transactions, `npm run db:test:concurrency`) | PASS |
+| Suite                                                                                                               | Result |
+| ------------------------------------------------------------------------------------------------------------------- | ------ |
+| 01 tenant isolation                                                                                                 | PASS   |
+| 02 project integrity                                                                                                | PASS   |
+| 03 roles and RLS                                                                                                    | PASS   |
+| 04 scope grants                                                                                                     | PASS   |
+| 05 immutability                                                                                                     | PASS   |
+| 06 schema invariants (12 checks, strict `search_path`, missing-`tenant_id` detection, forced RLS, no client writes) | PASS   |
+| 07 cross-tenant identity regression (dual-tenant membership, role isolation, non-member denial)                     | PASS   |
+| 08 scope-grant concurrency (two parallel transactions, `npm run db:test:concurrency`)                               | PASS   |
 
 TypeScript typecheck: 0 errors. Production build: succeeds. Secret scan: no
 credentials in the repository; `SUPABASE_SERVICE_ROLE_KEY` is read from the

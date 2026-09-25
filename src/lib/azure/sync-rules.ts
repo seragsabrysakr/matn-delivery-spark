@@ -16,7 +16,9 @@ export const templateFromName = (name: string | null | undefined): ProcessTempla
 
 export const iterationPhase = (iteration: AzureIteration, now: Date): IterationPhase => {
   const start = iteration.attributes?.startDate ? new Date(iteration.attributes.startDate) : null;
-  const finish = iteration.attributes?.finishDate ? new Date(iteration.attributes.finishDate) : null;
+  const finish = iteration.attributes?.finishDate
+    ? new Date(iteration.attributes.finishDate)
+    : null;
   if (!start || !finish) return "undated";
   if (now < start) return "future";
   if (now > finish) return "completed";

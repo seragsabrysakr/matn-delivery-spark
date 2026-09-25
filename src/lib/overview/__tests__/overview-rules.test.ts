@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { countWorkingDays, sprintCalendar } from "@/lib/calendar/cairo";
-import { buildIterationWiql, chunkIds, escapeWiqlLiteral, isAllowedReadPostKind } from "@/lib/azure/wiql";
+import {
+  buildIterationWiql,
+  chunkIds,
+  escapeWiqlLiteral,
+  isAllowedReadPostKind,
+} from "@/lib/azure/wiql";
 import { diffWorkItem } from "@/lib/azure/workitem-map";
 import {
   buildOverview,
@@ -86,7 +91,9 @@ describe("wiql builder", () => {
 describe("work item diff", () => {
   it("treats an identical re-sync as unchanged despite null/undefined mismatch", () => {
     const payload = { title: "A", estimate: 5, reason: null } as never;
-    expect(diffWorkItem({ title: "A", estimate: "5", reason: undefined }, payload).kind).toBe("unchanged");
+    expect(diffWorkItem({ title: "A", estimate: "5", reason: undefined }, payload).kind).toBe(
+      "unchanged",
+    );
   });
 
   it("reports only the changed columns", () => {
@@ -121,7 +128,12 @@ describe("overview rules", () => {
       [
         fact({ id: "1", isBlocked: true, blockedSince: "2026-08-20T00:00:00.000Z" }),
         fact({ id: "2", isBlocked: true, blockedSince: "2026-08-24T18:00:00.000Z" }),
-        fact({ id: "3", isBlocked: true, blockedSince: "2026-08-01T00:00:00.000Z", stateCategory: "completed" }),
+        fact({
+          id: "3",
+          isBlocked: true,
+          blockedSince: "2026-08-01T00:00:00.000Z",
+          stateCategory: "completed",
+        }),
       ],
       now,
     );

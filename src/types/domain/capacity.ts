@@ -1,4 +1,12 @@
-import type { IsoDate, IsoTimestamp, Measure, RecordMeta, SourceTracked, TenantScoped, Uuid } from "./common";
+import type {
+  IsoDate,
+  IsoTimestamp,
+  Measure,
+  RecordMeta,
+  SourceTracked,
+  TenantScoped,
+  Uuid,
+} from "./common";
 
 /** Per-activity capacity as configured in Azure team capacity. */
 export interface ActivityCapacity {

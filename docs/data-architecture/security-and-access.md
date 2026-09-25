@@ -14,7 +14,7 @@ Nothing in this phase requests, stores or references a real credential. No secre
 ## Production
 
 - Identity: **Microsoft Entra ID OAuth 2.0** against Azure DevOps (`499b84ac-1321-427f-aa17-267ca6975798/.default`), authorization code with PKCE for per-user access, or a service principal / managed identity for tenant-wide background sync.
-- Deployment models: *per-user delegated* (each viewer sees only what they can see in Azure DevOps) or *service principal* (one read-only integration identity, MATN enforces visibility). The model is a per-tenant setting on `SyncConnection.authMode`.
+- Deployment models: _per-user delegated_ (each viewer sees only what they can see in Azure DevOps) or _service principal_ (one read-only integration identity, MATN enforces visibility). The model is a per-tenant setting on `SyncConnection.authMode`.
 - Tokens: short-lived access tokens held in memory for the request; refresh tokens encrypted at rest in the secret store, bound to tenant and connection, rotated on use, revoked on disconnect.
 - Tenant isolation: every token is bound to one `(tenantId, organizationId)`; the sync worker refuses to write rows whose tenant differs from the run's tenant.
 - Authorization: role-based, evaluated server-side; the client never asserts its own role.
@@ -23,16 +23,16 @@ Nothing in this phase requests, stores or references a real credential. No secre
 
 ## Application roles and permissions
 
-| Role | Scope | Read dashboards | Drill into work items | Manage connections | Configure thresholds/process mapping | Decide recommendations | Manage users/roles | View audit |
-|---|---|---|---|---|---|---|---|---|
-| Platform Admin | all tenants | yes | yes | yes | yes | no | yes | yes |
-| Tenant Admin | one tenant | yes | yes | yes | yes | yes | yes | yes |
-| Executive Viewer | tenant | yes (aggregate) | limited | no | no | no | no | no |
-| Delivery Manager | projects | yes | yes | no | yes (thresholds) | yes | no | no |
-| Team Lead | own teams | yes (own teams) | yes | no | no | yes (own teams) | no | no |
-| Contributor | own teams | yes (own teams) | yes | no | no | no | no | no |
-| QA & Release Owner | projects | yes | yes | no | yes (release gates) | yes (quality) | no | no |
-| Read-only Viewer | assigned scope | yes | read-only | no | no | no | no | no |
+| Role               | Scope          | Read dashboards | Drill into work items | Manage connections | Configure thresholds/process mapping | Decide recommendations | Manage users/roles | View audit |
+| ------------------ | -------------- | --------------- | --------------------- | ------------------ | ------------------------------------ | ---------------------- | ------------------ | ---------- |
+| Platform Admin     | all tenants    | yes             | yes                   | yes                | yes                                  | no                     | yes                | yes        |
+| Tenant Admin       | one tenant     | yes             | yes                   | yes                | yes                                  | yes                    | yes                | yes        |
+| Executive Viewer   | tenant         | yes (aggregate) | limited               | no                 | no                                   | no                     | no                 | no         |
+| Delivery Manager   | projects       | yes             | yes                   | no                 | yes (thresholds)                     | yes                    | no                 | no         |
+| Team Lead          | own teams      | yes (own teams) | yes                   | no                 | no                                   | yes (own teams)        | no                 | no         |
+| Contributor        | own teams      | yes (own teams) | yes                   | no                 | no                                   | no                     | no                 | no         |
+| QA & Release Owner | projects       | yes             | yes                   | no                 | yes (release gates)                  | yes (quality)          | no                 | no         |
+| Read-only Viewer   | assigned scope | yes             | read-only             | no                 | no                                   | no                     | no                 | no         |
 
 Notes: Executive Viewer sees aggregates and named risks but not individual member utilization detail; per-person metrics are visible to Delivery Manager, Team Lead (own team) and the member themself. No role exposes secrets or the service role key.
 
@@ -40,18 +40,18 @@ Notes: Executive Viewer sees aggregates and named risks but not individual membe
 
 Roles alone are not sufficient: project- and team-limited roles resolve through the explicit scope tables `core_user_project_scopes` and `core_user_team_scopes`.
 
-| Role | Resolution |
-|---|---|
-| Platform Admin | platform-wide; not bound to one tenant; audited on every access |
-| Tenant Admin | full access inside one `tenant_id`; no scope rows needed |
-| Executive Viewer | tenant-wide **aggregates only** — per-member rows are filtered out server-side |
-| Delivery Manager | union of active rows in `core_user_project_scopes` |
-| Team Lead | union of active rows in `core_user_team_scopes` |
-| Contributor | union of active rows in `core_user_team_scopes` |
-| QA & Release Owner | union of active rows in `core_user_project_scopes` |
-| Read-only Viewer | strictly the explicitly assigned project **and** team scope rows; no implicit inheritance |
+| Role               | Resolution                                                                                |
+| ------------------ | ----------------------------------------------------------------------------------------- |
+| Platform Admin     | platform-wide; not bound to one tenant; audited on every access                           |
+| Tenant Admin       | full access inside one `tenant_id`; no scope rows needed                                  |
+| Executive Viewer   | tenant-wide **aggregates only** — per-member rows are filtered out server-side            |
+| Delivery Manager   | union of active rows in `core_user_project_scopes`                                        |
+| Team Lead          | union of active rows in `core_user_team_scopes`                                           |
+| Contributor        | union of active rows in `core_user_team_scopes`                                           |
+| QA & Release Owner | union of active rows in `core_user_project_scopes`                                        |
+| Read-only Viewer   | strictly the explicitly assigned project **and** team scope rows; no implicit inheritance |
 
-A scope row is *active* when `revoked_at IS NULL AND (expires_at IS NULL OR expires_at > now())`. This predicate is mandatory in **every** authorization query; `revoked_at IS NULL` alone is never sufficient, because an expired row keeps `revoked_at NULL` until it is closed.
+A scope row is _active_ when `revoked_at IS NULL AND (expires_at IS NULL OR expires_at > now())`. This predicate is mandatory in **every** authorization query; `revoked_at IS NULL` alone is never sufficient, because an expired row keeps `revoked_at NULL` until it is closed.
 
 Lifecycle (implemented by the proposed `grant_project_scope` / `grant_team_scope` security-definer functions, see database-blueprint.md):
 

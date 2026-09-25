@@ -39,5 +39,7 @@ export interface DeliveryContract extends DashboardContractBase {
   readonly funnel: Section<readonly FunnelStageContract[]>;
   readonly scopeChanges: Section<readonly ScopeChangeEntry[]>;
   readonly flow: Section<FlowMetricsContract>;
-  readonly velocityHistory: Section<readonly { readonly iteration: Localized; readonly completed: number }[]>;
+  readonly velocityHistory: Section<
+    readonly { readonly iteration: Localized; readonly completed: number }[]
+  >;
 }

@@ -8,12 +8,14 @@ export const Route = createFileRoute("/intelligence")({
       { title: "Delivery Intelligence — MATN" },
       {
         name: "description",
-        content: "Root-cause explanations, what-if forecasting, and the conversational delivery copilot.",
+        content:
+          "Root-cause explanations, what-if forecasting, and the conversational delivery copilot.",
       },
       { property: "og:title", content: "Delivery Intelligence — MATN" },
       {
         property: "og:description",
-        content: "Root-cause explanations, what-if forecasting, and the conversational delivery copilot.",
+        content:
+          "Root-cause explanations, what-if forecasting, and the conversational delivery copilot.",
       },
     ],
   }),

@@ -18,7 +18,8 @@ export interface AzurePipelineDefinition {
 export interface AzureBuild {
   readonly id: number;
   readonly buildNumber: string;
-  readonly status: "none" | "inProgress" | "completed" | "cancelling" | "postponed" | "notStarted" | "all";
+  readonly status:
+    "none" | "inProgress" | "completed" | "cancelling" | "postponed" | "notStarted" | "all";
   readonly result?: "none" | "succeeded" | "partiallySucceeded" | "failed" | "canceled";
   readonly queueTime: string;
   readonly startTime?: string;
@@ -38,7 +39,8 @@ export interface AzureBuildTimelineRecord {
   readonly type: "Stage" | "Phase" | "Job" | "Task" | "Checkpoint";
   readonly name: string;
   readonly state: "pending" | "inProgress" | "completed";
-  readonly result?: "succeeded" | "succeededWithIssues" | "failed" | "canceled" | "skipped" | "abandoned";
+  readonly result?:
+    "succeeded" | "succeededWithIssues" | "failed" | "canceled" | "skipped" | "abandoned";
   readonly startTime?: string;
   readonly finishTime?: string;
 }

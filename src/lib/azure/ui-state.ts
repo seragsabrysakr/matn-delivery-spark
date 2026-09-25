@@ -37,9 +37,10 @@ export function deriveAzureUiState(input: AzureUiInput): AzureUiState {
   const connectionStatus: ConnectionStatus = input.validation
     ? input.validation.status
     : input.statusConnection;
-  const connectionError = input.validation && !input.validation.connected
-    ? (input.validation.error?.code ?? "unknown")
-    : null;
+  const connectionError =
+    input.validation && !input.validation.connected
+      ? (input.validation.error?.code ?? "unknown")
+      : null;
 
   const discovery = input.discovery;
   const discoveryError: AzureErrorCode | null = input.discoveryFailed
@@ -52,7 +53,9 @@ export function deriveAzureUiState(input: AzureUiInput): AzureUiState {
     connectionStatus,
     connectionError,
     discoveryError,
-    showEmptyProjects: Boolean(discovery && discovery.status === "complete" && discovery.projectCount === 0),
+    showEmptyProjects: Boolean(
+      discovery && discovery.status === "complete" && discovery.projectCount === 0,
+    ),
     showPartialDiscovery: Boolean(discovery && discovery.status === "partial"),
     syncError: input.syncFailed ? "unknown" : (input.sync?.error?.code ?? null),
   };

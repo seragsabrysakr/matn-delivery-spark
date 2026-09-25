@@ -138,8 +138,22 @@ const baseSnapshot: DeliverySnapshot = {
         { ar: "سعة الاختبار أقل بمقدار يوم ونصف.", en: "QA capacity is short by 1.5 days." },
       ],
       relatedItems: items(
-        wi("12841", "تكامل بوابة الهوية", "Identity gateway integration", "User Story", "قيد التطوير", "Active"),
-        wi("12902", "فشل التحقق من الجلسة", "Session validation failure", "Bug", "متوقف", "Blocked"),
+        wi(
+          "12841",
+          "تكامل بوابة الهوية",
+          "Identity gateway integration",
+          "User Story",
+          "قيد التطوير",
+          "Active",
+        ),
+        wi(
+          "12902",
+          "فشل التحقق من الجلسة",
+          "Session validation failure",
+          "Bug",
+          "متوقف",
+          "Blocked",
+        ),
       ),
       formula: {
         ar: "نموذج مرجّح يجمع السرعة الحالية، وثبات النطاق، وعمر المعوّقات، وسعة الاختبار.",
@@ -167,7 +181,14 @@ const baseSnapshot: DeliverySnapshot = {
         { ar: "عنصران كبيران ما زالا في المراجعة.", en: "Two large items are still in review." },
       ],
       relatedItems: items(
-        wi("12777", "لوحة تقارير المدفوعات", "Payments reporting board", "User Story", "قيد المراجعة", "In review"),
+        wi(
+          "12777",
+          "لوحة تقارير المدفوعات",
+          "Payments reporting board",
+          "User Story",
+          "قيد المراجعة",
+          "In review",
+        ),
       ),
       formula: {
         ar: "النقاط المكتملة ÷ إجمالي نقاط النطاق الحالي.",
@@ -191,7 +212,10 @@ const baseSnapshot: DeliverySnapshot = {
         { label: "D7", value: 72 },
       ],
       drivers: [
-        { ar: "خط مرجعي خطي معدّل حسب أيام العطل.", en: "Linear baseline adjusted for non-working days." },
+        {
+          ar: "خط مرجعي خطي معدّل حسب أيام العطل.",
+          en: "Linear baseline adjusted for non-working days.",
+        },
       ],
       relatedItems: [],
       formula: {
@@ -216,11 +240,21 @@ const baseSnapshot: DeliverySnapshot = {
         { label: "S24", value: 14 },
       ],
       drivers: [
-        { ar: "طلب عاجل من الالتزام التنظيمي أضاف ٨ نقاط.", en: "An urgent compliance request added 8 points." },
+        {
+          ar: "طلب عاجل من الالتزام التنظيمي أضاف ٨ نقاط.",
+          en: "An urgent compliance request added 8 points.",
+        },
         { ar: "لم تُزَل أي عناصر مقابل الإضافات.", en: "No items were traded out in return." },
       ],
       relatedItems: items(
-        wi("12955", "سجل تدقيق الالتزام", "Compliance audit log", "User Story", "قيد التطوير", "Active"),
+        wi(
+          "12955",
+          "سجل تدقيق الالتزام",
+          "Compliance audit log",
+          "User Story",
+          "قيد التطوير",
+          "Active",
+        ),
         wi("12961", "تصدير كشف الحساب", "Statement export", "Task", "جديد", "New"),
       ),
       formula: {
@@ -249,8 +283,22 @@ const baseSnapshot: DeliverySnapshot = {
         { ar: "متوسط عمر المعوّق ٣٫٦ يوم.", en: "Average blocker age is 3.6 days." },
       ],
       relatedItems: items(
-        wi("12902", "فشل التحقق من الجلسة", "Session validation failure", "Bug", "متوقف", "Blocked"),
-        wi("12888", "انتظار بيئة الاختبار", "Waiting on test environment", "Task", "متوقف", "Blocked"),
+        wi(
+          "12902",
+          "فشل التحقق من الجلسة",
+          "Session validation failure",
+          "Bug",
+          "متوقف",
+          "Blocked",
+        ),
+        wi(
+          "12888",
+          "انتظار بيئة الاختبار",
+          "Waiting on test environment",
+          "Task",
+          "متوقف",
+          "Blocked",
+        ),
       ),
       formula: {
         ar: "عدد العناصر ذات وسم متوقف وشدة حرجة أو عالية.",
@@ -278,7 +326,14 @@ const baseSnapshot: DeliverySnapshot = {
         { ar: "ملاحظات الإصدار غير مكتملة.", en: "Release notes are incomplete." },
       ],
       relatedItems: items(
-        wi("12930", "حزمة اختبار الانحدار", "Regression test suite", "Test Case", "فاشل", "Failing"),
+        wi(
+          "12930",
+          "حزمة اختبار الانحدار",
+          "Regression test suite",
+          "Test Case",
+          "فاشل",
+          "Failing",
+        ),
       ),
       formula: {
         ar: "متوسط مرجّح للاختبارات الناجحة، ونجاح النشر، وقبول الأعمال، والتوثيق.",
@@ -324,8 +379,22 @@ const baseSnapshot: DeliverySnapshot = {
       owner: "Layla Haddad",
       ageDays: 5,
       items: items(
-        wi("12902", "فشل التحقق من الجلسة", "Session validation failure", "Bug", "متوقف", "Blocked"),
-        wi("12841", "تكامل بوابة الهوية", "Identity gateway integration", "User Story", "قيد التطوير", "Active"),
+        wi(
+          "12902",
+          "فشل التحقق من الجلسة",
+          "Session validation failure",
+          "Bug",
+          "متوقف",
+          "Blocked",
+        ),
+        wi(
+          "12841",
+          "تكامل بوابة الهوية",
+          "Identity gateway integration",
+          "User Story",
+          "قيد التطوير",
+          "Active",
+        ),
       ),
       adoUrl: "#",
     },
@@ -344,7 +413,14 @@ const baseSnapshot: DeliverySnapshot = {
       owner: "Omar Nasser",
       ageDays: 4,
       items: items(
-        wi("12955", "سجل تدقيق الالتزام", "Compliance audit log", "User Story", "قيد التطوير", "Active"),
+        wi(
+          "12955",
+          "سجل تدقيق الالتزام",
+          "Compliance audit log",
+          "User Story",
+          "قيد التطوير",
+          "Active",
+        ),
       ),
       adoUrl: "#",
     },
@@ -363,14 +439,24 @@ const baseSnapshot: DeliverySnapshot = {
       owner: "Sara Kamel",
       ageDays: 3,
       items: items(
-        wi("12812", "إعادة هيكلة طبقة التخزين", "Storage layer refactor", "Task", "قيد المراجعة", "In review"),
+        wi(
+          "12812",
+          "إعادة هيكلة طبقة التخزين",
+          "Storage layer refactor",
+          "Task",
+          "قيد المراجعة",
+          "In review",
+        ),
       ),
       adoUrl: "#",
     },
     {
       id: "risk-4",
       severity: "high",
-      title: { ar: "سعة الاختبار غير كافية لنهاية السبرنت", en: "QA capacity falls short of the sprint close" },
+      title: {
+        ar: "سعة الاختبار غير كافية لنهاية السبرنت",
+        en: "QA capacity falls short of the sprint close",
+      },
       explanation: {
         ar: "حجم العمل المتبقي للاختبار يتجاوز السعة المتاحة بمقدار يوم ونصف.",
         en: "Remaining test work exceeds available QA capacity by 1.5 days.",
@@ -382,14 +468,24 @@ const baseSnapshot: DeliverySnapshot = {
       owner: "Hadi Mansour",
       ageDays: 6,
       items: items(
-        wi("12930", "حزمة اختبار الانحدار", "Regression test suite", "Test Case", "فاشل", "Failing"),
+        wi(
+          "12930",
+          "حزمة اختبار الانحدار",
+          "Regression test suite",
+          "Test Case",
+          "فاشل",
+          "Failing",
+        ),
       ),
       adoUrl: "#",
     },
     {
       id: "risk-5",
       severity: "watch",
-      title: { ar: "اعتماد خارجي على فريق البنية التحتية", en: "External dependency on the platform team" },
+      title: {
+        ar: "اعتماد خارجي على فريق البنية التحتية",
+        en: "External dependency on the platform team",
+      },
       explanation: {
         ar: "بيئة الاختبار المشتركة غير متاحة، والطلب معلّق منذ ثلاثة أيام.",
         en: "The shared test environment is unavailable and the request has been pending three days.",
@@ -401,7 +497,14 @@ const baseSnapshot: DeliverySnapshot = {
       owner: "Nour Idris",
       ageDays: 3,
       items: items(
-        wi("12888", "انتظار بيئة الاختبار", "Waiting on test environment", "Task", "متوقف", "Blocked"),
+        wi(
+          "12888",
+          "انتظار بيئة الاختبار",
+          "Waiting on test environment",
+          "Task",
+          "متوقف",
+          "Blocked",
+        ),
       ),
       adoUrl: "#",
     },
@@ -492,52 +595,89 @@ const baseSnapshot: DeliverySnapshot = {
         ar: "خصّص مطوّرَين لإغلاق خلل التحقق من الجلسة",
         en: "Pair two developers to close the session validation defect",
       },
-      impact: { ar: "يرفع ثقة السبرنت نحو ٩ نقاط", en: "Raises sprint confidence by about 9 points" },
+      impact: {
+        ar: "يرفع ثقة السبرنت نحو ٩ نقاط",
+        en: "Raises sprint confidence by about 9 points",
+      },
       reason: {
         ar: "الخلل يحجب ثلاث قصص ويؤخر بدء اختبار الانحدار.",
         en: "The defect blocks three stories and delays the regression cycle.",
       },
       items: items(
-        wi("12902", "فشل التحقق من الجلسة", "Session validation failure", "Bug", "متوقف", "Blocked"),
+        wi(
+          "12902",
+          "فشل التحقق من الجلسة",
+          "Session validation failure",
+          "Bug",
+          "متوقف",
+          "Blocked",
+        ),
       ),
     },
     {
       id: "act-2",
       priority: 2,
-      title: { ar: "أجّل عنصرين منخفضي الأولوية إلى السبرنت القادم", en: "Defer two low-priority items to next sprint" },
+      title: {
+        ar: "أجّل عنصرين منخفضي الأولوية إلى السبرنت القادم",
+        en: "Defer two low-priority items to next sprint",
+      },
       impact: { ar: "يخفّض العجز في النطاق بمقدار ٦ نقاط", en: "Cuts the scope gap by 6 points" },
       reason: {
         ar: "النطاق نما ١٤٪ بعد البدء دون مقايضة.",
         en: "Scope grew 14% mid-sprint with no trade-out.",
       },
-      items: items(
-        wi("12961", "تصدير كشف الحساب", "Statement export", "Task", "جديد", "New"),
-      ),
+      items: items(wi("12961", "تصدير كشف الحساب", "Statement export", "Task", "جديد", "New")),
     },
     {
       id: "act-3",
       priority: 3,
-      title: { ar: "افتح نافذة مراجعة يومية لطلبات الدمج", en: "Open a daily pull request review window" },
-      impact: { ar: "يقلّص وسيط المراجعة إلى نحو ٨ ساعات", en: "Brings median review time down to about 8 hours" },
+      title: {
+        ar: "افتح نافذة مراجعة يومية لطلبات الدمج",
+        en: "Open a daily pull request review window",
+      },
+      impact: {
+        ar: "يقلّص وسيط المراجعة إلى نحو ٨ ساعات",
+        en: "Brings median review time down to about 8 hours",
+      },
       reason: {
         ar: "أربع طلبات دمج تجاوزت ٤٨ ساعة وتحجب عملاً لاحقاً.",
         en: "Four pull requests exceeded 48 hours and are blocking downstream work.",
       },
       items: items(
-        wi("12812", "إعادة هيكلة طبقة التخزين", "Storage layer refactor", "Task", "قيد المراجعة", "In review"),
+        wi(
+          "12812",
+          "إعادة هيكلة طبقة التخزين",
+          "Storage layer refactor",
+          "Task",
+          "قيد المراجعة",
+          "In review",
+        ),
       ),
     },
     {
       id: "act-4",
       priority: 4,
-      title: { ar: "ابدأ اختبار العناصر المكتملة يومياً", en: "Start testing completed items daily" },
-      impact: { ar: "يرفع جاهزية الإصدار نحو ٧ نقاط", en: "Lifts release readiness by about 7 points" },
+      title: {
+        ar: "ابدأ اختبار العناصر المكتملة يومياً",
+        en: "Start testing completed items daily",
+      },
+      impact: {
+        ar: "يرفع جاهزية الإصدار نحو ٧ نقاط",
+        en: "Lifts release readiness by about 7 points",
+      },
       reason: {
         ar: "تجميع الاختبار في نهاية السبرنت يتجاوز سعة الجودة.",
         en: "Batching tests at sprint end exceeds available QA capacity.",
       },
       items: items(
-        wi("12930", "حزمة اختبار الانحدار", "Regression test suite", "Test Case", "فاشل", "Failing"),
+        wi(
+          "12930",
+          "حزمة اختبار الانحدار",
+          "Regression test suite",
+          "Test Case",
+          "فاشل",
+          "Failing",
+        ),
       ),
     },
   ],

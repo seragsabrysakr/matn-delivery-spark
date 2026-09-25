@@ -25,12 +25,14 @@ export const Route = createFileRoute("/_authenticated/settings/azure")({
       { title: "Azure DevOps Connection — MATN Delivery Intelligence" },
       {
         name: "description",
-        content: "Validate the read-only Azure DevOps connection and run the foundation synchronization.",
+        content:
+          "Validate the read-only Azure DevOps connection and run the foundation synchronization.",
       },
       { property: "og:title", content: "Azure DevOps Connection — MATN Delivery Intelligence" },
       {
         property: "og:description",
-        content: "Validate the read-only Azure DevOps connection and run the foundation synchronization.",
+        content:
+          "Validate the read-only Azure DevOps connection and run the foundation synchronization.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -65,14 +67,30 @@ function ReportTable({ report }: { report: SyncRunReport }) {
         <caption className="sr-only">{t("azure.lastRun")}</caption>
         <thead>
           <tr className="text-start text-xs uppercase tracking-wide text-muted-foreground">
-            <th scope="col" className="py-2 text-start">{t("azure.domain")}</th>
-            <th scope="col" className="py-2 text-start">{t("azure.discovered")}</th>
-            <th scope="col" className="py-2 text-start">{t("azure.inserted")}</th>
-            <th scope="col" className="py-2 text-start">{t("azure.updated")}</th>
-            <th scope="col" className="py-2 text-start">{t("azure.unchanged")}</th>
-            <th scope="col" className="py-2 text-start">{t("azure.missing")}</th>
-            <th scope="col" className="py-2 text-start">{t("azure.failed")}</th>
-            <th scope="col" className="py-2 text-start">{t("azure.freshness")}</th>
+            <th scope="col" className="py-2 text-start">
+              {t("azure.domain")}
+            </th>
+            <th scope="col" className="py-2 text-start">
+              {t("azure.discovered")}
+            </th>
+            <th scope="col" className="py-2 text-start">
+              {t("azure.inserted")}
+            </th>
+            <th scope="col" className="py-2 text-start">
+              {t("azure.updated")}
+            </th>
+            <th scope="col" className="py-2 text-start">
+              {t("azure.unchanged")}
+            </th>
+            <th scope="col" className="py-2 text-start">
+              {t("azure.missing")}
+            </th>
+            <th scope="col" className="py-2 text-start">
+              {t("azure.failed")}
+            </th>
+            <th scope="col" className="py-2 text-start">
+              {t("azure.freshness")}
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -83,10 +101,16 @@ function ReportTable({ report }: { report: SyncRunReport }) {
                 <th scope="row" className="py-2 text-start font-medium">
                   {t(`azure.domain.${domain}` as TKey)}{" "}
                   <Badge
-                    variant={counts.complete ? "secondary" : counts.blocked ? "outline" : "destructive"}
+                    variant={
+                      counts.complete ? "secondary" : counts.blocked ? "outline" : "destructive"
+                    }
                     className="ms-1 align-middle"
                   >
-                    {counts.complete ? t("azure.complete") : counts.blocked ? t("azure.blocked") : t("azure.partial")}
+                    {counts.complete
+                      ? t("azure.complete")
+                      : counts.blocked
+                        ? t("azure.blocked")
+                        : t("azure.partial")}
                   </Badge>
                   {counts.blocked && counts.blockedBy ? (
                     <span className="ms-2 block text-xs font-normal text-muted-foreground">
@@ -97,13 +121,27 @@ function ReportTable({ report }: { report: SyncRunReport }) {
                     </span>
                   ) : null}
                 </th>
-                <td className="py-2"><Iso>{counts.discovered}</Iso></td>
-                <td className="py-2"><Iso>{counts.inserted}</Iso></td>
-                <td className="py-2"><Iso>{counts.updated}</Iso></td>
-                <td className="py-2"><Iso>{counts.unchanged}</Iso></td>
-                <td className="py-2"><Iso>{counts.missing}</Iso></td>
-                <td className="py-2"><Iso>{counts.failed}</Iso></td>
-                <td className="py-2 text-muted-foreground"><Iso>{fmt(counts.freshnessAt)}</Iso></td>
+                <td className="py-2">
+                  <Iso>{counts.discovered}</Iso>
+                </td>
+                <td className="py-2">
+                  <Iso>{counts.inserted}</Iso>
+                </td>
+                <td className="py-2">
+                  <Iso>{counts.updated}</Iso>
+                </td>
+                <td className="py-2">
+                  <Iso>{counts.unchanged}</Iso>
+                </td>
+                <td className="py-2">
+                  <Iso>{counts.missing}</Iso>
+                </td>
+                <td className="py-2">
+                  <Iso>{counts.failed}</Iso>
+                </td>
+                <td className="py-2 text-muted-foreground">
+                  <Iso>{fmt(counts.freshnessAt)}</Iso>
+                </td>
               </tr>
             );
           })}
@@ -133,7 +171,9 @@ function AzureSettingsPage() {
     mutationFn: () => validate({ data: { tenantId: null } }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["azure", "status"] }),
   });
-  const discoverMutation = useMutation({ mutationFn: () => discover({ data: { tenantId: null } }) });
+  const discoverMutation = useMutation({
+    mutationFn: () => discover({ data: { tenantId: null } }),
+  });
   const syncMutation = useMutation({
     mutationFn: () => startSync({ data: { tenantId: null } }),
     onSuccess: (state) => {
@@ -198,17 +238,27 @@ function AzureSettingsPage() {
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
               {t("azure.lastVerified")}:{" "}
-              <Iso>{status?.lastVerifiedAt ? new Date(status.lastVerifiedAt).toLocaleString() : t("azure.never")}</Iso>
+              <Iso>
+                {status?.lastVerifiedAt
+                  ? new Date(status.lastVerifiedAt).toLocaleString()
+                  : t("azure.never")}
+              </Iso>
             </p>
 
             {status && !status.configured ? (
-              <p role="status" className="rounded-md bg-muted p-3 text-sm">{t("azure.notConfigured")}</p>
+              <p role="status" className="rounded-md bg-muted p-3 text-sm">
+                {t("azure.notConfigured")}
+              </p>
             ) : null}
             {status && status.configured && !status.canSync ? (
-              <p role="status" className="rounded-md bg-muted p-3 text-sm">{t("azure.noPermission")}</p>
+              <p role="status" className="rounded-md bg-muted p-3 text-sm">
+                {t("azure.noPermission")}
+              </p>
             ) : null}
             {status?.activeRun ? (
-              <p role="status" className="rounded-md bg-muted p-3 text-sm">{t("azure.activeRun")}</p>
+              <p role="status" className="rounded-md bg-muted p-3 text-sm">
+                {t("azure.activeRun")}
+              </p>
             ) : null}
             {ui.connectionError ? (
               <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -231,7 +281,9 @@ function AzureSettingsPage() {
               </p>
             ) : null}
             {report ? (
-              <p className="text-sm text-muted-foreground">{t(`azure.next.${report.nextSafeAction}` as TKey)}</p>
+              <p className="text-sm text-muted-foreground">
+                {t(`azure.next.${report.nextSafeAction}` as TKey)}
+              </p>
             ) : null}
 
             <div className="flex flex-wrap gap-2">
@@ -256,7 +308,11 @@ function AzureSettingsPage() {
                 {syncMutation.isPending || jobActive ? t("azure.running") : t("azure.sync")}
               </Button>
               {jobActive ? (
-                <Button variant="ghost" onClick={() => cancelMutation.mutate()} disabled={cancelMutation.isPending}>
+                <Button
+                  variant="ghost"
+                  onClick={() => cancelMutation.mutate()}
+                  disabled={cancelMutation.isPending}
+                >
                   {t("azure.cancel")}
                 </Button>
               ) : null}
@@ -275,13 +331,22 @@ function AzureSettingsPage() {
               ) : (
                 <>
                   {ui.showPartialDiscovery ? (
-                    <p role="status" className="mb-3 rounded-md bg-muted p-3 text-sm">{t("azure.discoveryPartial")}</p>
+                    <p role="status" className="mb-3 rounded-md bg-muted p-3 text-sm">
+                      {t("azure.discoveryPartial")}
+                    </p>
                   ) : null}
                   <ul className="grid gap-2 sm:grid-cols-2">
                     {discoverMutation.data.projects.map((project) => (
-                      <li key={project.azureProjectId} className="rounded-md border border-border/60 p-3 text-sm">
-                        <span className="font-medium"><Iso>{project.name}</Iso></span>
-                        <span className="block text-xs text-muted-foreground"><Iso>{project.state}</Iso></span>
+                      <li
+                        key={project.azureProjectId}
+                        className="rounded-md border border-border/60 p-3 text-sm"
+                      >
+                        <span className="font-medium">
+                          <Iso>{project.name}</Iso>
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          <Iso>{project.state}</Iso>
+                        </span>
                       </li>
                     ))}
                   </ul>

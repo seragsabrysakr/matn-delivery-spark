@@ -1,5 +1,12 @@
 import type {
-  IsoDate, IsoTimestamp, Localized, RecordMeta, SourceTracked, TenantScoped, TimeZone, Uuid,
+  IsoDate,
+  IsoTimestamp,
+  Localized,
+  RecordMeta,
+  SourceTracked,
+  TenantScoped,
+  TimeZone,
+  Uuid,
 } from "./common";
 
 /** Lifecycle of a sprint relative to "now". */

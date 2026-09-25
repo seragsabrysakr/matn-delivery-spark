@@ -203,7 +203,8 @@ export function computeSprintConfidence(input: {
   }
 
   if (input.baselineScopeTotal !== null && input.baselineScopeTotal > 0) {
-    const churn = Math.abs(input.currentScopeTotal - input.baselineScopeTotal) / input.baselineScopeTotal;
+    const churn =
+      Math.abs(input.currentScopeTotal - input.baselineScopeTotal) / input.baselineScopeTotal;
     components.push({
       key: "scopeStability",
       weight: CONFIDENCE_WEIGHTS.scopeStability,
@@ -284,7 +285,9 @@ export function computeTeamLoad(
       // Effort is only reportable when at least one assigned item carries an estimate.
       const estimated = items.filter((f) => typeof f.estimate === "number" && f.estimate > 0);
       const assignedHours =
-        estimated.length > 0 ? round(estimated.reduce((sum, f) => sum + (f.estimate ?? 0), 0)) : null;
+        estimated.length > 0
+          ? round(estimated.reduce((sum, f) => sum + (f.estimate ?? 0), 0))
+          : null;
       const capacityHours =
         typeof member.capacityHours === "number" && member.capacityHours > 0
           ? member.capacityHours
@@ -468,7 +471,10 @@ function buildTrajectory(
     startDate: calendar?.startDate ?? "",
     endDate: calendar?.finishDate ?? "",
     forecastCompletion,
-    forecastRange: [clamp(round(forecastCompletion * 0.85)), clamp(round(forecastCompletion * 1.15))],
+    forecastRange: [
+      clamp(round(forecastCompletion * 0.85)),
+      clamp(round(forecastCompletion * 1.15)),
+    ],
   };
 }
 
@@ -582,10 +588,11 @@ export function buildOverview(input: OverviewInput): OverviewResult {
       : "no_baseline_snapshot";
   if (scopeChangeReason) unavailable["scopeChange"] = scopeChangeReason;
 
-  const coverageParts = scoped.length > 0
-    ? (scoped.filter((f) => f.estimate !== null).length / scoped.length) * 0.5 +
-      (scoped.filter((f) => f.assignedToMemberId !== null).length / scoped.length) * 0.5
-    : 0;
+  const coverageParts =
+    scoped.length > 0
+      ? (scoped.filter((f) => f.estimate !== null).length / scoped.length) * 0.5 +
+        (scoped.filter((f) => f.assignedToMemberId !== null).length / scoped.length) * 0.5
+      : 0;
 
   const confidence = computeSprintConfidence({
     scopePercent: scope.percent,
@@ -597,7 +604,11 @@ export function buildOverview(input: OverviewInput): OverviewResult {
     dataCoverage: coverageParts,
   });
   const confidenceReason: UnavailableReasonCode | null =
-    confidence.score !== null ? null : facts.length === 0 ? "no_work_items" : "insufficient_coverage";
+    confidence.score !== null
+      ? null
+      : facts.length === 0
+        ? "no_work_items"
+        : "insufficient_coverage";
   if (confidenceReason) unavailable["confidence"] = confidenceReason;
 
   const trendPoints = input.history.map((point) => ({
@@ -700,7 +711,10 @@ export function buildOverview(input: OverviewInput): OverviewResult {
                 },
           ],
           scope.basis === "estimate"
-            ? { ar: "التقديرات المكتملة ÷ إجمالي التقديرات", en: "Completed estimate ÷ total estimate" }
+            ? {
+                ar: "التقديرات المكتملة ÷ إجمالي التقديرات",
+                en: "Completed estimate ÷ total estimate",
+              }
             : { ar: "العناصر المكتملة ÷ إجمالي العناصر", en: "Completed items ÷ total items" },
           trendPoints,
           scoped.slice(0, 5).map(toRef),
@@ -726,7 +740,12 @@ export function buildOverview(input: OverviewInput): OverviewResult {
         )
       : unavailableKpi("scope", "percent", "no_work_items", {
           key: "real.reason.no_work_items",
-          facts: emptyFacts({ sprintDay, totalWorkingDays, blockerCount: blockers.count, capacityAvailable }),
+          facts: emptyFacts({
+            sprintDay,
+            totalWorkingDays,
+            blockerCount: blockers.count,
+            capacityAvailable,
+          }),
         }),
   );
 
@@ -744,7 +763,10 @@ export function buildOverview(input: OverviewInput): OverviewResult {
               en: `Day ${calendar.currentWorkingDay} of ${calendar.totalWorkingDays}`,
             },
           ],
-          { ar: "أيام العمل المنقضية ÷ إجمالي أيام العمل", en: "Elapsed working days ÷ total working days" },
+          {
+            ar: "أيام العمل المنقضية ÷ إجمالي أيام العمل",
+            en: "Elapsed working days ÷ total working days",
+          },
           [],
           [],
           {
@@ -785,7 +807,10 @@ export function buildOverview(input: OverviewInput): OverviewResult {
             en: `Baseline ${baseline.snapshotDate}`,
           },
         ],
-        { ar: "(النطاق الحالي − خط الأساس) ÷ خط الأساس", en: "(current scope − baseline) ÷ baseline" },
+        {
+          ar: "(النطاق الحالي − خط الأساس) ÷ خط الأساس",
+          en: "(current scope − baseline) ÷ baseline",
+        },
         [],
         [],
         {
@@ -805,7 +830,12 @@ export function buildOverview(input: OverviewInput): OverviewResult {
     kpis.push(
       unavailableKpi("scopeChange", "delta", scopeChangeReason ?? "no_baseline_snapshot", {
         key: `real.reason.${scopeChangeReason ?? "no_baseline_snapshot"}`,
-        facts: emptyFacts({ sprintDay, totalWorkingDays, blockerCount: blockers.count, capacityAvailable }),
+        facts: emptyFacts({
+          sprintDay,
+          totalWorkingDays,
+          blockerCount: blockers.count,
+          capacityAvailable,
+        }),
       }),
     );
   }
@@ -829,7 +859,13 @@ export function buildOverview(input: OverviewInput): OverviewResult {
       blockers.count === 0
         ? {
             key: "real.explain.blockers.none",
-            facts: emptyFacts({ numerator: 0, sprintDay, totalWorkingDays, blockerCount: 0, capacityAvailable }),
+            facts: emptyFacts({
+              numerator: 0,
+              sprintDay,
+              totalWorkingDays,
+              blockerCount: 0,
+              capacityAvailable,
+            }),
           }
         : {
             key: "real.explain.blockers.some",
@@ -860,7 +896,12 @@ export function buildOverview(input: OverviewInput): OverviewResult {
   kpis.push(
     unavailableKpi("release", "percent", "not_synchronized", {
       key: "real.explain.release.notSynced",
-      facts: emptyFacts({ sprintDay, totalWorkingDays, blockerCount: blockers.count, capacityAvailable }),
+      facts: emptyFacts({
+        sprintDay,
+        totalWorkingDays,
+        blockerCount: blockers.count,
+        capacityAvailable,
+      }),
     }),
   );
 
@@ -887,7 +928,11 @@ export function buildOverview(input: OverviewInput): OverviewResult {
       medianReviewHours: 0,
       buildSuccessRate: 0,
       failedTests: 0,
-      deployment: { status: "neutral", labelKey: "eng.deploy.unknown", noteKey: "eng.deploy.notSynced" },
+      deployment: {
+        status: "neutral",
+        labelKey: "eng.deploy.unknown",
+        noteKey: "eng.deploy.notSynced",
+      },
     },
     actions: actionsFromRisks(risks),
   };
@@ -898,7 +943,11 @@ export function buildOverview(input: OverviewInput): OverviewResult {
     console.error("[overview] explanation contradictions", violations);
   }
 
-  return { snapshot, unavailable, confidenceCoveragePercent: Math.round(confidence.coverage * 100) };
+  return {
+    snapshot,
+    unavailable,
+    confidenceCoveragePercent: Math.round(confidence.coverage * 100),
+  };
 }
 
 /**
@@ -917,8 +966,11 @@ export function findExplanationContradictions(kpis: readonly KpiMetric[]): strin
     if (metric.explanationKey.endsWith(".explain")) {
       problems.push(`${metric.id}: uses a static mock explanation key`);
     }
-    if (metric.unavailable && metric.explanationKey.startsWith("real.explain.") &&
-        metric.id !== "release") {
+    if (
+      metric.unavailable &&
+      metric.explanationKey.startsWith("real.explain.") &&
+      metric.id !== "release"
+    ) {
       problems.push(`${metric.id}: unavailable metric narrates a computed value`);
     }
     if (metric.id === "blockers") {
@@ -927,7 +979,9 @@ export function findExplanationContradictions(kpis: readonly KpiMetric[]): strin
         problems.push(`${metric.id}: blocker narrative contradicts count ${metric.value}`);
       }
       if (facts.blockerCount !== metric.value) {
-        problems.push(`${metric.id}: facts blockerCount ${facts.blockerCount} != value ${metric.value}`);
+        problems.push(
+          `${metric.id}: facts blockerCount ${facts.blockerCount} != value ${metric.value}`,
+        );
       }
     }
     if (metric.id === "scope" && !metric.unavailable) {

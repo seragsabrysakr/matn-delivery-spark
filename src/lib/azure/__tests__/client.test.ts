@@ -4,7 +4,10 @@ import { AzureDevOpsError, toAzureFailure } from "../errors";
 
 const PAT = "super-secret-pat-value";
 
-const jsonResponse = (body: unknown, init: { status?: number; headers?: Record<string, string> } = {}) =>
+const jsonResponse = (
+  body: unknown,
+  init: { status?: number; headers?: Record<string, string> } = {},
+) =>
   new Response(JSON.stringify(body), {
     status: init.status ?? 200,
     headers: { "content-type": "application/json", ...(init.headers ?? {}) },
@@ -43,7 +46,10 @@ describe("AzureDevOpsClient", () => {
     const client = makeClient(async () => {
       call += 1;
       return call === 1
-        ? jsonResponse({ count: 1, value: [{ id: "a" }] }, { headers: { "x-ms-continuationtoken": "next" } })
+        ? jsonResponse(
+            { count: 1, value: [{ id: "a" }] },
+            { headers: { "x-ms-continuationtoken": "next" } },
+          )
         : jsonResponse({ count: 1, value: [{ id: "b" }] });
     });
 
@@ -53,10 +59,16 @@ describe("AzureDevOpsClient", () => {
 
   it("stops paging at the configured ceiling", async () => {
     let calls = 0;
-    const client = makeClient(async () => {
-      calls += 1;
-      return jsonResponse({ count: 1, value: [{ id: String(calls) }] }, { headers: { "x-ms-continuationtoken": "t" } });
-    }, { maxPages: 3 });
+    const client = makeClient(
+      async () => {
+        calls += 1;
+        return jsonResponse(
+          { count: 1, value: [{ id: String(calls) }] },
+          { headers: { "x-ms-continuationtoken": "t" } },
+        );
+      },
+      { maxPages: 3 },
+    );
 
     const projects = await client.listProjects();
     expect(calls).toBe(3);
@@ -82,11 +94,17 @@ describe("AzureDevOpsClient", () => {
   });
 
   it("surfaces throttling as a sanitized error after exhausting retries", async () => {
-    const client = makeClient(async () => new Response("", { status: 429, headers: { "retry-after": "5" } }), {
-      maxRetries: 1,
-    });
+    const client = makeClient(
+      async () => new Response("", { status: 429, headers: { "retry-after": "5" } }),
+      {
+        maxRetries: 1,
+      },
+    );
 
-    await expect(client.listProjects()).rejects.toMatchObject({ code: "throttled", retryAfterSeconds: 5 });
+    await expect(client.listProjects()).rejects.toMatchObject({
+      code: "throttled",
+      retryAfterSeconds: 5,
+    });
   });
 
   it("maps auth and permission failures without leaking provider text", async () => {
@@ -97,18 +115,26 @@ describe("AzureDevOpsClient", () => {
     expect(authError).toBeInstanceOf(AzureDevOpsError);
     expect((authError as Error).message).not.toContain(PAT);
     expect(toAzureFailure(authError).code).toBe("invalid_credentials");
-    await expect(forbidden.listProjects()).rejects.toMatchObject({ code: "insufficient_permissions" });
+    await expect(forbidden.listProjects()).rejects.toMatchObject({
+      code: "insufficient_permissions",
+    });
   });
 
   it("treats a non-JSON sign-in page as an invalid credential", async () => {
-    const client = makeClient(async () => new Response("<html>sign in</html>", { headers: { "content-type": "text/html" } }));
+    const client = makeClient(
+      async () =>
+        new Response("<html>sign in</html>", { headers: { "content-type": "text/html" } }),
+    );
     await expect(client.listProjects()).rejects.toMatchObject({ code: "invalid_credentials" });
   });
 
   it("times out and reports a sanitized timeout", async () => {
-    const client = makeClient(async () => {
-      throw new Error("network down");
-    }, { maxRetries: 0 });
+    const client = makeClient(
+      async () => {
+        throw new Error("network down");
+      },
+      { maxRetries: 0 },
+    );
     await expect(client.listProjects()).rejects.toMatchObject({ code: "timeout" });
   });
 

@@ -1,20 +1,55 @@
 import type {
-  CalculationStamp, HealthStatus, IsoTimestamp, Localized, Measure, RecordMeta, TenantScoped, Uuid, ValueAvailability,
+  CalculationStamp,
+  HealthStatus,
+  IsoTimestamp,
+  Localized,
+  Measure,
+  RecordMeta,
+  TenantScoped,
+  Uuid,
+  ValueAvailability,
 } from "./common";
 
 export type KpiId =
-  | "sprint_confidence" | "scope_completion" | "expected_completion" | "scope_change"
-  | "critical_blockers" | "release_readiness" | "forecasted_completion" | "velocity"
-  | "burndown" | "burnup" | "cycle_time" | "lead_time" | "throughput" | "work_in_progress"
-  | "flow_efficiency" | "blocked_work_age" | "scope_added" | "scope_removed"
-  | "planned_vs_completed_points" | "capacity_utilization" | "pr_review_time" | "stale_pull_requests"
-  | "build_success_rate" | "deployment_frequency" | "deployment_failure_rate" | "failed_tests"
-  | "test_pass_rate" | "items_without_owner" | "items_without_estimate" | "reopened_bugs"
-  | "bug_age" | "escaped_defects" | "data_freshness" | "sync_health";
+  | "sprint_confidence"
+  | "scope_completion"
+  | "expected_completion"
+  | "scope_change"
+  | "critical_blockers"
+  | "release_readiness"
+  | "forecasted_completion"
+  | "velocity"
+  | "burndown"
+  | "burnup"
+  | "cycle_time"
+  | "lead_time"
+  | "throughput"
+  | "work_in_progress"
+  | "flow_efficiency"
+  | "blocked_work_age"
+  | "scope_added"
+  | "scope_removed"
+  | "planned_vs_completed_points"
+  | "capacity_utilization"
+  | "pr_review_time"
+  | "stale_pull_requests"
+  | "build_success_rate"
+  | "deployment_frequency"
+  | "deployment_failure_rate"
+  | "failed_tests"
+  | "test_pass_rate"
+  | "items_without_owner"
+  | "items_without_estimate"
+  | "reopened_bugs"
+  | "bug_age"
+  | "escaped_defects"
+  | "data_freshness"
+  | "sync_health";
 
 export type KpiUnit = "percent" | "count" | "hours" | "days" | "points" | "ratio" | "perDay";
 export type KpiFrequency = "onSync" | "hourly" | "daily" | "onDemand";
-export type MissingDataBehavior = "return_null" | "partial_with_flag" | "exclude_component" | "fallback_estimate";
+export type MissingDataBehavior =
+  "return_null" | "partial_with_flag" | "exclude_component" | "fallback_estimate";
 
 /** Direction that counts as good. */
 export type KpiDirection = "higherIsBetter" | "lowerIsBetter" | "targetBand";
@@ -137,12 +172,18 @@ export interface KpiValue extends TenantScoped {
   readonly stamp: CalculationStamp;
 }
 
-
 /** One transparent input of Sprint Confidence. */
 export interface ConfidenceComponent {
   readonly key:
-    | "delivery_trajectory" | "scope_stability" | "blocker_pressure" | "capacity_pressure"
-    | "pr_flow" | "build_health" | "test_health" | "historical_predictability" | "data_completeness";
+    | "delivery_trajectory"
+    | "scope_stability"
+    | "blocker_pressure"
+    | "capacity_pressure"
+    | "pr_flow"
+    | "build_health"
+    | "test_health"
+    | "historical_predictability"
+    | "data_completeness";
   readonly label: Localized;
   readonly inputMetric: KpiId | "composite";
   readonly normalization: "linear_clamped" | "inverse_linear" | "step_bands" | "ratio_to_target";
@@ -175,9 +216,15 @@ export type GateOutcome = "passed" | "failed" | "pending" | "unknown" | "skipped
 
 export interface ReleaseGate {
   readonly key:
-    | "scope_completion" | "critical_defects" | "regression_tests" | "build_status"
-    | "deployment_status" | "pull_requests" | "release_documentation"
-    | "business_acceptance" | "security_compliance";
+    | "scope_completion"
+    | "critical_defects"
+    | "regression_tests"
+    | "build_status"
+    | "deployment_status"
+    | "pull_requests"
+    | "release_documentation"
+    | "business_acceptance"
+    | "security_compliance";
   readonly label: Localized;
   readonly requirement: GateRequirement;
   readonly outcome: GateOutcome;

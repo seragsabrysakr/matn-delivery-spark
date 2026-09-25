@@ -132,7 +132,11 @@ async function loadMembers(
 
 const HOUR_MS = 3_600_000;
 
-export function resolveDataState(lastSyncAt: string | null, itemCount: number, nowIso: string): TeamDataState {
+export function resolveDataState(
+  lastSyncAt: string | null,
+  itemCount: number,
+  nowIso: string,
+): TeamDataState {
   if (itemCount === 0) return "notSynced";
   if (!lastSyncAt) return "partial";
   const age = Date.parse(nowIso) - Date.parse(lastSyncAt);
@@ -176,7 +180,9 @@ export async function buildTeamPage(
   } else if (accessLevel === "selfOnly") {
     const selfMemberId = await resolveSelfMemberId(tenant);
     members = selfMemberId ? allMemberRows.filter((m) => m.memberId === selfMemberId) : [];
-    workItems = selfMemberId ? allWorkItemRows.filter((w) => w.assignedMemberId === selfMemberId) : [];
+    workItems = selfMemberId
+      ? allWorkItemRows.filter((w) => w.assignedMemberId === selfMemberId)
+      : [];
   }
 
   const lastWorkItemSyncAt = lastSync.data?.last_synced_at ?? null;

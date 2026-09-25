@@ -128,9 +128,9 @@ function RootComponent() {
         <ThemeProvider>
           <WorkspaceProvider>
             <TooltipProvider delayDuration={150}>
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-            <Toaster />
+              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+              <Outlet />
+              <Toaster />
             </TooltipProvider>
           </WorkspaceProvider>
         </ThemeProvider>

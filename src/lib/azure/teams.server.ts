@@ -60,7 +60,8 @@ interface RawTeam {
   readonly description?: unknown;
 }
 
-const str = (value: unknown): string | null => (typeof value === "string" && value.length > 0 ? value : null);
+const str = (value: unknown): string | null =>
+  typeof value === "string" && value.length > 0 ? value : null;
 
 export function sanitizeTeam(raw: RawTeam): DiscoveredTeam | null {
   const id = str(raw.id);
@@ -87,7 +88,8 @@ export async function readProjectTeams(options: TeamReadOptions): Promise<TeamRe
   const elapsed = () => Math.max(0, Math.round(now() - startedAt));
   // Bind the global so the call never relies on an implicit receiver: an
   // unbound `fetch` reference throws "Illegal invocation" in the worker runtime.
-  const fetchImpl = options.fetchImpl ?? ((input: RequestInfo | URL, init?: RequestInit) => fetch(input, init));
+  const fetchImpl =
+    options.fetchImpl ?? ((input: RequestInfo | URL, init?: RequestInit) => fetch(input, init));
   const sleep = options.sleep ?? defaultSleep;
   const timeoutMs = options.timeoutMs ?? TEAMS_REQUEST_TIMEOUT_MS;
   const maxPages = options.maxPages ?? TEAMS_MAX_PAGES;
@@ -106,12 +108,15 @@ export async function readProjectTeams(options: TeamReadOptions): Promise<TeamRe
     elapsedMs: elapsed(),
     httpStatus: lastHttpStatus,
     warning,
-    error: warning ? new AzureDevOpsError(warning, { httpStatus: lastHttpStatus }).toFailure() : null,
+    error: warning
+      ? new AzureDevOpsError(warning, { httpStatus: lastHttpStatus }).toFailure()
+      : null,
   });
 
   const pat = (options.pat ?? "").trim();
   const organization = normalizeOrganization(options.organization);
-  if (!pat || !(options.organization ?? "").trim()) return result("failed", "missing_configuration");
+  if (!pat || !(options.organization ?? "").trim())
+    return result("failed", "missing_configuration");
   if (!organization) return result("failed", "invalid_configuration");
   if (!options.azureProjectId) return result("failed", "invalid_configuration");
 
@@ -195,7 +200,8 @@ export async function readProjectTeams(options: TeamReadOptions): Promise<TeamRe
     }
 
     const bodyToken = (outcome.body as { continuationToken?: unknown })?.continuationToken;
-    const hasToken = Boolean(outcome.token) || (typeof bodyToken === "string" && bodyToken.length > 0);
+    const hasToken =
+      Boolean(outcome.token) || (typeof bodyToken === "string" && bodyToken.length > 0);
     // The teams endpoint pages with $skip; a short page means the end.
     if (!hasToken && rows.length < TEAMS_PAGE_SIZE) return result("complete", null);
   }

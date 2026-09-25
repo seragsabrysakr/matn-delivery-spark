@@ -1,4 +1,12 @@
-import type { CustomFields, JsonValue, Localized, RecordMeta, SourceTracked, TenantScoped, Uuid } from "./common";
+import type {
+  CustomFields,
+  JsonValue,
+  Localized,
+  RecordMeta,
+  SourceTracked,
+  TenantScoped,
+  Uuid,
+} from "./common";
 
 /** Azure process template family; custom inherited processes map onto a base. */
 export type ProcessTemplateKind = "agile" | "scrum" | "cmmi" | "basic" | "custom";
@@ -18,7 +26,9 @@ export interface ProcessMapping {
   /** Azure work item type name -> normalized alias (e.g. "Product Backlog Item" -> "story"). */
   readonly workItemTypeAliases: Readonly<Record<string, string>>;
   /** Azure state name -> normalized state category. */
-  readonly stateCategoryMap: Readonly<Record<string, "proposed" | "inProgress" | "resolved" | "completed" | "removed">>;
+  readonly stateCategoryMap: Readonly<
+    Record<string, "proposed" | "inProgress" | "resolved" | "completed" | "removed">
+  >;
   readonly doneStates: readonly string[];
   readonly activeStates: readonly string[];
   /** Ordered candidate reference names used to detect blocked items. */

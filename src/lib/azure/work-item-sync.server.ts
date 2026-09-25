@@ -177,7 +177,8 @@ async function loadReferenceData(target: ResolvedTeamIteration): Promise<Loaded>
   const memberByUniqueName = new Map<string, string>();
   for (const member of members.data ?? []) {
     if (member.azure_descriptor) memberByDescriptor.set(String(member.azure_descriptor), member.id);
-    if (member.azure_unique_name) memberByUniqueName.set(String(member.azure_unique_name).toLowerCase(), member.id);
+    if (member.azure_unique_name)
+      memberByUniqueName.set(String(member.azure_unique_name).toLowerCase(), member.id);
   }
 
   return {
@@ -222,12 +223,15 @@ export async function advanceWorkItemSync(
     };
   }
 
-  const client = options.client ?? AzureDevOpsClient.fromEnvironment({ timeoutMs: WORK_ITEM_REQUEST_TIMEOUT_MS });
+  const client =
+    options.client ??
+    AzureDevOpsClient.fromEnvironment({ timeoutMs: WORK_ITEM_REQUEST_TIMEOUT_MS });
   const { mapping, memberByDescriptor, memberByUniqueName } = await loadReferenceData(target);
 
   const resolveMember = (ref: AzureIdentityLike | null | undefined): string | null => {
     if (!ref) return null;
-    if (ref.descriptor && memberByDescriptor.has(ref.descriptor)) return memberByDescriptor.get(ref.descriptor)!;
+    if (ref.descriptor && memberByDescriptor.has(ref.descriptor))
+      return memberByDescriptor.get(ref.descriptor)!;
     if (ref.uniqueName) return memberByUniqueName.get(ref.uniqueName.toLowerCase()) ?? null;
     return null;
   };
@@ -272,7 +276,10 @@ export async function advanceWorkItemSync(
           .in("azure_work_item_id", batch);
         if (existing.error) throw new AzureDevOpsError("unknown");
         const existingById = new Map(
-          (existing.data ?? []).map((row) => [Number(row.azure_work_item_id), row as Record<string, unknown>]),
+          (existing.data ?? []).map((row) => [
+            Number(row.azure_work_item_id),
+            row as Record<string, unknown>,
+          ]),
         );
 
         let inserted = 0;
@@ -294,7 +301,9 @@ export async function advanceWorkItemSync(
 
           const prior = existingById.get(mapped.azureWorkItemId);
           const blockedSince = mapped.payload.is_blocked
-            ? ((prior?.["blocked_since"] as string | null) ?? mapped.payload.state_change_date ?? seenAt)
+            ? ((prior?.["blocked_since"] as string | null) ??
+              mapped.payload.state_change_date ??
+              seenAt)
             : null;
 
           if (!prior) {
@@ -312,9 +321,12 @@ export async function advanceWorkItemSync(
             continue;
           }
 
-          const diff = diffWorkItem({ ...prior, blocked_since: prior["blocked_since"] }, {
-            ...mapped.payload,
-          });
+          const diff = diffWorkItem(
+            { ...prior, blocked_since: prior["blocked_since"] },
+            {
+              ...mapped.payload,
+            },
+          );
           const blockedChanged = (prior["blocked_since"] ?? null) !== blockedSince;
 
           if (diff.kind === "unchanged" && !blockedChanged) {
@@ -384,7 +396,14 @@ export async function advanceWorkItemSync(
         finished_at: new Date().toISOString(),
         finalized_at: new Date().toISOString(),
       });
-      return { runId, status, cursor, failure: null, startedAt: runRow.data.started_at, finishedAt: new Date().toISOString() };
+      return {
+        runId,
+        status,
+        cursor,
+        failure: null,
+        startedAt: runRow.data.started_at,
+        finishedAt: new Date().toISOString(),
+      };
     }
 
     await checkpoint(runId, cursor);
@@ -403,7 +422,14 @@ export async function advanceWorkItemSync(
       finished_at: new Date().toISOString(),
       error_count: cursor.failed + 1,
     });
-    return { runId, status: "failed", cursor, failure, startedAt: runRow.data.started_at, finishedAt: null };
+    return {
+      runId,
+      status: "failed",
+      cursor,
+      failure,
+      startedAt: runRow.data.started_at,
+      finishedAt: null,
+    };
   }
 }
 
@@ -420,9 +446,10 @@ export async function getWorkItemSyncStatus(
     .limit(5);
 
   const row = (data ?? []).find(
-    (candidate) => readCursor(candidate.details, target.teamIterationId).ids.length >= 0 &&
-      (candidate.details as { cursor?: { teamIterationId?: string } } | null)?.cursor?.teamIterationId ===
-        target.teamIterationId,
+    (candidate) =>
+      readCursor(candidate.details, target.teamIterationId).ids.length >= 0 &&
+      (candidate.details as { cursor?: { teamIterationId?: string } } | null)?.cursor
+        ?.teamIterationId === target.teamIterationId,
   );
   if (!row) return null;
 

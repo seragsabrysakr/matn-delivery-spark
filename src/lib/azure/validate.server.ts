@@ -56,7 +56,9 @@ interface ProjectsBody {
 const defaultSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 /** Performs the single validation request and returns a sanitized diagnostic. */
-export async function validateAzureOrganization(options: ValidateOptions): Promise<ValidationDiagnostic> {
+export async function validateAzureOrganization(
+  options: ValidateOptions,
+): Promise<ValidationDiagnostic> {
   const now = options.now ?? (() => Date.now());
   const startedAt = now();
   const elapsed = () => Math.max(0, Math.round(now() - startedAt));
@@ -128,14 +130,19 @@ export async function validateAzureOrganization(options: ValidateOptions): Promi
       }
     }
 
-    if (status === 401 || status === 203) return done("invalid_credentials", "azure_response", { httpStatus: status });
-    if (status === 403) return done("insufficient_permissions", "azure_response", { httpStatus: status });
-    if (status === 404) return done("organization_not_found", "azure_response", { httpStatus: status });
-    if (status === 400) return done("invalid_configuration", "azure_response", { httpStatus: status });
+    if (status === 401 || status === 203)
+      return done("invalid_credentials", "azure_response", { httpStatus: status });
+    if (status === 403)
+      return done("insufficient_permissions", "azure_response", { httpStatus: status });
+    if (status === 404)
+      return done("organization_not_found", "azure_response", { httpStatus: status });
+    if (status === 400)
+      return done("invalid_configuration", "azure_response", { httpStatus: status });
 
     if (RETRYABLE_ONCE.has(status) && attempt === 0) {
       const remaining = timeoutMs * 2 - elapsed();
-      if (remaining <= 1_000) return done("provider_unavailable", "azure_response", { httpStatus: status });
+      if (remaining <= 1_000)
+        return done("provider_unavailable", "azure_response", { httpStatus: status });
       await sleep(Math.min(1_000, Math.max(0, remaining - 1_000)));
       continue;
     }

@@ -38,7 +38,9 @@ export async function resolveTenantContext(
     .eq("auth_user_id", authUserId)
     .eq("is_active", true);
 
-  const { data, error } = requestedTenantId ? await query.eq("tenant_id", requestedTenantId) : await query;
+  const { data, error } = requestedTenantId
+    ? await query.eq("tenant_id", requestedTenantId)
+    : await query;
   if (error) throw new AzureDevOpsError("unknown");
   const memberships = data ?? [];
   if (memberships.length === 0) throw new AzureDevOpsError("forbidden");
@@ -94,6 +96,7 @@ export async function writeAudit(input: {
     entity_id: input.entityId ?? null,
     outcome: input.outcome,
     ...(input.correlationId ? { correlation_id: input.correlationId } : {}),
-    metadata: (input.metadata ?? {}) as Database["public"]["Tables"]["aud_audit_events"]["Row"]["metadata"],
+    metadata: (input.metadata ??
+      {}) as Database["public"]["Tables"]["aud_audit_events"]["Row"]["metadata"],
   });
 }

@@ -1,4 +1,12 @@
-import type { CustomFields, IsoTimestamp, Localized, RecordMeta, SourceTracked, TenantScoped, Uuid } from "./common";
+import type {
+  CustomFields,
+  IsoTimestamp,
+  Localized,
+  RecordMeta,
+  SourceTracked,
+  TenantScoped,
+  Uuid,
+} from "./common";
 
 /** Top-level customer boundary. One tenant owns many Azure organizations. */
 export interface Tenant extends RecordMeta {

@@ -23,7 +23,9 @@ export interface WorkItemRevision extends TenantScoped {
   readonly tags: readonly string[];
 
   /** Field-level diff versus the previous revision, JSON-safe. */
-  readonly changedFields: Readonly<Record<string, { readonly from: JsonValue; readonly to: JsonValue }>>;
+  readonly changedFields: Readonly<
+    Record<string, { readonly from: JsonValue; readonly to: JsonValue }>
+  >;
   readonly customFields: CustomFields;
   readonly ingestedAt: IsoTimestamp;
 }

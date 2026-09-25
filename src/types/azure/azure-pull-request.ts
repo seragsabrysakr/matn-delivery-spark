@@ -43,7 +43,8 @@ export interface AzurePullRequest {
   readonly sourceRefName: string;
   readonly targetRefName: string;
   readonly isDraft?: boolean;
-  readonly mergeStatus?: "succeeded" | "conflicts" | "queued" | "rejectedByPolicy" | "notSet" | "failure";
+  readonly mergeStatus?:
+    "succeeded" | "conflicts" | "queued" | "rejectedByPolicy" | "notSet" | "failure";
   readonly reviewers?: readonly AzurePullRequestReviewer[];
   readonly repository: { readonly id: string; readonly name: string };
   readonly workItemRefs?: readonly { readonly id: string; readonly url: string }[];

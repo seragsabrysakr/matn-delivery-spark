@@ -7,15 +7,15 @@ organization.
 
 ## Server boundary
 
-| Concern | Location | Notes |
-|---|---|---|
-| REST client | `src/lib/azure/client.server.ts` | GET-only, `api-version=7.1`, Basic auth built from the PAT inside the constructor |
-| Pure rules | `src/lib/azure/sync-rules.ts` | template kind, iteration phase, date normalization, identity precedence |
-| Foundation sync | `src/lib/azure/sync.server.ts` | lock, run row, upserts, tombstones, run report |
-| Authorization | `src/lib/azure/authz.server.ts` | tenant resolution from the validated bearer token, role checks, audit writes |
-| Operations | `src/lib/azure/operations.server.ts` | status, validate, discover, sync |
-| RPC wrappers | `src/lib/azure/azure.functions.ts` | thin `createServerFn` declarations only |
-| UI | `src/routes/_authenticated/settings.azure.tsx` | bilingual, RTL-aware, read-only controls |
+| Concern         | Location                                       | Notes                                                                             |
+| --------------- | ---------------------------------------------- | --------------------------------------------------------------------------------- |
+| REST client     | `src/lib/azure/client.server.ts`               | GET-only, `api-version=7.1`, Basic auth built from the PAT inside the constructor |
+| Pure rules      | `src/lib/azure/sync-rules.ts`                  | template kind, iteration phase, date normalization, identity precedence           |
+| Foundation sync | `src/lib/azure/sync.server.ts`                 | lock, run row, upserts, tombstones, run report                                    |
+| Authorization   | `src/lib/azure/authz.server.ts`                | tenant resolution from the validated bearer token, role checks, audit writes      |
+| Operations      | `src/lib/azure/operations.server.ts`           | status, validate, discover, sync                                                  |
+| RPC wrappers    | `src/lib/azure/azure.functions.ts`             | thin `createServerFn` declarations only                                           |
+| UI              | `src/routes/_authenticated/settings.azure.tsx` | bilingual, RTL-aware, read-only controls                                          |
 
 The PAT is read from `process.env` inside handlers, never at module scope, never returned to the
 browser, never written to a table and never included in an error message. Error text sent to the
@@ -23,12 +23,12 @@ client comes from a fixed dictionary keyed by an `AzureErrorCode`; provider bodi
 
 ## Secrets
 
-| Name | Purpose |
-|---|---|
-| `AZURE_DEVOPS_ORGANIZATION` | the `dev.azure.com/{organization}` segment |
-| `AZURE_DEVOPS_PAT` | read-only PAT: Work Items (Read), Project & Team (Read), Identity (Read) |
+| Name                        | Purpose                                                                  |
+| --------------------------- | ------------------------------------------------------------------------ |
+| `AZURE_DEVOPS_ORGANIZATION` | the `dev.azure.com/{organization}` segment                               |
+| `AZURE_DEVOPS_PAT`          | read-only PAT: Work Items (Read), Project & Team (Read), Identity (Read) |
 
-`ops_sync_connections.secret_ref` stores the *name* `AZURE_DEVOPS_PAT`, never a value.
+`ops_sync_connections.secret_ref` stores the _name_ `AZURE_DEVOPS_PAT`, never a value.
 
 ## Authorization
 
@@ -55,7 +55,7 @@ client comes from a fixed dictionary keyed by an `AzureErrorCode`; provider bodi
   `finally` block; the full report is persisted in `details` so a later run can be compared to it.
 - **Partial-safe** — each domain tracks `complete`. A domain that raised an error is reported
   incomplete and its tombstoning step is skipped, so a transient failure never deletes live rows.
-- **Deletion-safe** — items absent from a *complete* pass are tombstoned
+- **Deletion-safe** — items absent from a _complete_ pass are tombstoned
   (`source_status = 'deleted'`, `is_deleted = true`), never hard-deleted. Memberships are closed with
   `left_at` instead of removed.
 - **Throttling** — bounded concurrency (4 projects, 4 teams) and retry with `Retry-After` and

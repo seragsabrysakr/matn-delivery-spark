@@ -1,16 +1,34 @@
-import type { CustomFields, IsoTimestamp, RecordMeta, Severity, SourceTracked, TenantScoped, Uuid } from "./common";
+import type {
+  CustomFields,
+  IsoTimestamp,
+  RecordMeta,
+  Severity,
+  SourceTracked,
+  TenantScoped,
+  Uuid,
+} from "./common";
 
 /** Normalized type alias; custom types resolve through ProcessMapping. */
 export type WorkItemAlias =
-  | "epic" | "feature" | "story" | "requirement" | "issue" | "bug" | "task" | "testCase" | "custom";
+  "epic" | "feature" | "story" | "requirement" | "issue" | "bug" | "task" | "testCase" | "custom";
 
 /** Process-independent state category. */
-export type StateCategory = "proposed" | "inProgress" | "resolved" | "completed" | "removed" | "unknown";
+export type StateCategory =
+  "proposed" | "inProgress" | "resolved" | "completed" | "removed" | "unknown";
 
 /** Azure relation kinds we normalize. */
 export type WorkItemRelationType =
-  | "parent" | "child" | "related" | "predecessor" | "successor"
-  | "duplicate" | "duplicateOf" | "testedBy" | "tests" | "affects" | "other";
+  | "parent"
+  | "child"
+  | "related"
+  | "predecessor"
+  | "successor"
+  | "duplicate"
+  | "duplicateOf"
+  | "testedBy"
+  | "tests"
+  | "affects"
+  | "other";
 
 export interface WorkItemRelation extends TenantScoped, RecordMeta, SourceTracked {
   readonly id: Uuid;

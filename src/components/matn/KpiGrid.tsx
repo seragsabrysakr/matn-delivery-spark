@@ -45,12 +45,26 @@ function Sparkline({ values, status }: { values: number[]; status: KpiMetric["st
           : "var(--muted-foreground)";
   return (
     <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="h-6 w-full" aria-hidden>
-      <polyline fill="none" stroke={stroke} strokeWidth="2" points={points} vectorEffect="non-scaling-stroke" />
+      <polyline
+        fill="none"
+        stroke={stroke}
+        strokeWidth="2"
+        points={points}
+        vectorEffect="non-scaling-stroke"
+      />
     </svg>
   );
 }
 
-function KpiCard({ kpi, onOpen, primary }: { kpi: KpiMetric; onOpen: () => void; primary?: boolean }) {
+function KpiCard({
+  kpi,
+  onOpen,
+  primary,
+}: {
+  kpi: KpiMetric;
+  onOpen: () => void;
+  primary?: boolean;
+}) {
   const { t } = useI18n();
   const na = !!kpi.unavailable;
   const diff = kpi.value - kpi.comparison.value;
@@ -199,7 +213,10 @@ export function KpiGrid({ kpis, loading }: { kpis: KpiMetric[]; loading?: boolea
             <>
               <SheetHeader>
                 <SheetTitle className="flex items-center gap-2">
-                  <span className={cn("size-2 rounded-full", statusDot[selected.status])} aria-hidden />
+                  <span
+                    className={cn("size-2 rounded-full", statusDot[selected.status])}
+                    aria-hidden
+                  />
                   {t(selected.labelKey as TKey)}
                 </SheetTitle>
                 <SheetDescription>{t(selected.tooltipKey as TKey)}</SheetDescription>
@@ -217,7 +234,11 @@ export function KpiGrid({ kpis, loading }: { kpis: KpiMetric[]; loading?: boolea
                   </span>
                   <StatusPill
                     status={
-                      selected.unavailable ? "neutral" : selected.id === "expected" ? "healthy" : selected.status
+                      selected.unavailable
+                        ? "neutral"
+                        : selected.id === "expected"
+                          ? "healthy"
+                          : selected.status
                     }
                   >
                     {selected.unavailable
@@ -240,7 +261,10 @@ export function KpiGrid({ kpis, loading }: { kpis: KpiMetric[]; loading?: boolea
                     <ul className="space-y-2">
                       {selected.drivers.map((d, i) => (
                         <li key={i} className="flex gap-2 text-sm text-foreground">
-                          <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-azure" aria-hidden />
+                          <span
+                            className="mt-1.5 size-1.5 shrink-0 rounded-full bg-azure"
+                            aria-hidden
+                          />
                           <span>{d[locale]}</span>
                         </li>
                       ))}
@@ -250,7 +274,9 @@ export function KpiGrid({ kpis, loading }: { kpis: KpiMetric[]; loading?: boolea
 
                 {selected.explanationFacts && selected.explanationFacts.coveragePercent !== null ? (
                   <ul className="space-y-1 text-sm text-muted-foreground">
-                    <li>{t("real.facts.coverage", { a: selected.explanationFacts.coveragePercent })}</li>
+                    <li>
+                      {t("real.facts.coverage", { a: selected.explanationFacts.coveragePercent })}
+                    </li>
                     <li>
                       {t("real.facts.included", {
                         a:
@@ -276,9 +302,14 @@ export function KpiGrid({ kpis, loading }: { kpis: KpiMetric[]; loading?: boolea
                   </h3>
                   <div className="grid grid-cols-5 gap-2">
                     {selected.trend.map((p) => (
-                      <div key={p.label} className="rounded-md border border-border bg-surface p-2 text-center">
+                      <div
+                        key={p.label}
+                        className="rounded-md border border-border bg-surface p-2 text-center"
+                      >
                         <div className="text-[11px] text-muted-foreground">{p.label}</div>
-                        <div className="text-sm font-semibold tabular-nums text-foreground">{p.value}</div>
+                        <div className="text-sm font-semibold tabular-nums text-foreground">
+                          {p.value}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -304,9 +335,15 @@ export function KpiGrid({ kpis, loading }: { kpis: KpiMetric[]; loading?: boolea
                           key={item.id}
                           className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-border bg-surface px-3 py-2"
                         >
-                          <Iso className="shrink-0 text-xs tabular-nums text-muted-foreground">#{item.id}</Iso>
-                          <span className="min-w-0 truncate text-sm text-foreground">{item.title[locale]}</span>
-                          <span className="shrink-0 text-[11px] text-muted-foreground">{item.state[locale]}</span>
+                          <Iso className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                            #{item.id}
+                          </Iso>
+                          <span className="min-w-0 truncate text-sm text-foreground">
+                            {item.title[locale]}
+                          </span>
+                          <span className="shrink-0 text-[11px] text-muted-foreground">
+                            {item.state[locale]}
+                          </span>
                         </li>
                       ))}
                     </ul>

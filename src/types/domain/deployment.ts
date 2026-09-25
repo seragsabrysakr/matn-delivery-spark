@@ -1,8 +1,14 @@
 import type { IsoTimestamp, RecordMeta, SourceTracked, TenantScoped, Uuid } from "./common";
 
 export type DeploymentStatus =
-  | "notDeployed" | "inProgress" | "succeeded" | "partiallySucceeded"
-  | "failed" | "canceled" | "skipped" | "unknown";
+  | "notDeployed"
+  | "inProgress"
+  | "succeeded"
+  | "partiallySucceeded"
+  | "failed"
+  | "canceled"
+  | "skipped"
+  | "unknown";
 
 export interface DeploymentApproval {
   readonly approverMemberId: Uuid | null;

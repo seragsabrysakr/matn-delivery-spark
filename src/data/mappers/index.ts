@@ -10,9 +10,7 @@
  * Phase 4 wires real fetchers.
  */
 import type { Tables } from "@/integrations/supabase/types";
-import type {
-  Iteration, Project, Team, TeamIteration, WorkItem,
-} from "@/types/domain";
+import type { Iteration, Project, Team, TeamIteration, WorkItem } from "@/types/domain";
 
 /** Convenience alias so mappers read as `Row<"core_projects">`. */
 export type Row<T extends keyof DatabaseTables> = DatabaseTables[T];

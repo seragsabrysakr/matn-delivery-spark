@@ -8,12 +8,14 @@ export const Route = createFileRoute("/engineering")({
       { title: "Engineering Health — MATN Delivery Intelligence" },
       {
         name: "description",
-        content: "Monitor pull request latency, build stability, test health, and deployment status.",
+        content:
+          "Monitor pull request latency, build stability, test health, and deployment status.",
       },
       { property: "og:title", content: "Engineering Health — MATN Delivery Intelligence" },
       {
         property: "og:description",
-        content: "Monitor pull request latency, build stability, test health, and deployment status.",
+        content:
+          "Monitor pull request latency, build stability, test health, and deployment status.",
       },
     ],
   }),

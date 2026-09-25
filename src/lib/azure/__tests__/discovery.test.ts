@@ -3,9 +3,18 @@ import { discoverAzureProjectsBounded } from "../discovery.server";
 
 const PAT = "super-secret-pat";
 const page = (ids: string[], token?: string) =>
-  new Response(JSON.stringify({ count: ids.length, value: ids.map((id) => ({ id, name: `p-${id}`, state: "wellFormed" })) }), {
-    headers: { "content-type": "application/json", ...(token ? { "x-ms-continuationtoken": token } : {}) },
-  });
+  new Response(
+    JSON.stringify({
+      count: ids.length,
+      value: ids.map((id) => ({ id, name: `p-${id}`, state: "wellFormed" })),
+    }),
+    {
+      headers: {
+        "content-type": "application/json",
+        ...(token ? { "x-ms-continuationtoken": token } : {}),
+      },
+    },
+  );
 
 const run = (fetchImpl: typeof fetch, overrides = {}) =>
   discoverAzureProjectsBounded({
@@ -115,7 +124,10 @@ describe("project discovery", () => {
   it("fails fast on missing or invalid configuration", async () => {
     const missing = await discoverAzureProjectsBounded({ organization: "contoso", pat: "" });
     expect(missing.warning).toBe("missing_configuration");
-    const invalid = await discoverAzureProjectsBounded({ organization: "https://dev.azure.com/x", pat: PAT });
+    const invalid = await discoverAzureProjectsBounded({
+      organization: "https://dev.azure.com/x",
+      pat: PAT,
+    });
     expect(invalid.warning).toBe("invalid_configuration");
   });
 });

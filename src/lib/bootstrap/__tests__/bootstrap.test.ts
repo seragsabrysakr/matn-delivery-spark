@@ -3,9 +3,18 @@ import { validateBootstrapInput } from "../bootstrap-rules";
 
 /** Mutable fake of the service-role client used by the server module. */
 const state = {
-  user: null as null | { id: string; email: string | null; email_confirmed_at: string | null; user_metadata?: Record<string, unknown> },
+  user: null as null | {
+    id: string;
+    email: string | null;
+    email_confirmed_at: string | null;
+    user_metadata?: Record<string, unknown>;
+  },
   getUserError: null as null | { message: string },
-  rpcResult: { status: "created", tenantId: "11111111-1111-4111-8111-111111111111", tenantSlug: "matn" } as unknown,
+  rpcResult: {
+    status: "created",
+    tenantId: "11111111-1111-4111-8111-111111111111",
+    tenantSlug: "matn",
+  } as unknown,
   rpcCalls: [] as { fn: string; args: Record<string, unknown> }[],
 };
 
@@ -13,7 +22,10 @@ vi.mock("@/integrations/supabase/client.server", () => ({
   supabaseAdmin: {
     auth: {
       admin: {
-        getUserById: async () => ({ data: state.user ? { user: state.user } : null, error: state.getUserError }),
+        getUserById: async () => ({
+          data: state.user ? { user: state.user } : null,
+          error: state.getUserError,
+        }),
       },
     },
     rpc: async (fn: string, args: Record<string, unknown>) => {
@@ -41,7 +53,11 @@ beforeEach(() => {
   state.user = null;
   state.getUserError = null;
   state.rpcCalls = [];
-  state.rpcResult = { status: "created", tenantId: "11111111-1111-4111-8111-111111111111", tenantSlug: "matn" };
+  state.rpcResult = {
+    status: "created",
+    tenantId: "11111111-1111-4111-8111-111111111111",
+    tenantSlug: "matn",
+  };
 });
 
 describe("bootstrapFirstTenantAdmin", () => {
@@ -78,10 +94,16 @@ describe("bootstrapFirstTenantAdmin", () => {
   });
 
   it("rejects a second user once a real tenant exists", async () => {
-    state.user = { ...VERIFIED, id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", email: "second@example.com" };
+    state.user = {
+      ...VERIFIED,
+      id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      email: "second@example.com",
+    };
     state.rpcResult = { status: "rejected", reason: "tenant_exists" };
     const { bootstrapFirstTenantAdminServer } = await load();
-    expect(await bootstrapFirstTenantAdminServer("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", input)).toEqual({
+    expect(
+      await bootstrapFirstTenantAdminServer("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", input),
+    ).toEqual({
       status: "rejected",
       reason: "tenant_exists",
     });
@@ -125,7 +147,9 @@ describe("bootstrapFirstTenantAdmin", () => {
 
 describe("validateBootstrapInput", () => {
   it("accepts the defaults", () => {
-    expect(validateBootstrapInput({ tenantName: "MATN Delivery Intelligence", tenantSlug: "matn" })).toBeNull();
+    expect(
+      validateBootstrapInput({ tenantName: "MATN Delivery Intelligence", tenantSlug: "matn" }),
+    ).toBeNull();
   });
 
   it("rejects reserved, malformed and CI slugs", () => {

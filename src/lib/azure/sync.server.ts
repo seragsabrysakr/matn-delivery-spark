@@ -11,11 +11,16 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { AzureDevOpsClient, mapWithConcurrency } from "./client.server";
 import { AzureDevOpsError, toAzureFailure } from "./errors";
-import { emptyCounts, SYNC_DOMAINS, type DomainCounts, type SyncDomain, type SyncRunReport } from "./contracts";
+import {
+  emptyCounts,
+  SYNC_DOMAINS,
+  type DomainCounts,
+  type SyncDomain,
+  type SyncRunReport,
+} from "./contracts";
 import type { Database } from "@/integrations/supabase/types";
 import type { AzureProject, AzureTeam } from "@/types/azure";
 import { dateOnly, iterationPhase, memberKey, templateFromName } from "./sync-rules";
-
 
 const LOCK_TTL_MINUTES = 30;
 const PROJECT_CONCURRENCY = 4;
@@ -45,7 +50,11 @@ export interface FoundationSyncInput {
 }
 
 /** Ensures the organization row exists and returns its internal id. */
-export async function ensureOrganization(tenantId: string, organizationName: string, nowIso: string): Promise<string> {
+export async function ensureOrganization(
+  tenantId: string,
+  organizationName: string,
+  nowIso: string,
+): Promise<string> {
   const { data, error } = await supabaseAdmin
     .from("core_organizations")
     .upsert(
@@ -141,7 +150,8 @@ async function releaseLock(tenantId: string, runId: string, nowIso: string): Pro
 
 /** Tombstones rows that were not seen during a *complete* pass. */
 async function tombstoneMissing(
-  table: "core_projects" | "core_teams" | "core_iterations" | "core_team_iterations" | "core_members",
+  table:
+    "core_projects" | "core_teams" | "core_iterations" | "core_team_iterations" | "core_members",
   tenantId: string,
   scope: Readonly<Record<string, string>>,
   cutoffIso: string,
@@ -197,7 +207,9 @@ export async function runFoundationSync(input: FoundationSyncInput): Promise<Syn
         ? "fix_credentials"
         : error?.code === "insufficient_permissions" || error?.code === "forbidden"
           ? "contact_admin"
-          : error?.code === "throttled" || error?.code === "unavailable" || error?.code === "timeout"
+          : error?.code === "throttled" ||
+              error?.code === "unavailable" ||
+              error?.code === "timeout"
             ? "wait_and_retry"
             : status === "succeeded"
               ? "none"
@@ -241,7 +253,11 @@ export async function runFoundationSync(input: FoundationSyncInput): Promise<Syn
   const lock = await acquireLock(input.tenantId, organizationId, runId, startedAt);
   if (!lock.acquired) {
     warnings.push("another_run_active");
-    return buildReport("skipped", new AzureDevOpsError("conflict").toFailure(), now().toISOString());
+    return buildReport(
+      "skipped",
+      new AzureDevOpsError("conflict").toFailure(),
+      now().toISOString(),
+    );
   }
 
   await supabaseAdmin.from("ops_sync_runs").insert({
@@ -316,237 +332,252 @@ export async function runFoundationSync(input: FoundationSyncInput): Promise<Syn
     }
 
     // ---- teams, iterations, members per project ------------------------
-    await mapWithConcurrency([...projectIdByAzureId.entries()], PROJECT_CONCURRENCY, async ([azureProjectId, projectId]) => {
-      let teams: AzureTeam[] = [];
-      try {
-        teams = await input.client.listTeams(azureProjectId);
-      } catch {
-        domains.teams.failed += 1;
-        warnings.push(`teams_incomplete:${azureProjectId}`);
-        return;
-      }
-      domains.teams.discovered += teams.length;
-      const teamSeenIso = now().toISOString();
-
-      const teamIdByAzureId = new Map<string, string>();
-      for (const team of teams) {
-        const fieldValues = await input.client.getTeamFieldValues(azureProjectId, team.id);
-        const settings = await input.client.getTeamSettings(azureProjectId, team.id);
-        const { data, error } = await supabaseAdmin
-          .from("core_teams")
-          .upsert(
-            {
-              tenant_id: input.tenantId,
-              organization_id: organizationId,
-              project_id: projectId,
-              azure_team_id: team.id,
-              azure_team_name: team.name,
-              name_en: team.name,
-              name_ar: team.name,
-              description: team.description ?? null,
-              area_paths: fieldValues ? fieldValues.values.map((v) => v.value) : [],
-              default_iteration_path: settings?.defaultIteration?.path ?? null,
-              source_status: "active",
-              is_deleted: false,
-              last_seen_at: teamSeenIso,
-              last_synced_at: teamSeenIso,
-            },
-            { onConflict: "tenant_id,project_id,azure_team_id" },
-          )
-          .select("id, created_at")
-          .single();
-        if (error || !data) {
-          domains.teams.failed += 1;
-          continue;
-        }
-        teamIdByAzureId.set(team.id, data.id);
-        if (data.created_at >= startedIso) domains.teams.inserted += 1;
-        else domains.teams.updated += 1;
-      }
-      if (domains.teams.failed === 0) {
-        domains.teams.missing += await tombstoneMissing(
-          "core_teams",
-          input.tenantId,
-          { project_id: projectId },
-          teamSeenIso,
-        );
-      }
-
-      await mapWithConcurrency([...teamIdByAzureId.entries()], TEAM_CONCURRENCY, async ([azureTeamId, teamId]) => {
-        // iterations + team iterations
+    await mapWithConcurrency(
+      [...projectIdByAzureId.entries()],
+      PROJECT_CONCURRENCY,
+      async ([azureProjectId, projectId]) => {
+        let teams: AzureTeam[] = [];
         try {
-          const iterations = await input.client.listTeamIterations(azureProjectId, azureTeamId);
-          domains.iterations.discovered += iterations.length;
-          const iterationSeenIso = now().toISOString();
-          for (const iteration of iterations) {
-            const phase = iterationPhase(iteration, now());
-            const { data, error } = await supabaseAdmin
-              .from("core_iterations")
-              .upsert(
-                {
-                  tenant_id: input.tenantId,
-                  organization_id: organizationId,
-                  project_id: projectId,
-                  azure_iteration_id: iteration.id,
-                  azure_iteration_path: iteration.path,
-                  name_en: iteration.name,
-                  name_ar: iteration.name,
-                  start_date: dateOnly(iteration.attributes?.startDate),
-                  finish_date: dateOnly(iteration.attributes?.finishDate),
-                  phase,
-                  source_status: "active",
-                  is_deleted: false,
-                  last_seen_at: iterationSeenIso,
-                  last_synced_at: iterationSeenIso,
-                },
-                { onConflict: "tenant_id,project_id,azure_iteration_id" },
-              )
-              .select("id, created_at")
-              .single();
-            if (error || !data) {
-              domains.iterations.failed += 1;
-              continue;
-            }
-            if (data.created_at >= startedIso) domains.iterations.inserted += 1;
-            else domains.iterations.updated += 1;
-
-            domains.teamIterations.discovered += 1;
-            const { data: link, error: linkError } = await supabaseAdmin
-              .from("core_team_iterations")
-              .upsert(
-                {
-                  tenant_id: input.tenantId,
-                  organization_id: organizationId,
-                  project_id: projectId,
-                  team_id: teamId,
-                  iteration_id: data.id,
-                  phase,
-                  source_status: "active",
-                  is_deleted: false,
-                  last_seen_at: iterationSeenIso,
-                  last_synced_at: iterationSeenIso,
-                },
-                { onConflict: "tenant_id,team_id,iteration_id" },
-              )
-              .select("id, created_at")
-              .single();
-            if (linkError || !link) {
-              domains.teamIterations.failed += 1;
-              continue;
-            }
-            if (link.created_at >= startedIso) domains.teamIterations.inserted += 1;
-            else domains.teamIterations.updated += 1;
-          }
-          domains.iterations.freshnessAt = iterationSeenIso;
-          domains.teamIterations.freshnessAt = iterationSeenIso;
+          teams = await input.client.listTeams(azureProjectId);
         } catch {
-          domains.iterations.failed += 1;
-          warnings.push(`iterations_incomplete:${azureTeamId}`);
+          domains.teams.failed += 1;
+          warnings.push(`teams_incomplete:${azureProjectId}`);
+          return;
         }
+        domains.teams.discovered += teams.length;
+        const teamSeenIso = now().toISOString();
 
-        // members + memberships
-        try {
-          const members = await input.client.listTeamMembers(azureProjectId, azureTeamId);
-          const memberSeenIso = now().toISOString();
-          domains.members.discovered += members.length;
-          const memberIds: string[] = [];
-          for (const entry of members) {
-            const identity = entry.identity;
-            const descriptor = memberKey(identity);
-            if (!descriptor) {
-              domains.members.failed += 1;
-              continue;
-            }
-            const { data, error } = await supabaseAdmin
-              .from("core_members")
-              .upsert(
-                {
-                  tenant_id: input.tenantId,
-                  organization_id: organizationId,
-                  azure_descriptor: descriptor,
-                  azure_unique_name: identity.uniqueName ?? null,
-                  display_name: identity.displayName ?? descriptor,
-                  email: identity.uniqueName?.includes("@") ? identity.uniqueName : null,
-                  image_url: identity.imageUrl ?? null,
-                  is_active: true,
-                  source_status: "active",
-                  is_deleted: false,
-                  last_seen_at: memberSeenIso,
-                  last_synced_at: memberSeenIso,
-                },
-                { onConflict: "tenant_id,organization_id,azure_descriptor" },
-              )
-              .select("id, created_at")
-              .single();
-            if (error || !data) {
-              domains.members.failed += 1;
-              continue;
-            }
-            memberIdByDescriptor.set(descriptor, data.id);
-            memberIds.push(data.id);
-            if (data.created_at >= startedIso) domains.members.inserted += 1;
-            else domains.members.updated += 1;
-          }
-          domains.members.freshnessAt = memberSeenIso;
-
-          // memberships: read-then-insert keeps the nullable natural key stable
-          const { data: existing } = await supabaseAdmin
-            .from("core_team_memberships")
-            .select("id, member_id")
-            .eq("tenant_id", input.tenantId)
-            .eq("team_id", teamId);
-          const existingByMember = new Map((existing ?? []).map((row) => [row.member_id, row.id]));
-          domains.teamMemberships.discovered += memberIds.length;
-          for (const memberId of memberIds) {
-            const existingId = existingByMember.get(memberId);
-            if (existingId) {
-              await supabaseAdmin
-                .from("core_team_memberships")
-                .update({
-                  is_active: true,
-                  left_at: null,
-                  source_status: "active",
-                  is_deleted: false,
-                  last_seen_at: memberSeenIso,
-                })
-                .eq("tenant_id", input.tenantId)
-                .eq("id", existingId);
-              domains.teamMemberships.updated += 1;
-            } else {
-              const { error } = await supabaseAdmin.from("core_team_memberships").insert({
+        const teamIdByAzureId = new Map<string, string>();
+        for (const team of teams) {
+          const fieldValues = await input.client.getTeamFieldValues(azureProjectId, team.id);
+          const settings = await input.client.getTeamSettings(azureProjectId, team.id);
+          const { data, error } = await supabaseAdmin
+            .from("core_teams")
+            .upsert(
+              {
                 tenant_id: input.tenantId,
+                organization_id: organizationId,
                 project_id: projectId,
-                team_id: teamId,
-                member_id: memberId,
-                role: "member",
-                is_active: true,
+                azure_team_id: team.id,
+                azure_team_name: team.name,
+                name_en: team.name,
+                name_ar: team.name,
+                description: team.description ?? null,
+                area_paths: fieldValues ? fieldValues.values.map((v) => v.value) : [],
+                default_iteration_path: settings?.defaultIteration?.path ?? null,
                 source_status: "active",
                 is_deleted: false,
-                last_seen_at: memberSeenIso,
-              });
-              if (error) domains.teamMemberships.failed += 1;
-              else domains.teamMemberships.inserted += 1;
-            }
+                last_seen_at: teamSeenIso,
+                last_synced_at: teamSeenIso,
+              },
+              { onConflict: "tenant_id,project_id,azure_team_id" },
+            )
+            .select("id, created_at")
+            .single();
+          if (error || !data) {
+            domains.teams.failed += 1;
+            continue;
           }
-          // members that left the team are closed, never deleted
-          const activeSet = new Set(memberIds);
-          for (const [memberId, membershipId] of existingByMember) {
-            if (activeSet.has(memberId)) continue;
-            await supabaseAdmin
-              .from("core_team_memberships")
-              .update({ is_active: false, left_at: memberSeenIso, source_status: "deleted", is_deleted: true })
-              .eq("tenant_id", input.tenantId)
-              .eq("id", membershipId)
-              .eq("is_deleted", false);
-            domains.teamMemberships.missing += 1;
-          }
-          domains.teamMemberships.freshnessAt = memberSeenIso;
-        } catch {
-          domains.members.failed += 1;
-          warnings.push(`members_incomplete:${azureTeamId}`);
+          teamIdByAzureId.set(team.id, data.id);
+          if (data.created_at >= startedIso) domains.teams.inserted += 1;
+          else domains.teams.updated += 1;
         }
-      });
-    });
+        if (domains.teams.failed === 0) {
+          domains.teams.missing += await tombstoneMissing(
+            "core_teams",
+            input.tenantId,
+            { project_id: projectId },
+            teamSeenIso,
+          );
+        }
+
+        await mapWithConcurrency(
+          [...teamIdByAzureId.entries()],
+          TEAM_CONCURRENCY,
+          async ([azureTeamId, teamId]) => {
+            // iterations + team iterations
+            try {
+              const iterations = await input.client.listTeamIterations(azureProjectId, azureTeamId);
+              domains.iterations.discovered += iterations.length;
+              const iterationSeenIso = now().toISOString();
+              for (const iteration of iterations) {
+                const phase = iterationPhase(iteration, now());
+                const { data, error } = await supabaseAdmin
+                  .from("core_iterations")
+                  .upsert(
+                    {
+                      tenant_id: input.tenantId,
+                      organization_id: organizationId,
+                      project_id: projectId,
+                      azure_iteration_id: iteration.id,
+                      azure_iteration_path: iteration.path,
+                      name_en: iteration.name,
+                      name_ar: iteration.name,
+                      start_date: dateOnly(iteration.attributes?.startDate),
+                      finish_date: dateOnly(iteration.attributes?.finishDate),
+                      phase,
+                      source_status: "active",
+                      is_deleted: false,
+                      last_seen_at: iterationSeenIso,
+                      last_synced_at: iterationSeenIso,
+                    },
+                    { onConflict: "tenant_id,project_id,azure_iteration_id" },
+                  )
+                  .select("id, created_at")
+                  .single();
+                if (error || !data) {
+                  domains.iterations.failed += 1;
+                  continue;
+                }
+                if (data.created_at >= startedIso) domains.iterations.inserted += 1;
+                else domains.iterations.updated += 1;
+
+                domains.teamIterations.discovered += 1;
+                const { data: link, error: linkError } = await supabaseAdmin
+                  .from("core_team_iterations")
+                  .upsert(
+                    {
+                      tenant_id: input.tenantId,
+                      organization_id: organizationId,
+                      project_id: projectId,
+                      team_id: teamId,
+                      iteration_id: data.id,
+                      phase,
+                      source_status: "active",
+                      is_deleted: false,
+                      last_seen_at: iterationSeenIso,
+                      last_synced_at: iterationSeenIso,
+                    },
+                    { onConflict: "tenant_id,team_id,iteration_id" },
+                  )
+                  .select("id, created_at")
+                  .single();
+                if (linkError || !link) {
+                  domains.teamIterations.failed += 1;
+                  continue;
+                }
+                if (link.created_at >= startedIso) domains.teamIterations.inserted += 1;
+                else domains.teamIterations.updated += 1;
+              }
+              domains.iterations.freshnessAt = iterationSeenIso;
+              domains.teamIterations.freshnessAt = iterationSeenIso;
+            } catch {
+              domains.iterations.failed += 1;
+              warnings.push(`iterations_incomplete:${azureTeamId}`);
+            }
+
+            // members + memberships
+            try {
+              const members = await input.client.listTeamMembers(azureProjectId, azureTeamId);
+              const memberSeenIso = now().toISOString();
+              domains.members.discovered += members.length;
+              const memberIds: string[] = [];
+              for (const entry of members) {
+                const identity = entry.identity;
+                const descriptor = memberKey(identity);
+                if (!descriptor) {
+                  domains.members.failed += 1;
+                  continue;
+                }
+                const { data, error } = await supabaseAdmin
+                  .from("core_members")
+                  .upsert(
+                    {
+                      tenant_id: input.tenantId,
+                      organization_id: organizationId,
+                      azure_descriptor: descriptor,
+                      azure_unique_name: identity.uniqueName ?? null,
+                      display_name: identity.displayName ?? descriptor,
+                      email: identity.uniqueName?.includes("@") ? identity.uniqueName : null,
+                      image_url: identity.imageUrl ?? null,
+                      is_active: true,
+                      source_status: "active",
+                      is_deleted: false,
+                      last_seen_at: memberSeenIso,
+                      last_synced_at: memberSeenIso,
+                    },
+                    { onConflict: "tenant_id,organization_id,azure_descriptor" },
+                  )
+                  .select("id, created_at")
+                  .single();
+                if (error || !data) {
+                  domains.members.failed += 1;
+                  continue;
+                }
+                memberIdByDescriptor.set(descriptor, data.id);
+                memberIds.push(data.id);
+                if (data.created_at >= startedIso) domains.members.inserted += 1;
+                else domains.members.updated += 1;
+              }
+              domains.members.freshnessAt = memberSeenIso;
+
+              // memberships: read-then-insert keeps the nullable natural key stable
+              const { data: existing } = await supabaseAdmin
+                .from("core_team_memberships")
+                .select("id, member_id")
+                .eq("tenant_id", input.tenantId)
+                .eq("team_id", teamId);
+              const existingByMember = new Map(
+                (existing ?? []).map((row) => [row.member_id, row.id]),
+              );
+              domains.teamMemberships.discovered += memberIds.length;
+              for (const memberId of memberIds) {
+                const existingId = existingByMember.get(memberId);
+                if (existingId) {
+                  await supabaseAdmin
+                    .from("core_team_memberships")
+                    .update({
+                      is_active: true,
+                      left_at: null,
+                      source_status: "active",
+                      is_deleted: false,
+                      last_seen_at: memberSeenIso,
+                    })
+                    .eq("tenant_id", input.tenantId)
+                    .eq("id", existingId);
+                  domains.teamMemberships.updated += 1;
+                } else {
+                  const { error } = await supabaseAdmin.from("core_team_memberships").insert({
+                    tenant_id: input.tenantId,
+                    project_id: projectId,
+                    team_id: teamId,
+                    member_id: memberId,
+                    role: "member",
+                    is_active: true,
+                    source_status: "active",
+                    is_deleted: false,
+                    last_seen_at: memberSeenIso,
+                  });
+                  if (error) domains.teamMemberships.failed += 1;
+                  else domains.teamMemberships.inserted += 1;
+                }
+              }
+              // members that left the team are closed, never deleted
+              const activeSet = new Set(memberIds);
+              for (const [memberId, membershipId] of existingByMember) {
+                if (activeSet.has(memberId)) continue;
+                await supabaseAdmin
+                  .from("core_team_memberships")
+                  .update({
+                    is_active: false,
+                    left_at: memberSeenIso,
+                    source_status: "deleted",
+                    is_deleted: true,
+                  })
+                  .eq("tenant_id", input.tenantId)
+                  .eq("id", membershipId)
+                  .eq("is_deleted", false);
+                domains.teamMemberships.missing += 1;
+              }
+              domains.teamMemberships.freshnessAt = memberSeenIso;
+            } catch {
+              domains.members.failed += 1;
+              warnings.push(`members_incomplete:${azureTeamId}`);
+            }
+          },
+        );
+      },
+    );
 
     domains.teams.complete = domains.teams.failed === 0;
     domains.iterations.complete = domains.iterations.failed === 0;
@@ -567,7 +598,8 @@ export async function runFoundationSync(input: FoundationSyncInput): Promise<Syn
         items_read: report.totals.discovered,
         items_written: report.totals.inserted + report.totals.updated,
         error_count: report.totals.failed,
-        details: report as unknown as Database["public"]["Tables"]["ops_sync_runs"]["Row"]["details"],
+        details:
+          report as unknown as Database["public"]["Tables"]["ops_sync_runs"]["Row"]["details"],
       })
       .eq("tenant_id", input.tenantId)
       .eq("id", runId);
@@ -593,7 +625,8 @@ export async function runFoundationSync(input: FoundationSyncInput): Promise<Syn
         finished_at: failedAt,
         finalized_at: failedAt,
         error_count: report.totals.failed + 1,
-        details: report as unknown as Database["public"]["Tables"]["ops_sync_runs"]["Row"]["details"],
+        details:
+          report as unknown as Database["public"]["Tables"]["ops_sync_runs"]["Row"]["details"],
       })
       .eq("tenant_id", input.tenantId)
       .eq("id", runId);
