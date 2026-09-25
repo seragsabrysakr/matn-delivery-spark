@@ -118,7 +118,12 @@ export interface Risk {
 export type FunnelStageId = "backlog" | "ready" | "development" | "review" | "testing" | "done";
 
 export interface FunnelStage {
-  id: FunnelStageId;
+  /** A fixed stage id in demo data; the Azure board column id in live data. */
+  id: FunnelStageId | (string & {});
+  /** Live data: the board column name exactly as configured in Azure. */
+  label?: string;
+  /** Live data: the column's WIP limit from Azure, when one is set. */
+  itemLimit?: number | null;
   count: number;
   avgDays: number;
   status: HealthStatus;

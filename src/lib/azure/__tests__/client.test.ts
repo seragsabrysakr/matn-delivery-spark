@@ -160,3 +160,25 @@ describe("mapWithConcurrency", () => {
     expect(peak).toBeLessThanOrEqual(2);
   });
 });
+
+describe("AzureDevOpsClient metadata reads", () => {
+  it("reads process and board metadata with GET only, on the documented paths", async () => {
+    const calls: { url: string; method: string }[] = [];
+    const client = makeClient(async (url, init) => {
+      calls.push({ url: String(url), method: String(init?.method) });
+      return jsonResponse({ count: 0, value: [] });
+    });
+
+    await client.listWorkItemTypes("proj-1");
+    await client.listWorkItemTypeStates("proj-1", "User Story");
+    await client.listTeamBoards("proj-1", "team-1");
+    await client.listBoardColumns("proj-1", "team-1", "board-1");
+
+    expect(calls.map((c) => c.method)).toEqual(["GET", "GET", "GET", "GET"]);
+    expect(calls[0]!.url).toContain("/contoso/proj-1/_apis/wit/workitemtypes?");
+    expect(calls[1]!.url).toContain("/proj-1/_apis/wit/workitemtypes/User%20Story/states?");
+    expect(calls[2]!.url).toContain("/proj-1/team-1/_apis/work/boards?");
+    expect(calls[3]!.url).toContain("/proj-1/team-1/_apis/work/boards/board-1/columns?");
+    for (const call of calls) expect(call.url).toContain("api-version=7.1");
+  });
+});

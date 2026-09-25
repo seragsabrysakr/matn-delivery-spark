@@ -8,6 +8,8 @@ import { AzureDevOpsError, statusToCode } from "./errors";
 import { isAllowedReadPostKind, type AzureReadPostKind } from "./wiql";
 
 import type {
+  AzureBoardColumn,
+  AzureBoardReference,
   AzureIteration,
   AzureListResponse,
   AzureIdentityRef,
@@ -15,6 +17,8 @@ import type {
   AzureTeam,
   AzureTeamFieldValues,
   AzureTeamSettings,
+  AzureWorkItemStateColor,
+  AzureWorkItemType,
 } from "@/types/azure";
 
 const API_VERSION = "7.1";
@@ -308,6 +312,47 @@ export class AzureDevOpsClient {
     } catch {
       return null;
     }
+  }
+
+  listWorkItemTypes(projectId: string, signal?: AbortSignal): Promise<AzureWorkItemType[]> {
+    return this.list<AzureWorkItemType>(
+      `/${encodeURIComponent(projectId)}/_apis/wit/workitemtypes`,
+      { signal },
+    );
+  }
+
+  listWorkItemTypeStates(
+    projectId: string,
+    typeName: string,
+    signal?: AbortSignal,
+  ): Promise<AzureWorkItemStateColor[]> {
+    return this.list<AzureWorkItemStateColor>(
+      `/${encodeURIComponent(projectId)}/_apis/wit/workitemtypes/${encodeURIComponent(typeName)}/states`,
+      { signal },
+    );
+  }
+
+  listTeamBoards(
+    projectId: string,
+    teamId: string,
+    signal?: AbortSignal,
+  ): Promise<AzureBoardReference[]> {
+    return this.list<AzureBoardReference>(
+      `/${encodeURIComponent(projectId)}/${encodeURIComponent(teamId)}/_apis/work/boards`,
+      { signal },
+    );
+  }
+
+  listBoardColumns(
+    projectId: string,
+    teamId: string,
+    boardId: string,
+    signal?: AbortSignal,
+  ): Promise<AzureBoardColumn[]> {
+    return this.list<AzureBoardColumn>(
+      `/${encodeURIComponent(projectId)}/${encodeURIComponent(teamId)}/_apis/work/boards/${encodeURIComponent(boardId)}/columns`,
+      { signal },
+    );
   }
 
   listTeamMembers(

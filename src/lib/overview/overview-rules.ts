@@ -7,11 +7,15 @@
  * metric as unavailable instead of inventing a value.
  */
 import { cairoToday, type SprintCalendar } from "@/lib/calendar/cairo";
+import {
+  boardColumnIndexFor,
+  choosePrimaryBoard,
+  type BoardColumnType,
+} from "@/lib/azure/metadata-rules";
 import type { StateCategory, WorkItemAlias } from "@/types/domain/work-item";
 import type {
   DeliverySnapshot,
   FunnelStage,
-  FunnelStageId,
   HealthStatus,
   KpiExplanationFacts,
   KpiId,
@@ -53,6 +57,25 @@ export interface RealWorkItemFact {
   readonly stateChangeDate: string | null;
   readonly changedAtSource: string;
   readonly azureUrl: string | null;
+  /** `System.BoardColumn` as synchronized; null when Azure did not report one. */
+  readonly boardColumn: string | null;
+  /** When the item was first observed in its current column; null if unknown. */
+  readonly boardColumnEnteredAt: string | null;
+}
+
+export interface BoardColumnFact {
+  readonly id: string;
+  readonly name: string;
+  readonly columnType: BoardColumnType;
+  readonly itemLimit: number | null;
+  readonly stateMappings: Readonly<Record<string, string>>;
+}
+
+/** One of the team's Azure boards with its columns in Azure order. */
+export interface BoardFact {
+  readonly id: string;
+  readonly name: string;
+  readonly columns: readonly BoardColumnFact[];
 }
 
 export interface MemberFact {
@@ -73,6 +96,8 @@ export interface OverviewInput {
   readonly members: readonly MemberFact[];
   readonly calendar: SprintCalendar | null;
   readonly history: readonly SnapshotHistoryPoint[];
+  /** The team's synchronized boards; empty until board metadata is synced. */
+  readonly boards?: readonly BoardFact[];
   readonly lastSyncedAt: string | null;
   readonly nowIso: string;
   readonly iterationId: string;
@@ -85,7 +110,8 @@ export type UnavailableReasonCode =
   | "baseline_same_day"
   | "no_estimates"
   | "insufficient_coverage"
-  | "not_synchronized";
+  | "not_synchronized"
+  | "board_not_synchronized";
 
 export interface OverviewResult {
   readonly snapshot: DeliverySnapshot;
@@ -225,43 +251,54 @@ export function computeSprintConfidence(input: {
   return { score: Math.round(weighted / coverage), coverage, components };
 }
 
-const FUNNEL_ORDER: readonly FunnelStageId[] = [
-  "backlog",
-  "ready",
-  "development",
-  "review",
-  "testing",
-  "done",
-];
+/**
+ * The delivery funnel is the team's own Azure board: one stage per column, in
+ * Azure's order, named exactly as in Azure (ADR-013). The board shown is the
+ * one that holds most of the sprint's items. Items that do not belong on that
+ * board (e.g. tasks) are not counted. No board metadata means no funnel.
+ */
+export function computeFunnel(
+  facts: readonly RealWorkItemFact[],
+  boards: readonly BoardFact[],
+  nowIso: string,
+): FunnelStage[] {
+  const board = choosePrimaryBoard(
+    boards,
+    facts.map((f) => f.azureType),
+  );
+  if (!board || board.columns.length === 0) return [];
 
-function funnelStageOf(fact: RealWorkItemFact): FunnelStageId {
-  const state = fact.state.toLowerCase();
-  if (state.includes("ready")) return "ready";
-  if (state.includes("test")) return "testing";
-  switch (fact.stateCategory) {
-    case "proposed":
-      return "backlog";
-    case "inProgress":
-      return "development";
-    case "resolved":
-      return "review";
-    case "completed":
-      return "done";
-    default:
-      return "backlog";
+  const byColumn = board.columns.map(() => [] as RealWorkItemFact[]);
+  for (const fact of facts) {
+    const index = boardColumnIndexFor(fact, board.columns);
+    if (index !== null) byColumn[index]!.push(fact);
   }
-}
 
-export function computeFunnel(facts: readonly RealWorkItemFact[], nowIso: string): FunnelStage[] {
-  return FUNNEL_ORDER.map((id) => {
-    const stageItems = facts.filter((f) => funnelStageOf(f) === id);
+  return board.columns.map((column, index) => {
+    const stageItems = byColumn[index]!;
     const ages = stageItems
-      .map((f) => daysBetween(f.stateChangeDate ?? f.changedAtSource, nowIso))
+      .map((f) =>
+        daysBetween(f.boardColumnEnteredAt ?? f.stateChangeDate ?? f.changedAtSource, nowIso),
+      )
       .filter((v): v is number => v !== null);
     const avgDays = ages.length > 0 ? round(ages.reduce((a, b) => a + b, 0) / ages.length) : 0;
+    const overLimit = column.itemLimit !== null && stageItems.length > column.itemLimit;
     const status: HealthStatus =
-      id === "done" ? "healthy" : avgDays >= 5 ? "critical" : avgDays >= 3 ? "atRisk" : "healthy";
-    return { id, count: stageItems.length, avgDays, status };
+      column.columnType === "outgoing"
+        ? "healthy"
+        : avgDays >= 5
+          ? "critical"
+          : avgDays >= 3 || overLimit
+            ? "atRisk"
+            : "healthy";
+    return {
+      id: column.id,
+      label: column.name,
+      itemLimit: column.itemLimit,
+      count: stageItems.length,
+      avgDays,
+      status,
+    };
   });
 }
 
@@ -905,6 +942,7 @@ export function buildOverview(input: OverviewInput): OverviewResult {
     }),
   );
 
+  if ((input.boards ?? []).length === 0) unavailable["funnel"] = "board_not_synchronized";
   unavailable["release"] = "not_synchronized";
   unavailable["engineering"] = "not_synchronized";
 
@@ -920,7 +958,7 @@ export function buildOverview(input: OverviewInput): OverviewResult {
     kpis,
     trajectory: buildTrajectory(input.history, calendar, scope.percent),
     risks,
-    funnel: computeFunnel(facts, nowIso),
+    funnel: computeFunnel(facts, input.boards ?? [], nowIso),
     teamLoad: computeTeamLoad(facts, input.members),
     engineering: {
       activePullRequests: 0,

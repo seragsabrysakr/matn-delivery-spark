@@ -20,6 +20,13 @@ import {
 } from "./wiql";
 import { resolveProcessMapping, type ProcessMappingRow } from "./process-mapping";
 import { diffWorkItem, mapAzureWorkItem, type AzureIdentityLike } from "./workitem-map";
+import { boardColumnEnteredAt } from "./metadata-rules";
+import {
+  ensureMetadataFresh,
+  loadAzureStateIndex,
+  recordStateResolutionGaps,
+  type StateResolutionGap,
+} from "./metadata-sync.server";
 import { ensureConnection } from "./sync.server";
 import type { ResolvedTeamIteration } from "@/lib/workspace/context.server";
 
@@ -155,7 +162,7 @@ interface Loaded {
 }
 
 async function loadReferenceData(target: ResolvedTeamIteration): Promise<Loaded> {
-  const [mappingRow, members] = await Promise.all([
+  const [mappingRow, members, azureStates] = await Promise.all([
     target.processMappingId
       ? supabaseAdmin
           .from("core_process_mappings")
@@ -171,6 +178,7 @@ async function loadReferenceData(target: ResolvedTeamIteration): Promise<Loaded>
       .select("id, azure_descriptor, azure_unique_name")
       .eq("tenant_id", target.tenantId)
       .eq("organization_id", target.organizationId),
+    loadAzureStateIndex(target.tenantId, target.projectId),
   ]);
 
   const memberByDescriptor = new Map<string, string>();
@@ -185,6 +193,7 @@ async function loadReferenceData(target: ResolvedTeamIteration): Promise<Loaded>
     mapping: resolveProcessMapping(
       (mappingRow.data as ProcessMappingRow | null) ?? null,
       target.processTemplateKind,
+      azureStates,
     ),
     memberByDescriptor,
     memberByUniqueName,
@@ -226,6 +235,23 @@ export async function advanceWorkItemSync(
   const client =
     options.client ??
     AzureDevOpsClient.fromEnvironment({ timeoutMs: WORK_ITEM_REQUEST_TIMEOUT_MS });
+
+  // States and board columns come from Azure, not from code (ADR-013). Refresh
+  // them once per run, before the first read, when they are stale.
+  if (cursor.phase === "discover" && target.azureTeamId) {
+    await ensureMetadataFresh(
+      {
+        tenantId: target.tenantId,
+        organizationId: target.organizationId,
+        projectId: target.projectId,
+        azureProjectId: target.azureProjectId,
+        teamId: target.teamId,
+        azureTeamId: target.azureTeamId,
+      },
+      client,
+    );
+  }
+
   const { mapping, memberByDescriptor, memberByUniqueName } = await loadReferenceData(target);
 
   const resolveMember = (ref: AzureIdentityLike | null | undefined): string | null => {
@@ -287,6 +313,7 @@ export async function advanceWorkItemSync(
         let unchanged = 0;
         let failed = 0;
         const seenAt = new Date().toISOString();
+        const gaps: StateResolutionGap[] = [];
 
         for (const raw of response.value ?? []) {
           const mapped = mapAzureWorkItem(raw, mapping, {
@@ -299,7 +326,28 @@ export async function advanceWorkItemSync(
             azureProjectName: target.azureProjectName,
           });
 
+          if (mapped.stateCategorySource === "fallback" || mapped.stateCategorySource === "none") {
+            gaps.push({
+              azureType: mapped.payload.azure_work_item_type,
+              state: mapped.payload.state,
+              source: mapped.stateCategorySource,
+              category: mapped.payload.state_category,
+            });
+          }
+
           const prior = existingById.get(mapped.azureWorkItemId);
+          const columnEnteredAt = boardColumnEnteredAt(
+            prior
+              ? {
+                  boardColumn: prior["board_column"] as string | null,
+                  enteredAt: prior["board_column_entered_at"] as string | null,
+                }
+              : null,
+            {
+              boardColumn: mapped.payload.board_column,
+              changedAtSource: mapped.payload.changed_at_source,
+            },
+          );
           const blockedSince = mapped.payload.is_blocked
             ? ((prior?.["blocked_since"] as string | null) ??
               mapped.payload.state_change_date ??
@@ -313,6 +361,7 @@ export async function advanceWorkItemSync(
               azure_work_item_id: mapped.azureWorkItemId,
               ...mapped.payload,
               blocked_since: blockedSince,
+              board_column_entered_at: columnEnteredAt,
               last_seen_at: seenAt,
               last_synced_at: seenAt,
             });
@@ -328,8 +377,9 @@ export async function advanceWorkItemSync(
             },
           );
           const blockedChanged = (prior["blocked_since"] ?? null) !== blockedSince;
+          const columnEntryChanged = (prior["board_column_entered_at"] ?? null) !== columnEnteredAt;
 
-          if (diff.kind === "unchanged" && !blockedChanged) {
+          if (diff.kind === "unchanged" && !blockedChanged && !columnEntryChanged) {
             // Freshness only: never counted as an update.
             await supabaseAdmin
               .from("az_work_items")
@@ -344,6 +394,7 @@ export async function advanceWorkItemSync(
             .update({
               ...(diff.kind === "update" ? diff.patch : {}),
               blocked_since: blockedSince,
+              board_column_entered_at: columnEnteredAt,
               last_seen_at: seenAt,
               last_synced_at: seenAt,
             })
@@ -351,6 +402,8 @@ export async function advanceWorkItemSync(
           if (error) failed += 1;
           else updated += 1;
         }
+
+        await recordStateResolutionGaps(target.tenantId, target.projectId, gaps);
 
         cursor = {
           ...cursor,
