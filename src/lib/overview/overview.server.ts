@@ -11,6 +11,7 @@ import { cairoToday, sprintCalendar } from "@/lib/calendar/cairo";
 import {
   buildOverview,
   computeScopeCompletion,
+  type BoardFact,
   type MemberFact,
   type OverviewResult,
   type RealWorkItemFact,
@@ -34,7 +35,7 @@ async function loadFacts(target: ResolvedTeamIteration): Promise<RealWorkItemFac
   const { data, error } = await supabaseAdmin
     .from("az_work_items")
     .select(
-      "id, azure_work_item_id, title, alias, azure_work_item_type, state, state_category, is_blocked, blocked_since, estimate, assigned_to_member_id, counts_toward_scope, state_change_date, changed_at_source, azure_url",
+      "id, azure_work_item_id, title, alias, azure_work_item_type, state, state_category, is_blocked, blocked_since, estimate, assigned_to_member_id, counts_toward_scope, state_change_date, changed_at_source, azure_url, board_column, board_column_entered_at",
     )
     .eq("tenant_id", target.tenantId)
     .eq("iteration_id", target.iterationId)
@@ -58,6 +59,55 @@ async function loadFacts(target: ResolvedTeamIteration): Promise<RealWorkItemFac
     stateChangeDate: row.state_change_date,
     changedAtSource: row.changed_at_source,
     azureUrl: row.azure_url,
+    boardColumn: row.board_column,
+    boardColumnEnteredAt: row.board_column_entered_at,
+  }));
+}
+
+/** The team's synchronized Azure boards with their columns in Azure order. */
+async function loadBoards(target: ResolvedTeamIteration): Promise<BoardFact[]> {
+  const [boards, columns] = await Promise.all([
+    supabaseAdmin
+      .from("az_team_boards")
+      .select("id, name")
+      .eq("tenant_id", target.tenantId)
+      .eq("team_id", target.teamId)
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: true }),
+    supabaseAdmin
+      .from("az_board_columns")
+      .select("id, board_id, name, column_order, column_type, item_limit, state_mappings")
+      .eq("tenant_id", target.tenantId)
+      .eq("team_id", target.teamId)
+      .eq("is_deleted", false)
+      .order("column_order", { ascending: true }),
+  ]);
+  if (boards.error || columns.error) return [];
+
+  return (boards.data ?? []).map((board) => ({
+    id: board.id,
+    name: board.name,
+    columns: (columns.data ?? [])
+      .filter((column) => column.board_id === board.id)
+      .map((column) => ({
+        id: column.id,
+        name: column.name,
+        columnType:
+          column.column_type === "incoming" ||
+          column.column_type === "inProgress" ||
+          column.column_type === "outgoing"
+            ? column.column_type
+            : "unknown",
+        itemLimit: column.item_limit,
+        stateMappings:
+          column.state_mappings &&
+          typeof column.state_mappings === "object" &&
+          !Array.isArray(column.state_mappings)
+            ? (Object.fromEntries(
+                Object.entries(column.state_mappings).filter(([, v]) => typeof v === "string"),
+              ) as Record<string, string>)
+            : {},
+      })),
   }));
 }
 
@@ -177,7 +227,11 @@ export async function persistDailySnapshot(
 export async function buildRealOverview(
   target: ResolvedTeamIteration,
 ): Promise<RealOverviewPayload> {
-  const [facts, members] = await Promise.all([loadFacts(target), loadMembers(target)]);
+  const [facts, members, boards] = await Promise.all([
+    loadFacts(target),
+    loadMembers(target),
+    loadBoards(target),
+  ]);
   await persistDailySnapshot(target, facts);
   const history = await loadHistory(target);
 
@@ -203,6 +257,7 @@ export async function buildRealOverview(
     members,
     calendar,
     history,
+    boards,
     lastSyncedAt: lastSync.data?.last_synced_at ?? null,
     nowIso: new Date().toISOString(),
     iterationId: target.teamIterationId,

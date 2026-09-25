@@ -597,6 +597,90 @@ export type Database = {
           },
         ];
       };
+      az_board_columns: {
+        Row: {
+          azure_column_id: string;
+          board_id: string;
+          column_order: number;
+          column_type: string;
+          created_at: string;
+          deleted_at_source: string | null;
+          description: string | null;
+          id: string;
+          is_deleted: boolean;
+          is_split: boolean;
+          item_limit: number | null;
+          last_seen_at: string | null;
+          last_synced_at: string | null;
+          name: string;
+          project_id: string;
+          source_status: Database["public"]["Enums"]["source_status"];
+          state_mappings: Json;
+          team_id: string;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          azure_column_id: string;
+          board_id: string;
+          column_order: number;
+          column_type: string;
+          created_at?: string;
+          deleted_at_source?: string | null;
+          description?: string | null;
+          id?: string;
+          is_deleted?: boolean;
+          is_split?: boolean;
+          item_limit?: number | null;
+          last_seen_at?: string | null;
+          last_synced_at?: string | null;
+          name: string;
+          project_id: string;
+          source_status?: Database["public"]["Enums"]["source_status"];
+          state_mappings?: Json;
+          team_id: string;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          azure_column_id?: string;
+          board_id?: string;
+          column_order?: number;
+          column_type?: string;
+          created_at?: string;
+          deleted_at_source?: string | null;
+          description?: string | null;
+          id?: string;
+          is_deleted?: boolean;
+          is_split?: boolean;
+          item_limit?: number | null;
+          last_seen_at?: string | null;
+          last_synced_at?: string | null;
+          name?: string;
+          project_id?: string;
+          source_status?: Database["public"]["Enums"]["source_status"];
+          state_mappings?: Json;
+          team_id?: string;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "az_board_columns_board_fk";
+            columns: ["tenant_id", "project_id", "board_id"];
+            isOneToOne: false;
+            referencedRelation: "az_team_boards";
+            referencedColumns: ["tenant_id", "project_id", "id"];
+          },
+          {
+            foreignKeyName: "az_board_columns_team_fk";
+            columns: ["tenant_id", "project_id", "team_id"];
+            isOneToOne: false;
+            referencedRelation: "core_teams";
+            referencedColumns: ["tenant_id", "project_id", "id"];
+          },
+        ];
+      };
       az_builds: {
         Row: {
           access_revoked_at: string | null;
@@ -1191,6 +1275,72 @@ export type Database = {
           },
         ];
       };
+      az_team_boards: {
+        Row: {
+          azure_board_id: string;
+          created_at: string;
+          deleted_at_source: string | null;
+          id: string;
+          is_deleted: boolean;
+          last_seen_at: string | null;
+          last_synced_at: string | null;
+          name: string;
+          organization_id: string;
+          project_id: string;
+          source_status: Database["public"]["Enums"]["source_status"];
+          team_id: string;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          azure_board_id: string;
+          created_at?: string;
+          deleted_at_source?: string | null;
+          id?: string;
+          is_deleted?: boolean;
+          last_seen_at?: string | null;
+          last_synced_at?: string | null;
+          name: string;
+          organization_id: string;
+          project_id: string;
+          source_status?: Database["public"]["Enums"]["source_status"];
+          team_id: string;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          azure_board_id?: string;
+          created_at?: string;
+          deleted_at_source?: string | null;
+          id?: string;
+          is_deleted?: boolean;
+          last_seen_at?: string | null;
+          last_synced_at?: string | null;
+          name?: string;
+          organization_id?: string;
+          project_id?: string;
+          source_status?: Database["public"]["Enums"]["source_status"];
+          team_id?: string;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "az_team_boards_org_fk";
+            columns: ["tenant_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "core_organizations";
+            referencedColumns: ["tenant_id", "id"];
+          },
+          {
+            foreignKeyName: "az_team_boards_team_fk";
+            columns: ["tenant_id", "project_id", "team_id"];
+            isOneToOne: false;
+            referencedRelation: "core_teams";
+            referencedColumns: ["tenant_id", "project_id", "id"];
+          },
+        ];
+      };
       az_test_result_summaries: {
         Row: {
           calculated_at: string;
@@ -1602,6 +1752,146 @@ export type Database = {
           },
         ];
       };
+      az_work_item_type_states: {
+        Row: {
+          azure_category: string;
+          color: string | null;
+          created_at: string;
+          deleted_at_source: string | null;
+          id: string;
+          is_deleted: boolean;
+          last_seen_at: string | null;
+          last_synced_at: string | null;
+          project_id: string;
+          sort_order: number;
+          source_status: Database["public"]["Enums"]["source_status"];
+          state_category: Database["public"]["Enums"]["state_category"];
+          state_name: string;
+          tenant_id: string;
+          updated_at: string;
+          work_item_type_id: string;
+        };
+        Insert: {
+          azure_category: string;
+          color?: string | null;
+          created_at?: string;
+          deleted_at_source?: string | null;
+          id?: string;
+          is_deleted?: boolean;
+          last_seen_at?: string | null;
+          last_synced_at?: string | null;
+          project_id: string;
+          sort_order?: number;
+          source_status?: Database["public"]["Enums"]["source_status"];
+          state_category?: Database["public"]["Enums"]["state_category"];
+          state_name: string;
+          tenant_id: string;
+          updated_at?: string;
+          work_item_type_id: string;
+        };
+        Update: {
+          azure_category?: string;
+          color?: string | null;
+          created_at?: string;
+          deleted_at_source?: string | null;
+          id?: string;
+          is_deleted?: boolean;
+          last_seen_at?: string | null;
+          last_synced_at?: string | null;
+          project_id?: string;
+          sort_order?: number;
+          source_status?: Database["public"]["Enums"]["source_status"];
+          state_category?: Database["public"]["Enums"]["state_category"];
+          state_name?: string;
+          tenant_id?: string;
+          updated_at?: string;
+          work_item_type_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "az_work_item_type_states_type_fk";
+            columns: ["tenant_id", "project_id", "work_item_type_id"];
+            isOneToOne: false;
+            referencedRelation: "az_work_item_types";
+            referencedColumns: ["tenant_id", "project_id", "id"];
+          },
+        ];
+      };
+      az_work_item_types: {
+        Row: {
+          color: string | null;
+          created_at: string;
+          deleted_at_source: string | null;
+          description: string | null;
+          icon_url: string | null;
+          id: string;
+          is_deleted: boolean;
+          is_disabled: boolean;
+          last_seen_at: string | null;
+          last_synced_at: string | null;
+          name: string;
+          organization_id: string;
+          project_id: string;
+          reference_name: string | null;
+          source_status: Database["public"]["Enums"]["source_status"];
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          color?: string | null;
+          created_at?: string;
+          deleted_at_source?: string | null;
+          description?: string | null;
+          icon_url?: string | null;
+          id?: string;
+          is_deleted?: boolean;
+          is_disabled?: boolean;
+          last_seen_at?: string | null;
+          last_synced_at?: string | null;
+          name: string;
+          organization_id: string;
+          project_id: string;
+          reference_name?: string | null;
+          source_status?: Database["public"]["Enums"]["source_status"];
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          color?: string | null;
+          created_at?: string;
+          deleted_at_source?: string | null;
+          description?: string | null;
+          icon_url?: string | null;
+          id?: string;
+          is_deleted?: boolean;
+          is_disabled?: boolean;
+          last_seen_at?: string | null;
+          last_synced_at?: string | null;
+          name?: string;
+          organization_id?: string;
+          project_id?: string;
+          reference_name?: string | null;
+          source_status?: Database["public"]["Enums"]["source_status"];
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "az_work_item_types_org_fk";
+            columns: ["tenant_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "core_organizations";
+            referencedColumns: ["tenant_id", "id"];
+          },
+          {
+            foreignKeyName: "az_work_item_types_project_fk";
+            columns: ["tenant_id", "project_id"];
+            isOneToOne: false;
+            referencedRelation: "core_projects";
+            referencedColumns: ["tenant_id", "id"];
+          },
+        ];
+      };
       az_work_items: {
         Row: {
           access_revoked_at: string | null;
@@ -1616,6 +1906,10 @@ export type Database = {
           azure_work_item_type: string;
           blocked_since: string | null;
           blocked_source_field: string | null;
+          board_column: string | null;
+          board_column_done: boolean | null;
+          board_column_entered_at: string | null;
+          board_lane: string | null;
           changed_at_source: string;
           changed_by_member_id: string | null;
           closed_date: string | null;
@@ -1673,6 +1967,10 @@ export type Database = {
           azure_work_item_type: string;
           blocked_since?: string | null;
           blocked_source_field?: string | null;
+          board_column?: string | null;
+          board_column_done?: boolean | null;
+          board_column_entered_at?: string | null;
+          board_lane?: string | null;
           changed_at_source?: string;
           changed_by_member_id?: string | null;
           closed_date?: string | null;
@@ -1730,6 +2028,10 @@ export type Database = {
           azure_work_item_type?: string;
           blocked_since?: string | null;
           blocked_source_field?: string | null;
+          board_column?: string | null;
+          board_column_done?: boolean | null;
+          board_column_entered_at?: string | null;
+          board_lane?: string | null;
           changed_at_source?: string;
           changed_by_member_id?: string | null;
           closed_date?: string | null;

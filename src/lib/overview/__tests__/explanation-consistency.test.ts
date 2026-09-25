@@ -23,6 +23,8 @@ const fact = (over: Partial<RealWorkItemFact> = {}): RealWorkItemFact => ({
   stateChangeDate: "2026-08-18T00:00:00.000Z",
   changedAtSource: "2026-08-18T00:00:00.000Z",
   azureUrl: null,
+  boardColumn: null,
+  boardColumnEnteredAt: null,
   ...over,
 });
 

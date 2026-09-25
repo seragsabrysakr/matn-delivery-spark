@@ -4,9 +4,15 @@
  * Everything the work item reader needs — which Azure types are in scope, which
  * field carries the estimate, which field marks "blocked" — comes from the
  * tenant's `core_process_mappings` row, with documented defaults per template.
+ *
+ * State categories are resolved in a fixed precedence (ADR-013): explicit tenant
+ * configuration, then the state metadata synchronized from Azure, and only then
+ * a small English dictionary kept as a last resort. A fallback or unknown
+ * result is reported so the sync can raise a data-quality issue.
  */
 import type { Database } from "@/integrations/supabase/types";
 import type { StateCategory, WorkItemAlias } from "@/types/domain/work-item";
+import { lookupAzureStateCategory, type AzureStateIndex } from "./metadata-rules";
 
 export type ProcessTemplateKind = Database["public"]["Enums"]["process_template_kind"];
 export type BugHandlingMode = Database["public"]["Enums"]["bug_handling_mode"];
@@ -26,7 +32,10 @@ export interface ResolvedProcessMapping {
   /** Azure `System.WorkItemType` names included in the sprint scope query. */
   readonly workItemTypes: readonly string[];
   readonly aliasByType: Readonly<Record<string, WorkItemAlias>>;
+  /** Tenant-configured overrides only (lower-cased state -> category). */
   readonly stateCategoryMap: Readonly<Record<string, StateCategory>>;
+  /** State categories synchronized from Azure for this project, if any. */
+  readonly azureStates: AzureStateIndex | null;
   readonly doneStates: readonly string[];
   readonly activeStates: readonly string[];
   readonly blockedFields: readonly string[];
@@ -64,7 +73,8 @@ const DEFAULT_TYPES_BY_KIND: Record<ProcessTemplateKind, readonly string[]> = {
   ],
 };
 
-const DEFAULT_STATE_CATEGORY: Record<string, StateCategory> = {
+/** Last resort only: used when neither the tenant nor Azure metadata knows a state. */
+const FALLBACK_STATE_CATEGORY: Record<string, StateCategory> = {
   new: "proposed",
   proposed: "proposed",
   approved: "proposed",
@@ -106,6 +116,7 @@ const asStringList = (value: readonly string[] | null | undefined): string[] =>
 export function resolveProcessMapping(
   row: ProcessMappingRow | null,
   templateKind: ProcessTemplateKind = "agile",
+  azureStates: AzureStateIndex | null = null,
 ): ResolvedProcessMapping {
   const bugHandlingMode = row?.bug_handling_mode ?? "as_requirement";
 
@@ -123,7 +134,7 @@ export function resolveProcessMapping(
   );
 
   const configuredStates = asStringRecord(row?.state_category_map);
-  const stateCategoryMap: Record<string, StateCategory> = { ...DEFAULT_STATE_CATEGORY };
+  const stateCategoryMap: Record<string, StateCategory> = {};
   for (const [state, category] of Object.entries(configuredStates)) {
     stateCategoryMap[state.toLowerCase()] = category as StateCategory;
   }
@@ -135,6 +146,7 @@ export function resolveProcessMapping(
     workItemTypes,
     aliasByType,
     stateCategoryMap,
+    azureStates,
     doneStates: asStringList(row?.done_states),
     activeStates: asStringList(row?.active_states),
     blockedFields: blockedFields.length > 0 ? blockedFields : DEFAULT_BLOCKED_FIELDS,
@@ -148,9 +160,39 @@ export function aliasFor(mapping: ResolvedProcessMapping, azureType: string): Wo
   return mapping.aliasByType[azureType.toLowerCase()] ?? "custom";
 }
 
-export function stateCategoryFor(mapping: ResolvedProcessMapping, state: string): StateCategory {
+/** Where a resolved state category came from. */
+export type StateCategorySource = "tenant" | "azure" | "fallback" | "none";
+
+export interface ResolvedStateCategory {
+  readonly category: StateCategory;
+  readonly source: StateCategorySource;
+}
+
+export function resolveStateCategory(
+  mapping: ResolvedProcessMapping,
+  state: string,
+  azureType: string | null = null,
+): ResolvedStateCategory {
   const key = state.toLowerCase();
-  if (mapping.doneStates.some((s) => s.toLowerCase() === key)) return "completed";
-  if (mapping.activeStates.some((s) => s.toLowerCase() === key)) return "inProgress";
-  return mapping.stateCategoryMap[key] ?? "unknown";
+  if (mapping.doneStates.some((s) => s.toLowerCase() === key))
+    return { category: "completed", source: "tenant" };
+  if (mapping.activeStates.some((s) => s.toLowerCase() === key))
+    return { category: "inProgress", source: "tenant" };
+  const configured = mapping.stateCategoryMap[key];
+  if (configured) return { category: configured, source: "tenant" };
+
+  const fromAzure = lookupAzureStateCategory(mapping.azureStates, azureType, state);
+  if (fromAzure) return { category: fromAzure, source: "azure" };
+
+  const fallback = FALLBACK_STATE_CATEGORY[key];
+  if (fallback) return { category: fallback, source: "fallback" };
+  return { category: "unknown", source: "none" };
+}
+
+export function stateCategoryFor(
+  mapping: ResolvedProcessMapping,
+  state: string,
+  azureType: string | null = null,
+): StateCategory {
+  return resolveStateCategory(mapping, state, azureType).category;
 }

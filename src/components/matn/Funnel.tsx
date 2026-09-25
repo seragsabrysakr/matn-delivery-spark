@@ -28,7 +28,7 @@ export function FunnelCard({ stages }: { stages: FunnelStage[] }) {
                   aria-hidden
                 />
                 <span className="min-w-0 truncate text-xs font-medium text-muted-foreground">
-                  {t(`funnel.${stage.id}` as TKey)}
+                  {stage.label ?? t(`funnel.${stage.id}` as TKey)}
                 </span>
               </div>
               <div className="mt-1.5 flex items-baseline gap-1.5">
@@ -52,6 +52,14 @@ export function FunnelCard({ stages }: { stages: FunnelStage[] }) {
                   style={{ width: `${Math.max(6, (stage.count / max) * 100)}%` }}
                 />
               </div>
+              {stage.itemLimit ? (
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  {t("funnel.wipLimit")}:{" "}
+                  <Iso>
+                    {stage.count}/{stage.itemLimit}
+                  </Iso>
+                </p>
+              ) : null}
               {stage.avgDays > 0 ? (
                 <p className="mt-2 text-[11px] text-muted-foreground">
                   {t("funnel.aging")}: <Iso>{days(stage.avgDays)}</Iso>

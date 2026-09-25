@@ -209,6 +209,8 @@ export interface ResolvedTeamIteration {
   readonly projectId: string;
   readonly teamId: string;
   readonly iterationId: string;
+  /** Azure's own team id, needed for team-scoped reads such as boards. */
+  readonly azureTeamId: string | null;
   readonly azureProjectName: string;
   readonly azureProjectId: string;
   readonly organizationBaseUrl: string;
@@ -268,7 +270,7 @@ export async function requireTeamIteration(
       .maybeSingle(),
     supabaseAdmin
       .from("core_teams")
-      .select("process_mapping_id")
+      .select("process_mapping_id, azure_team_id")
       .eq("tenant_id", row.tenant_id)
       .eq("id", row.team_id)
       .maybeSingle(),
@@ -292,6 +294,7 @@ export async function requireTeamIteration(
     projectId: row.project_id,
     teamId: row.team_id,
     iterationId: row.iteration_id,
+    azureTeamId: team.data?.azure_team_id ?? null,
     azureProjectId: project.data.azure_project_id,
     azureProjectName: project.data.azure_project_name,
     organizationBaseUrl: organization.data?.base_url ?? "https://dev.azure.com",

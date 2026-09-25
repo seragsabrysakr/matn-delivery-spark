@@ -27,15 +27,26 @@ export interface AzureWiqlResult {
   readonly workItems: readonly { readonly id: number; readonly url: string }[];
 }
 
+/**
+ * GET {org}/{project}/_apis/wit/workitemtypes/{type}/states — and inlined in
+ * the work item type itself. `category` is typed loosely on purpose: a value
+ * Azure adds later must surface as "unknown", not fail to parse.
+ */
+export interface AzureWorkItemStateColor {
+  readonly name: string;
+  readonly color?: string;
+  readonly category?: string;
+}
+
 /** GET {org}/{project}/_apis/wit/workitemtypes */
 export interface AzureWorkItemType {
   readonly name: string;
   readonly referenceName: string;
   readonly description?: string;
-  readonly states?: readonly {
-    readonly name: string;
-    readonly category: "Proposed" | "InProgress" | "Resolved" | "Completed" | "Removed";
-  }[];
+  readonly color?: string;
+  readonly icon?: { readonly id?: string; readonly url?: string };
+  readonly isDisabled?: boolean;
+  readonly states?: readonly AzureWorkItemStateColor[];
 }
 
 /** Canonical reference names consumed by the mapper. */

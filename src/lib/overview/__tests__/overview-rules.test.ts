@@ -10,8 +10,10 @@ import { diffWorkItem } from "@/lib/azure/workitem-map";
 import {
   buildOverview,
   computeCriticalBlockers,
+  computeFunnel,
   computeScopeCompletion,
   computeSprintConfidence,
+  type BoardFact,
   type RealWorkItemFact,
 } from "../overview-rules";
 
@@ -31,6 +33,8 @@ const fact = (over: Partial<RealWorkItemFact> = {}): RealWorkItemFact => ({
   stateChangeDate: "2026-08-18T00:00:00.000Z",
   changedAtSource: "2026-08-18T00:00:00.000Z",
   azureUrl: null,
+  boardColumn: null,
+  boardColumnEnteredAt: null,
   ...over,
 });
 
@@ -244,5 +248,116 @@ describe("overview rules", () => {
     expect(member.assignedHours).toBeNull();
     expect(member.signal).toBe("unknown");
     expect(member.activeItems).toBe(1);
+  });
+});
+
+describe("computeFunnel (live Azure board columns)", () => {
+  const storiesBoard: BoardFact = {
+    id: "board-stories",
+    name: "Stories",
+    columns: [
+      {
+        id: "col-new",
+        name: "New",
+        columnType: "incoming",
+        itemLimit: null,
+        stateMappings: { "User Story": "New", Bug: "New" },
+      },
+      {
+        id: "col-dev",
+        name: "Development",
+        columnType: "inProgress",
+        itemLimit: 1,
+        stateMappings: { "User Story": "Active", Bug: "Active" },
+      },
+      {
+        id: "col-qa",
+        name: "Ready for QA",
+        columnType: "inProgress",
+        itemLimit: null,
+        stateMappings: { "User Story": "Resolved", Bug: "Resolved" },
+      },
+      {
+        id: "col-closed",
+        name: "Closed",
+        columnType: "outgoing",
+        itemLimit: null,
+        stateMappings: { "User Story": "Closed", Bug: "Closed" },
+      },
+    ],
+  };
+  const now = "2026-08-25T00:00:00.000Z";
+
+  it("returns one stage per Azure column, in Azure order, with Azure's names", () => {
+    const stages = computeFunnel([fact()], [storiesBoard], now);
+    expect(stages.map((s) => [s.id, s.label])).toEqual([
+      ["col-new", "New"],
+      ["col-dev", "Development"],
+      ["col-qa", "Ready for QA"],
+      ["col-closed", "Closed"],
+    ]);
+  });
+
+  it("places items by their synced board column, then by state mapping", () => {
+    const stages = computeFunnel(
+      [
+        fact({ id: "a", state: "Active", boardColumn: "Ready for QA" }),
+        fact({ id: "b", state: "Closed", boardColumn: null }),
+        fact({ id: "c", azureType: "Bug", state: "New", boardColumn: null }),
+        fact({ id: "d", azureType: "Task", alias: "task", state: "Active" }),
+      ],
+      [storiesBoard],
+      now,
+    );
+    expect(stages.map((s) => s.count)).toEqual([1, 0, 1, 1]);
+  });
+
+  it("flags a column over its Azure WIP limit and never flags the done column", () => {
+    const stages = computeFunnel(
+      [
+        fact({ id: "a", state: "Active", stateChangeDate: now, changedAtSource: now }),
+        fact({ id: "b", state: "Active", stateChangeDate: now, changedAtSource: now }),
+        fact({ id: "c", state: "Closed", stateChangeDate: "2026-08-01T00:00:00.000Z" }),
+      ],
+      [storiesBoard],
+      now,
+    );
+    const dev = stages.find((s) => s.id === "col-dev")!;
+    expect(dev.itemLimit).toBe(1);
+    expect(dev.status).toBe("atRisk");
+    expect(stages.find((s) => s.id === "col-closed")!.status).toBe("healthy");
+  });
+
+  it("ages items from when they entered the column when known", () => {
+    const stages = computeFunnel(
+      [
+        fact({
+          state: "Active",
+          boardColumn: "Development",
+          boardColumnEnteredAt: "2026-08-19T00:00:00.000Z",
+          stateChangeDate: "2026-08-24T00:00:00.000Z",
+        }),
+      ],
+      [storiesBoard],
+      now,
+    );
+    const dev = stages.find((s) => s.id === "col-dev")!;
+    expect(dev.avgDays).toBe(6);
+    expect(dev.status).toBe("critical");
+  });
+
+  it("shows no funnel and reports why when board metadata is not synchronized", () => {
+    expect(computeFunnel([fact()], [], now)).toEqual([]);
+    const result = buildOverview({
+      facts: [fact()],
+      members: [],
+      calendar: sprintCalendar("2026-08-16", "2026-08-29", "2026-08-25"),
+      history: [],
+      lastSyncedAt: "2026-08-25T00:00:00.000Z",
+      nowIso: "2026-08-25T00:10:00.000Z",
+      iterationId: "ti-1",
+    });
+    expect(result.snapshot.funnel).toEqual([]);
+    expect(result.unavailable["funnel"]).toBe("board_not_synchronized");
   });
 });

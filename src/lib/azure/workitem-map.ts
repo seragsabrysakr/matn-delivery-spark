@@ -7,7 +7,12 @@
  */
 import type { Database, Json } from "@/integrations/supabase/types";
 import type { StateCategory, WorkItemAlias } from "@/types/domain/work-item";
-import { aliasFor, stateCategoryFor, type ResolvedProcessMapping } from "./process-mapping";
+import {
+  aliasFor,
+  resolveStateCategory,
+  type ResolvedProcessMapping,
+  type StateCategorySource,
+} from "./process-mapping";
 
 type SeverityEnum = Database["public"]["Enums"]["severity_level"];
 
@@ -55,6 +60,9 @@ export interface WorkItemMutablePayload {
   readonly original_estimate: number | null;
   readonly is_blocked: boolean;
   readonly blocked_source_field: string | null;
+  readonly board_column: string | null;
+  readonly board_column_done: boolean | null;
+  readonly board_lane: string | null;
   readonly parent_azure_work_item_id: number | null;
   readonly is_leaf: boolean;
   readonly counts_toward_scope: boolean;
@@ -69,6 +77,8 @@ export interface MappedWorkItem {
   readonly payload: WorkItemMutablePayload;
   /** Not persisted; used by the risk rules before ids are resolved. */
   readonly dueDate: string | null;
+  /** Not persisted; a "fallback" or "none" source raises a data-quality issue. */
+  readonly stateCategorySource: StateCategorySource;
 }
 
 export interface MapWorkItemContext {
@@ -155,7 +165,11 @@ export function mapAzureWorkItem(
   const type = str(f["System.WorkItemType"]) ?? "Unknown";
   const state = str(f["System.State"]) ?? "Unknown";
   const alias = aliasFor(mapping, type);
-  const stateCategory = stateCategoryFor(mapping, state);
+  const { category: stateCategory, source: stateCategorySource } = resolveStateCategory(
+    mapping,
+    state,
+    type,
+  );
   const blocked = resolveBlocked(f, mapping);
   const estimate = resolveEstimate(f, mapping);
   const severityRaw = mapping.severityField ? str(f[mapping.severityField]) : null;
@@ -175,6 +189,7 @@ export function mapAzureWorkItem(
   return {
     azureWorkItemId: raw.id,
     dueDate: iso(f["Microsoft.VSTS.Scheduling.DueDate"]),
+    stateCategorySource,
     payload: {
       project_id: ctx.projectId,
       team_id: ctx.teamId,
@@ -211,6 +226,10 @@ export function mapAzureWorkItem(
       original_estimate: num(f["Microsoft.VSTS.Scheduling.OriginalEstimate"]),
       is_blocked: blocked.blocked,
       blocked_source_field: blocked.sourceField,
+      board_column: str(f["System.BoardColumn"]),
+      board_column_done:
+        typeof f["System.BoardColumnDone"] === "boolean" ? f["System.BoardColumnDone"] : null,
+      board_lane: str(f["System.BoardLane"]),
       parent_azure_work_item_id: num(f["System.Parent"]),
       is_leaf: alias === "task" || alias === "bug",
       counts_toward_scope: countsTowardScope,
