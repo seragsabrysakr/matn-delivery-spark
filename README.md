@@ -1,6 +1,6 @@
 # MATN Delivery Intelligence
 
-Create a new project with Supabase enabled. MATN Delivery Intelligence
+# Create a new project with Supabase enabled. MATN Delivery Intelligence
 
 This project was built with [Lovable](https://lovable.dev).
 
