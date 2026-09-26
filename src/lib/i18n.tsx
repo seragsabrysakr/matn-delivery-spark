@@ -442,6 +442,53 @@ export const dictionary = {
   "delivery.p1": { ar: "تحليل تدفّق العمل وزمن الدورة", en: "Flow and cycle-time analysis" },
   "delivery.p2": { ar: "سجل تغيّرات النطاق", en: "Scope change ledger" },
   "delivery.p3": { ar: "التزامات الإصدار والمعالم", en: "Release and milestone commitments" },
+  "sh.title": { ar: "تاريخ السبرنتات", en: "Sprint history" },
+  "sh.subtitle": {
+    ar: "كل سبرنت للفريق كما كان فعلاً: الملتزم به عند البداية، ما أُضيف وما أُزيل، ما سُلِّم وما رُحِّل — من سجل تغييرات Azure DevOps.",
+    en: "Every sprint of the team as it actually happened: committed at the start, added and removed, delivered and carried over — from Azure DevOps change history.",
+  },
+  "sh.col.sprint": { ar: "السبرنت", en: "Sprint" },
+  "sh.col.committed": { ar: "الملتزم به عند البداية", en: "Committed at start" },
+  "sh.col.added": { ar: "أُضيف أثناء السبرنت", en: "Added during" },
+  "sh.col.removed": { ar: "أُزيل أثناء السبرنت", en: "Removed during" },
+  "sh.col.delivered": { ar: "تم تسليمه", en: "Delivered" },
+  "sh.col.carried": { ar: "مُرحَّل", en: "Carried over" },
+  "sh.col.late": { ar: "سُلِّم بعد نهاية السبرنت", en: "Delivered after the end" },
+  "sh.lateBy": { ar: "متوسط التأخير {a} يوم", en: "median {a} days late" },
+  "sh.col.sayDo": { ar: "الالتزام مقابل التنفيذ", en: "Say / Do" },
+  "sh.col.velocity": { ar: "السرعة", en: "Velocity" },
+  "sh.points": { ar: "نقطة", en: "pts" },
+  "sh.items": { ar: "عنصر", en: "items" },
+  "sh.basis.points": { ar: "بالنقاط", en: "by points" },
+  "sh.basis.count": { ar: "بعدد العناصر", en: "by item count" },
+  "sh.status.completed": { ar: "منتهٍ", en: "Completed" },
+  "sh.status.current": { ar: "جارٍ", en: "Current" },
+  "sh.status.future": { ar: "قادم", en: "Upcoming" },
+  "sh.gaps": {
+    ar: "{a} عنصر سجله غير مكتمل بعد",
+    en: "{a} items with incomplete history",
+  },
+  "sh.avgVelocity": {
+    ar: "متوسط السرعة {a} نقطة (آخر {b} سبرنت منتهية)",
+    en: "Average velocity {a} pts (last {b} completed sprints)",
+  },
+  "sh.avgVelocity.none": {
+    ar: "متوسط السرعة يحتاج سبرنتين منتهيتين على الأقل",
+    en: "Average velocity needs at least two completed sprints",
+  },
+  "sh.empty": {
+    ar: "لا توجد سبرنتات بتواريخ لهذا الفريق بعد.",
+    en: "No dated sprints for this team yet.",
+  },
+  "sh.coverage.title": { ar: "السجل لم يكتمل بعد", en: "History not complete yet" },
+  "sh.coverage.body": {
+    ar: "{a} من {b} عنصر لم يكتمل سجل تغييراته بعد؛ الأرقام قد تتغير بعد المزامنة القادمة.",
+    en: "{a} of {b} items do not have a complete change history yet; numbers may change after the next sync.",
+  },
+  "sh.method": {
+    ar: "الطريقة: حالة كل عنصر وتقديره عند منتصف ليل بداية السبرنت ونهايته بتوقيت الفريق، من سجل تغييرات Azure. الالتزام مقابل التنفيذ = ما سُلِّم من الملتزم به ÷ الملتزم به. السرعة = نقاط كل ما سُلِّم. المهام (Tasks) والـ Bugs المخططة كمهام لا تُحسب كنطاق.",
+    en: "Method: each item's state and estimate at local midnight at the sprint's start and end, from Azure change history. Say/Do = committed work delivered ÷ committed. Velocity = points of everything delivered. Tasks, and bugs planned as tasks, are not scope.",
+  },
 
   "teamPage.title": { ar: "الفريق", en: "Team" },
   "teamPage.subtitle": {
