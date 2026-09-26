@@ -19,6 +19,8 @@ export interface AzureTeamSettings {
   )[];
   readonly backlogIteration: { readonly id: string; readonly path?: string };
   readonly defaultIteration?: { readonly id: string; readonly path?: string };
+  /** How the team plans bugs: "asRequirements", "asTasks" or "off". */
+  readonly bugsBehavior?: string;
 }
 
 /** GET .../teamsettings/iterations/{id}/teamdaysoff */

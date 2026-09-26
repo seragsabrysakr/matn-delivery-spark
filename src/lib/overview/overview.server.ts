@@ -11,6 +11,7 @@ import { cairoToday, sprintCalendar } from "@/lib/calendar/cairo";
 import {
   buildOverview,
   computeScopeCompletion,
+  SCOPE_RULE_VERSION,
   type BoardFact,
   type MemberFact,
   type OverviewResult,
@@ -164,6 +165,8 @@ async function loadHistory(target: ResolvedTeamIteration): Promise<SnapshotHisto
       workingDay: row.working_day_index ?? 0,
       completedPercent: Number(metrics["scope_completion_percent"] ?? 0),
       scopeTotal: Number(counts["scope_total"] ?? 0),
+      scopeRule:
+        typeof metrics["scope_rule"] === "number" ? (metrics["scope_rule"] as number) : null,
     };
   });
 }
@@ -215,6 +218,7 @@ export async function persistDailySnapshot(
       scope_completion_percent: scope.percent ?? 0,
       expected_completion_percent: calendar.expectedCompletionPercent,
       basis: scope.basis,
+      scope_rule: SCOPE_RULE_VERSION,
     },
   };
 

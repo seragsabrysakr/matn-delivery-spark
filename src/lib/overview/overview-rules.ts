@@ -95,11 +95,20 @@ export interface MemberFact {
   readonly capacityHours: number | null;
 }
 
+/**
+ * Version of the rule that decides which items are sprint scope. Bumped when
+ * that rule changes (v2: bugs planned as tasks are no longer scope), so a
+ * rule change is never reported as a scope change.
+ */
+export const SCOPE_RULE_VERSION = 2;
+
 export interface SnapshotHistoryPoint {
   readonly snapshotDate: string;
   readonly workingDay: number;
   readonly completedPercent: number;
   readonly scopeTotal: number;
+  /** Scope rule the snapshot was taken under; null for snapshots before versioning. */
+  readonly scopeRule: number | null;
 }
 
 export interface OverviewInput {
@@ -491,8 +500,19 @@ export function computeRisks(
     });
   }
 
+  // A Story is owned when it or any of its child items (e.g. Tasks) is assigned:
+  // teams often assign the work on the Tasks and leave the Story itself open.
+  const assignedParents = new Set(
+    facts
+      .filter((f) => f.assignedToMemberId && f.parentAzureWorkItemId !== null)
+      .map((f) => f.parentAzureWorkItemId),
+  );
   const unassigned = facts.filter(
-    (f) => f.countsTowardScope && !f.assignedToMemberId && f.stateCategory !== "completed",
+    (f) =>
+      f.countsTowardScope &&
+      !f.assignedToMemberId &&
+      !assignedParents.has(f.azureWorkItemId) &&
+      f.stateCategory !== "completed",
   );
   if (unassigned.length > 0) {
     risks.push({
@@ -726,7 +746,9 @@ export function buildOverview(input: OverviewInput): OverviewResult {
   // first synchronized day the baseline is the current state, so any delta would
   // be 0% by construction rather than by measurement.
   const today = cairoToday(new Date(Date.parse(nowIso)));
-  const firstSnapshot = input.history.length > 0 ? input.history[0]! : null;
+  // Only a baseline taken under the current scope rule is comparable.
+  const firstSnapshot =
+    input.history.find((point) => point.scopeRule === SCOPE_RULE_VERSION) ?? null;
   const baseline =
     firstSnapshot && firstSnapshot.snapshotDate < today && firstSnapshot.scopeTotal > 0
       ? firstSnapshot

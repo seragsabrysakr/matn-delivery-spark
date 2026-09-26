@@ -10,6 +10,7 @@ import type { StateCategory, WorkItemAlias } from "@/types/domain/work-item";
 import {
   aliasFor,
   resolveStateCategory,
+  type BugHandlingMode,
   type ResolvedProcessMapping,
   type StateCategorySource,
 } from "./process-mapping";
@@ -89,6 +90,8 @@ export interface MapWorkItemContext {
   readonly resolveMember: (ref: AzureIdentityLike | null | undefined) => string | null;
   readonly organizationBaseUrl: string;
   readonly azureProjectName: string;
+  /** The owning team's effective bug handling; defaults to the mapping's. */
+  readonly bugHandlingMode?: BugHandlingMode | undefined;
 }
 
 const str = (v: unknown): string | null =>
@@ -183,8 +186,11 @@ export function mapAzureWorkItem(
         .filter(Boolean)
     : [];
 
-  const excludedBug = alias === "bug" && mapping.bugHandlingMode === "excluded";
-  const countsTowardScope = !excludedBug && alias !== "task" && stateCategory !== "removed";
+  // A bug planned like a task (under its story) or not planned at all is not
+  // scope of its own: counting it would double-count its parent story.
+  const bugHandling = ctx.bugHandlingMode ?? mapping.bugHandlingMode;
+  const bugOutOfScope = alias === "bug" && bugHandling !== "as_requirement";
+  const countsTowardScope = !bugOutOfScope && alias !== "task" && stateCategory !== "removed";
 
   return {
     azureWorkItemId: raw.id,

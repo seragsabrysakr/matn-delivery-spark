@@ -13,6 +13,7 @@ import {
   computeFunnel,
   computeScopeCompletion,
   computeSprintConfidence,
+  SCOPE_RULE_VERSION,
   type BoardFact,
   type RealWorkItemFact,
 } from "../overview-rules";
@@ -199,7 +200,15 @@ describe("overview rules", () => {
       facts: [fact()],
       members: [],
       calendar: sprintCalendar("2026-08-16", "2026-08-29", "2026-08-25"),
-      history: [{ snapshotDate: "2026-08-25", workingDay: 8, completedPercent: 0, scopeTotal: 5 }],
+      history: [
+        {
+          snapshotDate: "2026-08-25",
+          workingDay: 8,
+          completedPercent: 0,
+          scopeTotal: 5,
+          scopeRule: SCOPE_RULE_VERSION,
+        },
+      ],
       lastSyncedAt: "2026-08-25T09:00:00.000Z",
       nowIso: "2026-08-25T09:10:00.000Z",
       iterationId: "ti-1",
@@ -361,5 +370,63 @@ describe("computeFunnel (live Azure board columns)", () => {
     });
     expect(result.snapshot.funnel).toEqual([]);
     expect(result.unavailable["funnel"]).toBe("board_not_synchronized");
+  });
+});
+
+describe("ownership through child items", () => {
+  const run = (facts: RealWorkItemFact[]) =>
+    buildOverview({
+      facts,
+      members: [],
+      calendar: sprintCalendar("2026-08-16", "2026-08-29", "2026-08-25"),
+      history: [],
+      lastSyncedAt: "2026-08-25T00:00:00.000Z",
+      nowIso: "2026-08-25T00:10:00.000Z",
+      iterationId: "ti-1",
+    }).snapshot.risks.find((r) => r.id === "risk-unassigned");
+
+  const story = fact({ id: "s", azureWorkItemId: 100, assignedToMemberId: null });
+  const task = (assignee: string | null) =>
+    fact({
+      id: `t-${assignee}`,
+      azureWorkItemId: 101,
+      alias: "task",
+      azureType: "Task",
+      countsTowardScope: false,
+      assignedToMemberId: assignee,
+      parentAzureWorkItemId: 100,
+    });
+
+  it("treats a story as owned when one of its tasks is assigned", () => {
+    expect(run([story, task("m1")])).toBeUndefined();
+  });
+
+  it("still flags a story when neither it nor its tasks are assigned", () => {
+    expect(run([story, task(null)])?.items.map((i) => i.id)).toEqual(["100"]);
+  });
+});
+
+describe("scope baseline across a scope-rule change", () => {
+  const history = (scopeRule: number | null) => [
+    { snapshotDate: "2026-08-20", workingDay: 4, completedPercent: 0, scopeTotal: 26, scopeRule },
+  ];
+  const run = (scopeRule: number | null) =>
+    buildOverview({
+      facts: [fact()],
+      members: [],
+      calendar: sprintCalendar("2026-08-16", "2026-08-29", "2026-08-25"),
+      history: history(scopeRule),
+      lastSyncedAt: "2026-08-25T00:00:00.000Z",
+      nowIso: "2026-08-25T00:10:00.000Z",
+      iterationId: "ti-1",
+    });
+
+  it("never compares against a baseline taken under an older scope rule", () => {
+    expect(run(null).unavailable["scopeChange"]).toBe("no_baseline_snapshot");
+    expect(run(SCOPE_RULE_VERSION - 1).unavailable["scopeChange"]).toBe("no_baseline_snapshot");
+  });
+
+  it("uses a baseline taken under the current rule", () => {
+    expect(run(SCOPE_RULE_VERSION).unavailable["scopeChange"]).toBeUndefined();
   });
 });

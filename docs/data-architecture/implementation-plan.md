@@ -152,6 +152,17 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Consequences**: Silent stalls become visible per column and per item, from Azure data only. Until revisions are ingested, time-in-column for items that have not moved since the first sync is an upper-bound estimate.
 - **Alternatives**: A tenant configuration table for thresholds (rejected for now — a second source of truth outside Azure; revisit only if history-derived thresholds prove insufficient), persisting an `is_stuck` flag (rejected — wrong the next day), calendar days (rejected — weekends would make every Thursday card stuck by Sunday).
 
+### ADR-016: Work item hierarchy — count each piece of work once
+
+- **Context**: Teams plan User Stories and break them into Tasks, often per discipline (Backend / Frontend / QA), and many plan Bugs under their Story like Tasks (Azure team setting "Bugs are managed with tasks"). Stories are frequently left unassigned while the Tasks carry the assignee. Counting Bugs as scope next to their Story, or flagging such Stories as unassigned, double-counts and misreports the work.
+- **Decision**:
+  1. **Bug handling comes from the team's own Azure setting** — `GET {project}/{team}/_apis/work/teamsettings` → `bugsBehavior`: `asRequirements` → bugs are scope; `asTasks` or `off` → bugs are not scope (still synchronized, with their parent). An explicit `core_process_mappings.bug_handling_mode` still wins; with neither, the previous default applies. The sprint sync uses the sprint's team; the backlog sync uses each item's owning team.
+  2. **A Story is owned when it or any of its child items is assigned** — the unassigned-scope risk fires only when nobody holds any part of the Story.
+  3. **Scope rule versioning** — daily snapshots record `metrics.scope_rule` (now `2`); the scope-change KPI only compares against a baseline taken under the same rule, so a rule change is never reported as a scope change.
+  4. **Units never mix across levels** — Story Points stay on Stories (scope, velocity); per-person activity comes from Tasks (assignee, state), in counts unless the Tasks carry hours.
+- **Consequences**: Sprint scope and completion match what the team sees in Azure (e.g. Hoteliana Sprint 2: 19 Stories / 72 points, not 26 items). After deploy, scope change is unavailable until the first new-rule snapshot is a day old.
+- **Alternatives**: A tenant setting for bug handling (rejected as the default — Azure already stores it per team), treating every Bug as a Task (rejected — wrong for teams that plan bugs as requirements).
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.

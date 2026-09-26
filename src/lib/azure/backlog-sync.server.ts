@@ -28,6 +28,11 @@ import {
   type TeamArea,
 } from "./backlog-rules";
 import { ensureProcessMetadataFresh } from "./metadata-sync.server";
+import {
+  bugHandlingFromAzure,
+  effectiveBugHandling,
+  type BugHandlingMode,
+} from "./process-mapping";
 import { ensureConnection } from "./sync.server";
 import {
   buildWorkItemsBatchBody,
@@ -56,6 +61,8 @@ export interface BacklogSyncCursor {
   readonly projectId: string;
   readonly mode: BacklogMode;
   readonly areas: readonly TeamArea[];
+  /** Each team's bug handling from its Azure settings, by internal team id. */
+  readonly teamBugHandling: Readonly<Record<string, BugHandlingMode>>;
   readonly ids: number[];
   readonly nextBatch: number;
   /** Stored open items Azure did not return in a full pass; re-read by id. */
@@ -85,6 +92,7 @@ const emptyCursor = (projectId: string, mode: BacklogMode = "full"): BacklogSync
   projectId,
   mode,
   areas: [],
+  teamBugHandling: {},
   ids: [],
   nextBatch: 0,
   staleIds: [],
@@ -196,7 +204,11 @@ export async function startBacklogSync(
 async function resolveTeamAreas(
   target: ResolvedTeamIteration,
   client: AzureDevOpsClient,
-): Promise<{ areas: TeamArea[]; warnings: string[] }> {
+): Promise<{
+  areas: TeamArea[];
+  teamBugHandling: Record<string, BugHandlingMode>;
+  warnings: string[];
+}> {
   const { data: teams } = await supabaseAdmin
     .from("core_teams")
     .select("id, azure_team_id, azure_team_name, area_paths")
@@ -205,8 +217,12 @@ async function resolveTeamAreas(
     .eq("is_deleted", false);
 
   const areas: TeamArea[] = [];
+  const teamBugHandling: Record<string, BugHandlingMode> = {};
   const warnings: string[] = [];
   for (const team of teams ?? []) {
+    const settings = await client.getTeamSettings(target.azureProjectId, team.azure_team_id);
+    const bugHandling = bugHandlingFromAzure(settings?.bugsBehavior);
+    if (bugHandling) teamBugHandling[team.id] = bugHandling;
     const values = await client.getTeamFieldValues(target.azureProjectId, team.azure_team_id);
     if (values && values.field?.referenceName !== "System.AreaPath") {
       // A team keyed on a custom field has no area-based backlog to read.
@@ -229,7 +245,7 @@ async function resolveTeamAreas(
       if (path) areas.push({ teamId: team.id, path, includeChildren: true });
     }
   }
-  return { areas, warnings };
+  return { areas, teamBugHandling, warnings };
 }
 
 async function loadOpenStates(tenantId: string, projectId: string) {
@@ -325,7 +341,11 @@ export async function advanceBacklogSync(
         )),
       ];
       const reference = await loadWorkItemReference(target);
-      const { areas, warnings: areaWarnings } = await resolveTeamAreas(target, client);
+      const {
+        areas,
+        teamBugHandling,
+        warnings: areaWarnings,
+      } = await resolveTeamAreas(target, client);
       warnings.push(...areaWarnings);
 
       const watermark = await readWatermark(
@@ -374,6 +394,7 @@ export async function advanceBacklogSync(
         ...cursor,
         mode,
         areas,
+        teamBugHandling,
         ids,
         truncated,
         skippedTypes: wiql?.skippedTypes ?? [],
@@ -413,9 +434,14 @@ export async function advanceBacklogSync(
             const areaPath = String(raw.fields["System.AreaPath"] ?? "");
             const iterationPath = String(raw.fields["System.IterationPath"] ?? "");
             const priorTeam = (prior?.["team_id"] as string | null | undefined) ?? null;
+            const teamId = resolveOwningTeam(areaPath, cursor.areas, priorTeam) ?? priorTeam;
             return {
               projectId: target.projectId,
-              teamId: resolveOwningTeam(areaPath, cursor.areas, priorTeam) ?? priorTeam,
+              teamId,
+              bugHandlingMode: effectiveBugHandling(
+                reference.mapping,
+                teamId ? cursor.teamBugHandling[teamId] : undefined,
+              ),
               iterationId: iterationIdByPath.get(iterationPath.toLowerCase()) ?? null,
               teamIterationId: null,
               resolveMember: reference.resolveMember,
