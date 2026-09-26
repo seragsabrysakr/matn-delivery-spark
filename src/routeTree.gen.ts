@@ -12,10 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BoardRouteImport } from './routes/board'
 import { Route as DeliveryRouteImport } from './routes/delivery'
 import { Route as EngineeringRouteImport } from './routes/engineering'
 import { Route as HierarchyRouteImport } from './routes/hierarchy'
 import { Route as IntelligenceRouteImport } from './routes/intelligence'
+import { Route as StuckRouteImport } from './routes/stuck'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSettingsAzureRouteImport } from './routes/_authenticated/settings.azure'
@@ -33,6 +35,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoardRoute = BoardRouteImport.update({
+  id: '/board',
+  path: '/board',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DeliveryRoute = DeliveryRouteImport.update({
@@ -53,6 +60,11 @@ const HierarchyRoute = HierarchyRouteImport.update({
 const IntelligenceRoute = IntelligenceRouteImport.update({
   id: '/intelligence',
   path: '/intelligence',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StuckRoute = StuckRouteImport.update({
+  id: '/stuck',
+  path: '/stuck',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeamRoute = TeamRouteImport.update({
@@ -80,10 +92,12 @@ const ApiPublicCronTickRoute = ApiPublicCronTickRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/board': typeof BoardRoute
   '/delivery': typeof DeliveryRoute
   '/engineering': typeof EngineeringRoute
   '/hierarchy': typeof HierarchyRoute
   '/intelligence': typeof IntelligenceRoute
+  '/stuck': typeof StuckRoute
   '/team': typeof TeamRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings/azure': typeof AuthenticatedSettingsAzureRoute
@@ -92,10 +106,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/board': typeof BoardRoute
   '/delivery': typeof DeliveryRoute
   '/engineering': typeof EngineeringRoute
   '/hierarchy': typeof HierarchyRoute
   '/intelligence': typeof IntelligenceRoute
+  '/stuck': typeof StuckRoute
   '/team': typeof TeamRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings/azure': typeof AuthenticatedSettingsAzureRoute
@@ -106,10 +122,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/board': typeof BoardRoute
   '/delivery': typeof DeliveryRoute
   '/engineering': typeof EngineeringRoute
   '/hierarchy': typeof HierarchyRoute
   '/intelligence': typeof IntelligenceRoute
+  '/stuck': typeof StuckRoute
   '/team': typeof TeamRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings/azure': typeof AuthenticatedSettingsAzureRoute
@@ -120,10 +138,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/board'
     | '/delivery'
     | '/engineering'
     | '/hierarchy'
     | '/intelligence'
+    | '/stuck'
     | '/team'
     | '/onboarding'
     | '/settings/azure'
@@ -132,10 +152,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/board'
     | '/delivery'
     | '/engineering'
     | '/hierarchy'
     | '/intelligence'
+    | '/stuck'
     | '/team'
     | '/onboarding'
     | '/settings/azure'
@@ -145,10 +167,12 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/board'
     | '/delivery'
     | '/engineering'
     | '/hierarchy'
     | '/intelligence'
+    | '/stuck'
     | '/team'
     | '/_authenticated/onboarding'
     | '/_authenticated/settings/azure'
@@ -159,10 +183,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BoardRoute: typeof BoardRoute
   DeliveryRoute: typeof DeliveryRoute
   EngineeringRoute: typeof EngineeringRoute
   HierarchyRoute: typeof HierarchyRoute
   IntelligenceRoute: typeof IntelligenceRoute
+  StuckRoute: typeof StuckRoute
   TeamRoute: typeof TeamRoute
   ApiPublicCronTickRoute: typeof ApiPublicCronTickRoute
 }
@@ -188,6 +214,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/board': {
+      id: '/board'
+      path: '/board'
+      fullPath: '/board'
+      preLoaderRoute: typeof BoardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/delivery': {
@@ -216,6 +249,13 @@ declare module '@tanstack/react-router' {
       path: '/intelligence'
       fullPath: '/intelligence'
       preLoaderRoute: typeof IntelligenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stuck': {
+      id: '/stuck'
+      path: '/stuck'
+      fullPath: '/stuck'
+      preLoaderRoute: typeof StuckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/team': {
@@ -266,10 +306,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  BoardRoute: BoardRoute,
   DeliveryRoute: DeliveryRoute,
   EngineeringRoute: EngineeringRoute,
   HierarchyRoute: HierarchyRoute,
   IntelligenceRoute: IntelligenceRoute,
+  StuckRoute: StuckRoute,
   TeamRoute: TeamRoute,
   ApiPublicCronTickRoute: ApiPublicCronTickRoute,
 }
