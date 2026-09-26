@@ -740,6 +740,53 @@ export const dictionary = {
   "st.reason.blocked_field": { ar: "Blocked في Azure", en: "Blocked in Azure" },
   "st.reason.blocked_tag": { ar: "tag «Blocked»", en: "“Blocked” tag" },
   "st.reason.aged_in_column": { ar: "طال في العمود", en: "Too long in column" },
+  "ov.phase.ended.title": {
+    ar: "لا يوجد سبرنت جاري في Azure",
+    en: "No sprint is running in Azure",
+  },
+  "ov.phase.ended.body": {
+    ar: "المعروض هو {a} اللي انتهى في {b} (من {c} يوم عمل). أنشئ السبرنت الجديد في Azure وحط فيه الشغل عشان الأرقام تتابع الشغل الحالي.",
+    en: "Showing {a}, which ended on {b} ({c} working days ago). Create the next sprint in Azure and plan work into it so the numbers follow current work.",
+  },
+  "ov.phase.notStarted.title": { ar: "السبرنت لم يبدأ بعد", en: "The sprint has not started" },
+  "ov.phase.notStarted.body": { ar: "{a} يبدأ في {b}.", en: "{a} starts on {b}." },
+  "ov.sprint.title": { ar: "وضع السبرنت", en: "Sprint status" },
+  "ov.sprint.subtitle": {
+    ar: "الـ Stories (نطاق السبرنت) والـ Tasks كلٌ لوحده — مش بيتجمعوا مع بعض.",
+    en: "Stories (sprint scope) and tasks, each on its own — they are never added together.",
+  },
+  "ov.daysLeft": { ar: "باقي {a} يوم عمل", en: "{a} working days left" },
+  "ov.endedOn": { ar: "انتهى في {a}", en: "Ended on {a}" },
+  "ov.startsOn": { ar: "يبدأ في {a}", en: "Starts on {a}" },
+  "ov.stories": { ar: "الـ Stories", en: "Stories" },
+  "ov.tasks": { ar: "الـ Tasks", en: "Tasks" },
+  "ov.storiesPoints": {
+    ar: "{a} من {b} story مقفولة · {c} من {d} نقطة",
+    en: "{a} of {b} stories closed · {c} of {d} points",
+  },
+  "ov.storiesCount": { ar: "{a} من {b} story مقفولة", en: "{a} of {b} stories closed" },
+  "ov.expected": { ar: "المتوقع النهارده {a}%", en: "Expected by today {a}%" },
+  "ov.tasksNote": {
+    ar: "مؤشر على حركة الشغل اليومية، لا يُحسب في إنجاز النطاق.",
+    en: "A signal of day-to-day movement; it does not count toward scope completion.",
+  },
+  "ov.behind.title": {
+    ar: "{a} من {b} story لسه New رغم إن الـ Tasks بتاعتها اتحركت",
+    en: "{a} of {b} stories are still New although their tasks have moved",
+  },
+  "ov.behind.body": {
+    ar: "الفريق بيحرّك الـ Tasks بس مش بيحرّك الـ Story في Azure، فإنجاز السبرنت بيظهر أقل من الحقيقة. حرّكوا الـ Story لـ Active أول ما يبدأ شغلها، ولـ Closed لما تخلص.",
+    en: "The team moves tasks but not the story in Azure, so sprint completion reads lower than reality. Move a story to Active when work starts and to Closed when it is done.",
+  },
+  "ov.more": { ar: "و {a} كمان", en: "{a} more" },
+  "ov.all": { ar: "عرض الكل ({a})", en: "View all ({a})" },
+  "ov.attention.title": { ar: "محتاج تدخّل", en: "Needs attention" },
+  "ov.attention.subtitle": {
+    ar: "الشغل المتعطل في السبرنت، الأقدم أولاً، ومع مين.",
+    en: "Stuck work in the sprint, oldest first, and who holds it.",
+  },
+  "ov.delivery.title": { ar: "حالة التسليمات", en: "Delivery status" },
+  "ov.syncDetails": { ar: "تفاصيل آخر مزامنة", en: "Last sync details" },
   "bl.title": { ar: "الـ Backlog", en: "Backlog" },
   "bl.subtitle": {
     ar: "عناصر نطاق الفريق المفتوحة خارج السبرنت الحالي، مع ما ينقص كل عنصر عشان يبقى جاهز.",

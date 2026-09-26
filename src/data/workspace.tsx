@@ -36,6 +36,7 @@ import {
   startSprintWorkItemSync,
 } from "@/lib/workspace/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
+import type { SprintSummary } from "@/lib/overview/sprint-summary-rules";
 
 export type PreviewState = "normal" | "loading" | "empty" | "error" | "stale" | "partial";
 
@@ -118,6 +119,8 @@ type Ctx = {
   historyReport: HistorySyncReport | null;
   /** True when the sprint has no real start/finish dates. */
   sprintDatesUnavailable: boolean;
+  /** Real mode: sprint status and story/task progress (ADR-027); null otherwise. */
+  sprintSummary: SprintSummary | null;
 };
 
 const WorkspaceContext = createContext<Ctx | null>(null);
@@ -500,6 +503,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       backlogReport,
       historyReport,
       sprintDatesUnavailable: mode === "real" && Boolean(unavailable["sprintCalendar"]),
+      sprintSummary: mode === "real" ? (realOverview?.summary ?? null) : null,
     };
   }, [
     mode,

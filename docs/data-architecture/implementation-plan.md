@@ -269,6 +269,18 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Consequences**: Read-only, no migration. "Yesterday" is only as fresh as the last history sync; the page shows how far revision history is synced.
 - **Alternatives**: A tenant "Definition of Ready" setting (deferred — a second source of truth; revisit if the team keeps readiness in a tag or field in Azure), calendar-day idle alerts (rejected — weekends would flag everyone on Sunday).
 
+### ADR-027: Overview rebuilt around what a delivery manager acts on
+
+- **Context**: The owner found the Overview's look and data very poor on real data. On Hoteliana Sprint 2 all 19 stories were still New while 62 of 120 tasks were closed, the sprint had ended ten days earlier with no Sprint 3, and the page opened with sync counters, "unavailable" cards (release, engineering, confidence) and a disabled Copilot button. Every number was correct; the page did not say what it meant.
+- **Decision** (real mode only; demo mode unchanged):
+  1. **Sprint phase first** — when the selected sprint has ended (or not started), a notice says so with the dates, instead of scoring a finished sprint as if it were running.
+  2. **Sprint status card** — stories (scope, same rule as the scope KPI) and tasks shown side by side, each with done / in progress / not started; they are never added together (ADR-016). Stories still New whose tasks have moved are listed with a plain explanation, so a team that never moves stories in Azure sees why completion reads low.
+  3. **Needs attention** — the sprint's stuck work with owner and age (ADR-015, ADR-025), next to the risks.
+  4. **Delivery status** — the project's deliverables by status (ADR-021), late and at-risk first; hidden until a delivery mapping exists.
+  5. **No "unavailable" cards** — a KPI or card with no synchronized source is left out; pace-based KPIs (expected, confidence) are left out once the sprint has ended; trajectory shows only while the sprint runs. The Copilot placeholder is removed.
+  6. **Sync counters folded** into a collapsed "last sync details" section that opens by itself when a sync failed or was partial.
+- **Consequences**: No migration. The Overview payload gains a `summary` computed by `summarizeSprint` (pure, tested).
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.

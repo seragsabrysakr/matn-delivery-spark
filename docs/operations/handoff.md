@@ -44,11 +44,11 @@ Built and checked locally (tsc, vitest, eslint, prettier, vite build); ADR-026:
 - `/people` — `src/lib/people/people-rules.ts` (+ tests), `people.server.ts`, server fn `getPeople`. Previous working day's activity from revisions/transitions (mover); no-update alert after 2 working days with work in progress; visibility as the Team page.
 - Nav items `/backlog` (`ListTodo`) and `/people` (`UserRoundSearch`).
 
-Next steps: merge PR → confirm Lovable has the code → Publish (no migration).
+Next steps: merge PR (Phase 4b + Overview) → confirm Lovable has the code → Publish (no migration).
 
-## Owner feedback pending
+## Overview rebuild (ADR-027, same branch/PR)
 
-- Overview page: owner says its look and data are very bad and need fixing (2026-09-27). Details to confirm with the owner (demo data vs real data, which cards).
+Owner feedback 2026-09-27: Overview look and data were very poor on real data. Rebuilt (real mode only): sprint-phase notice, stories vs tasks card with "stories still New while tasks moved", needs-attention (stuck) + risks, delivery status, no "unavailable" cards, sync counters folded. Not yet seen by the owner on the live site.
 
 ## Remaining roadmap
 
@@ -56,7 +56,7 @@ Next steps: merge PR → confirm Lovable has the code → Publish (no migration)
 - Phase 5: daily digest and alerts.
 - New requests (answers pending from the owner): Release planning vs a product folder; Scrum ceremony tracking from a meetings folder with automatic AI reports. Open questions: folder location (Drive/SharePoint), product file format, how releases are defined in Azure, meeting platform and transcripts, an AI API key as a server secret.
 - Open decision: task discipline (BE/FE/QA) from tags vs Activity vs title prefix.
-- Known data facts: no current sprint exists (Sprint 2 ended 17 Sep, no Sprint 3 in Azure); tasks carry no remaining hours; capacity not filled in Azure.
+- Known data facts: no current sprint exists (Sprint 2 ended 17 Sep, no Sprint 3 in Azure); Hoteliana Sprint 2: all 19 stories still New while 62/120 tasks closed (team does not move stories); tasks carry no remaining hours; capacity not filled in Azure.
 
 ## Local checks
 

@@ -19,6 +19,7 @@ import {
   type SnapshotHistoryPoint,
 } from "./overview-rules";
 import { defaultStuckSettings } from "./stuck-rules";
+import { summarizeSprint, type SprintSummary } from "./sprint-summary-rules";
 import type { ResolvedTeamIteration } from "@/lib/workspace/context.server";
 
 export interface RealOverviewPayload extends OverviewResult {
@@ -31,6 +32,8 @@ export interface RealOverviewPayload extends OverviewResult {
     readonly totalWorkingDays: number | null;
   };
   readonly workItemCount: number;
+  /** Sprint status and story/task progress for the top of the Overview (ADR-027). */
+  readonly summary: SprintSummary;
 }
 
 export async function loadFacts(target: ResolvedTeamIteration): Promise<RealWorkItemFact[]> {
@@ -287,5 +290,12 @@ export async function buildRealOverview(
       totalWorkingDays: calendar?.totalWorkingDays ?? null,
     },
     workItemCount: facts.length,
+    summary: summarizeSprint({
+      facts,
+      startDate: target.startDate,
+      finishDate: target.finishDate,
+      today,
+      workingWeekdays: target.workingWeekdays,
+    }),
   };
 }

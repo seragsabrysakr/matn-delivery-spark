@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { RefreshCw, Sparkles } from "lucide-react";
-import { toast } from "sonner";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppShell } from "@/components/matn/AppShell";
 import { KpiGrid } from "@/components/matn/KpiGrid";
@@ -10,6 +9,12 @@ import { FunnelCard } from "@/components/matn/Funnel";
 import { TeamLoadCard } from "@/components/matn/TeamLoad";
 import { EngineeringHealthCard } from "@/components/matn/EngineeringHealth";
 import { RecommendedActionsCard } from "@/components/matn/RecommendedActions";
+import {
+  AttentionCard,
+  DeliveryStatusCard,
+  SprintPhaseNotice,
+  SprintSummaryCard,
+} from "@/components/matn/OverviewSections";
 import { ErrorBlock, Iso, LoadingBlock, Notice, SectionCard } from "@/components/matn/primitives";
 import { useI18n } from "@/lib/i18n";
 import { useWorkspace } from "@/data/workspace";
@@ -21,13 +26,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Executive delivery command center: sprint confidence, trajectory forecast, risks, team load, and recommended actions in Arabic and English.",
+          "Executive delivery command center: sprint status, stuck work, risks, delivery status and team load in Arabic and English.",
       },
       { property: "og:title", content: "MATN Delivery Intelligence — Executive Overview" },
       {
         property: "og:description",
-        content:
-          "Sprint confidence, trajectory forecast, risks, team load, and recommended actions in one executive view.",
+        content: "Sprint status, stuck work, risks and delivery status in one executive view.",
       },
     ],
   }),
@@ -36,25 +40,8 @@ export const Route = createFileRoute("/")({
 
 function OverviewPage() {
   const { t, locale } = useI18n();
-  const {
-    snapshot,
-    iteration,
-    loading,
-    error,
-    refresh,
-    mode,
-    unavailable,
-    syncing,
-    syncMessage,
-    runSync,
-    syncReport,
-    backlogReport,
-    historyReport,
-    sprintDatesUnavailable,
-  } = useWorkspace();
-
-  const engineeringUnavailable = mode === "real" && Boolean(unavailable["engineering"]);
-  const noWorkItems = mode === "real" && Boolean(unavailable["workItems"]);
+  const { iteration, mode, unavailable, syncing, syncMessage, runSync, sprintDatesUnavailable } =
+    useWorkspace();
   const noSprintDates = sprintDatesUnavailable;
 
   return (
@@ -72,51 +59,178 @@ function OverviewPage() {
               {iteration ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-0.5 text-[11px] text-muted-foreground">
                   <span className="font-medium text-foreground">{iteration.name[locale]}</span>
-                  <span aria-hidden>·</span>
-                  {noSprintDates || (mode === "real" && !iteration.totalDays) ? (
-                    <span>{t("real.sprintDates.unavailable")}</span>
-                  ) : (
-                    <Iso>
-                      {t("overview.sprintDay", { a: iteration.currentDay, b: iteration.totalDays })}
-                    </Iso>
-                  )}
+                  {mode !== "real" ? (
+                    <>
+                      <span aria-hidden>·</span>
+                      <Iso>
+                        {t("overview.sprintDay", {
+                          a: iteration.currentDay,
+                          b: iteration.totalDays,
+                        })}
+                      </Iso>
+                    </>
+                  ) : null}
                 </span>
               ) : null}
             </div>
             <p className="mt-0.5 text-[13px] text-muted-foreground">{t("overview.subtitle")}</p>
           </div>
-          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
-            {mode === "real" ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full min-h-11 shrink-0 sm:min-h-9 sm:w-auto"
-                disabled={syncing}
-                onClick={runSync}
-              >
-                <RefreshCw className={`size-3.5 ${syncing ? "animate-spin" : ""}`} aria-hidden />
-                {syncing ? t("real.sync.running") : t("real.sync.action")}
-              </Button>
-            ) : null}
+          {mode === "real" ? (
             <Button
               variant="outline"
               size="sm"
-              disabled
-              title={t("overview.copilot.comingSoon")}
               className="w-full min-h-11 shrink-0 sm:min-h-9 sm:w-auto"
+              disabled={syncing}
+              onClick={runSync}
             >
-              <Sparkles className="size-3.5" aria-hidden />
-              {t("overview.askCopilot")}
-              <span className="rounded-full border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                {t("overview.copilot.comingSoon")}
-              </span>
+              <RefreshCw className={`size-3.5 ${syncing ? "animate-spin" : ""}`} aria-hidden />
+              {syncing ? t("real.sync.running") : t("real.sync.action")}
             </Button>
-          </div>
+          ) : null}
         </header>
 
         {syncMessage ? (
           <Notice tone="warning" title={t("state.error.title")} body={syncMessage} />
         ) : null}
+        {mode === "real" && unavailable["workItems"] ? (
+          <Notice
+            tone="neutral"
+            title={t("real.unavailable.title")}
+            body={t("real.unavailable.noWorkItems")}
+          />
+        ) : null}
+        {noSprintDates ? (
+          <Notice
+            tone="warning"
+            title={t("real.unavailable.title")}
+            body={t("real.unavailable.noSprintDates")}
+          />
+        ) : null}
+
+        {mode === "real" ? <RealOverview /> : <DemoOverview />}
+      </div>
+    </AppShell>
+  );
+}
+
+function FreshnessNotices() {
+  const { t } = useI18n();
+  const { snapshot, loading } = useWorkspace();
+  if (loading || !snapshot) return null;
+  if (snapshot.freshness === "stale") {
+    return (
+      <Notice
+        tone="warning"
+        title={t("state.stale.title")}
+        body={t("state.stale.body", {
+          a: t("common.minutes", { a: snapshot.lastSyncMinutesAgo }),
+        })}
+      />
+    );
+  }
+  if (snapshot.freshness === "partial") {
+    return (
+      <Notice tone="neutral" title={t("state.partial.title")} body={t("state.partial.body")} />
+    );
+  }
+  return null;
+}
+
+/**
+ * Live data (ADR-027): what the sprint looks like, what needs attention, what
+ * is at risk and how delivery stands. Cards with no synchronized source are
+ * left out instead of shown as "unavailable".
+ */
+function RealOverview() {
+  const { t, locale } = useI18n();
+  const { snapshot, iteration, loading, error, refresh, unavailable, sprintSummary, filters } =
+    useWorkspace();
+
+  if (error) {
+    return (
+      <SectionCard title={t("state.error.title")}>
+        <ErrorBlock onRetry={refresh} />
+      </SectionCard>
+    );
+  }
+  if (loading || !snapshot || !sprintSummary) {
+    return (
+      <>
+        <SectionCard title={t("ov.sprint.title")}>
+          <LoadingBlock rows={4} />
+        </SectionCard>
+        <SectionCard title={t("ov.attention.title")}>
+          <LoadingBlock rows={3} />
+        </SectionCard>
+      </>
+    );
+  }
+
+  const running = sprintSummary.phase === "running";
+  // During a sprint every indicator is live; once it has ended, the pace-based
+  // ones (expected, confidence) describe a finished race and are left out.
+  const kpis = snapshot.kpis.filter(
+    (k) => !k.unavailable && (running || (k.id !== "expected" && k.id !== "confidence")),
+  );
+
+  return (
+    <>
+      <FreshnessNotices />
+      <SprintPhaseNotice summary={sprintSummary} sprintName={iteration?.name[locale] ?? ""} />
+      <SprintSummaryCard summary={sprintSummary} />
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <AttentionCard teamIterationId={filters.iterationId} />
+        <RisksCard risks={snapshot.risks} />
+      </div>
+
+      <DeliveryStatusCard teamIterationId={filters.iterationId} />
+
+      {kpis.length > 0 ? <KpiGrid kpis={kpis} /> : null}
+
+      {running && !unavailable["expected"] ? (
+        <TrajectoryCard
+          trajectory={snapshot.trajectory}
+          currentDay={iteration?.currentDay ?? 0}
+          totalDays={iteration?.totalDays ?? 0}
+        />
+      ) : null}
+
+      {!unavailable["funnel"] && snapshot.funnel.length > 0 ? (
+        <FunnelCard stages={snapshot.funnel} />
+      ) : null}
+
+      <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
+        {snapshot.teamLoad.length > 0 ? <TeamLoadCard members={snapshot.teamLoad} /> : null}
+        {snapshot.actions.length > 0 ? <RecommendedActionsCard actions={snapshot.actions} /> : null}
+      </div>
+
+      {!unavailable["engineering"] ? <EngineeringHealthCard data={snapshot.engineering} /> : null}
+
+      <SyncDetails />
+    </>
+  );
+}
+
+/** The last sync's counters, folded away: useful for support, noise for a manager. */
+function SyncDetails() {
+  const { t } = useI18n();
+  const { syncReport, backlogReport, historyReport } = useWorkspace();
+  if (!syncReport && !backlogReport && !historyReport) return null;
+  const failed =
+    (syncReport && (syncReport.status !== "succeeded" || syncReport.truncated)) ||
+    (backlogReport && (backlogReport.status !== "succeeded" || backlogReport.truncated)) ||
+    (historyReport && historyReport.status !== "succeeded");
+  return (
+    <details
+      className="rounded-lg border border-border bg-card px-4 py-3 text-xs"
+      open={Boolean(failed)}
+    >
+      <summary className="cursor-pointer text-muted-foreground">
+        {t("ov.syncDetails")}
+        {failed ? <span className="ms-2 text-warning">⚠</span> : null}
+      </summary>
+      <div className="mt-3 flex flex-col gap-2">
         {syncReport ? (
           <Notice
             tone={
@@ -190,110 +304,52 @@ function OverviewPage() {
             }
           />
         ) : null}
-        {noWorkItems ? (
-          <Notice
-            tone="neutral"
-            title={t("real.unavailable.title")}
-            body={t("real.unavailable.noWorkItems")}
-          />
-        ) : null}
-        {noSprintDates ? (
-          <Notice
-            tone="warning"
-            title={t("real.unavailable.title")}
-            body={t("real.unavailable.noSprintDates")}
-          />
-        ) : null}
+      </div>
+    </details>
+  );
+}
 
-        {error ? (
-          <SectionCard title={t("state.error.title")}>
-            <ErrorBlock onRetry={refresh} />
+/** Demo data shown only before any sprint is synchronized. */
+function DemoOverview() {
+  const { t } = useI18n();
+  const { snapshot, iteration, loading, error, refresh } = useWorkspace();
+  if (error) {
+    return (
+      <SectionCard title={t("state.error.title")}>
+        <ErrorBlock onRetry={refresh} />
+      </SectionCard>
+    );
+  }
+  return (
+    <>
+      <FreshnessNotices />
+      <KpiGrid kpis={snapshot?.kpis ?? []} loading={loading} />
+      <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
+        {loading || !snapshot ? (
+          <SectionCard title={t("trajectory.title")}>
+            <LoadingBlock rows={5} />
           </SectionCard>
         ) : (
-          <>
-            {!loading && snapshot && snapshot.freshness === "stale" ? (
-              <Notice
-                tone="warning"
-                title={t("state.stale.title")}
-                body={t("state.stale.body", {
-                  a: t("common.minutes", { a: snapshot.lastSyncMinutesAgo }),
-                })}
-              />
-            ) : null}
-            {!loading && snapshot && snapshot.freshness === "partial" ? (
-              <Notice
-                tone="neutral"
-                title={t("state.partial.title")}
-                body={t("state.partial.body")}
-              />
-            ) : null}
-
-            <KpiGrid kpis={snapshot?.kpis ?? []} loading={loading} />
-
-            <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
-              {loading || !snapshot ? (
-                <SectionCard title={t("trajectory.title")}>
-                  <LoadingBlock rows={5} />
-                </SectionCard>
-              ) : (
-                <TrajectoryCard
-                  trajectory={snapshot.trajectory}
-                  currentDay={iteration?.currentDay ?? 0}
-                  totalDays={iteration?.totalDays ?? 0}
-                />
-              )}
-
-              {loading || !snapshot ? (
-                <SectionCard title={t("risks.title")}>
-                  <LoadingBlock rows={5} />
-                </SectionCard>
-              ) : (
-                <RisksCard risks={snapshot.risks} />
-              )}
-            </div>
-
-            {loading || !snapshot ? (
-              <SectionCard title={t("funnel.title")}>
-                <LoadingBlock rows={2} />
-              </SectionCard>
-            ) : (
-              <FunnelCard stages={snapshot.funnel} />
-            )}
-
-            <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
-              {loading || !snapshot ? (
-                <SectionCard title={t("team.title")}>
-                  <LoadingBlock rows={5} />
-                </SectionCard>
-              ) : (
-                <TeamLoadCard members={snapshot.teamLoad} />
-              )}
-
-              {loading || !snapshot ? (
-                <SectionCard title={t("eng.title")}>
-                  <LoadingBlock rows={4} />
-                </SectionCard>
-              ) : engineeringUnavailable ? (
-                <SectionCard title={t("eng.title")}>
-                  <p className="text-[13px] text-muted-foreground">
-                    {t("real.unavailable.engineering")}
-                  </p>
-                </SectionCard>
-              ) : (
-                <EngineeringHealthCard data={snapshot.engineering} />
-              )}
-            </div>
-
-            {loading || !snapshot ? (
-              <SectionCard title={t("actions.title")}>
-                <LoadingBlock rows={3} />
-              </SectionCard>
-            ) : (
-              <RecommendedActionsCard actions={snapshot.actions} />
-            )}
-          </>
+          <TrajectoryCard
+            trajectory={snapshot.trajectory}
+            currentDay={iteration?.currentDay ?? 0}
+            totalDays={iteration?.totalDays ?? 0}
+          />
+        )}
+        {loading || !snapshot ? (
+          <SectionCard title={t("risks.title")}>
+            <LoadingBlock rows={5} />
+          </SectionCard>
+        ) : (
+          <RisksCard risks={snapshot.risks} />
         )}
       </div>
-    </AppShell>
+      {loading || !snapshot ? null : <FunnelCard stages={snapshot.funnel} />}
+      <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
+        {loading || !snapshot ? null : <TeamLoadCard members={snapshot.teamLoad} />}
+        {loading || !snapshot ? null : <EngineeringHealthCard data={snapshot.engineering} />}
+      </div>
+      {loading || !snapshot ? null : <RecommendedActionsCard actions={snapshot.actions} />}
+    </>
   );
 }
