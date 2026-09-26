@@ -442,3 +442,39 @@ export const getProjectHierarchy = createServerFn({ method: "GET" })
       return { ok: false as const, failure: toAzureFailure(error) };
     }
   });
+
+/** The team's Azure board for the selected sprint, with aging and stuck cards (ADR-025). */
+export const getSprintBoard = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => teamIterationInput.parse(data))
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext } = await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { buildSprintBoardPayload } = await import("@/lib/board/board.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      return { ok: true as const, board: await buildSprintBoardPayload(target) };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
+
+/** Stuck work across every team the user can see (ADR-025). */
+export const getStuckWork = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ tenantId: uuid.optional() }).strict().parse(data ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext } = await import("@/lib/azure/authz.server");
+    const { buildStuckAcrossTeams } = await import("@/lib/board/board.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      return { ok: true as const, stuck: await buildStuckAcrossTeams(tenant) };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
