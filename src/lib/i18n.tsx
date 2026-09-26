@@ -5,6 +5,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  type Context,
   type ReactNode,
 } from "react";
 
@@ -873,7 +874,9 @@ export function formatHours(value: number, locale: Locale) {
   return `${value} ساعة`;
 }
 
-const LocaleContext = createContext<Ctx | null>(null);
+// Keep one context instance across hot reloads so providers and consumers always match.
+const g = globalThis as unknown as { __matnLocaleContext?: React.Context<Ctx | null> };
+const LocaleContext = (g.__matnLocaleContext ??= createContext<Ctx | null>(null));
 
 const STORAGE_KEY = "matn.locale";
 
