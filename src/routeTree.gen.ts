@@ -12,11 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BacklogRouteImport } from './routes/backlog'
 import { Route as BoardRouteImport } from './routes/board'
 import { Route as DeliveryRouteImport } from './routes/delivery'
 import { Route as EngineeringRouteImport } from './routes/engineering'
 import { Route as HierarchyRouteImport } from './routes/hierarchy'
 import { Route as IntelligenceRouteImport } from './routes/intelligence'
+import { Route as PeopleRouteImport } from './routes/people'
 import { Route as StuckRouteImport } from './routes/stuck'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -35,6 +37,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BacklogRoute = BacklogRouteImport.update({
+  id: '/backlog',
+  path: '/backlog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BoardRoute = BoardRouteImport.update({
@@ -60,6 +67,11 @@ const HierarchyRoute = HierarchyRouteImport.update({
 const IntelligenceRoute = IntelligenceRouteImport.update({
   id: '/intelligence',
   path: '/intelligence',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PeopleRoute = PeopleRouteImport.update({
+  id: '/people',
+  path: '/people',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StuckRoute = StuckRouteImport.update({
@@ -92,11 +104,13 @@ const ApiPublicCronTickRoute = ApiPublicCronTickRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/backlog': typeof BacklogRoute
   '/board': typeof BoardRoute
   '/delivery': typeof DeliveryRoute
   '/engineering': typeof EngineeringRoute
   '/hierarchy': typeof HierarchyRoute
   '/intelligence': typeof IntelligenceRoute
+  '/people': typeof PeopleRoute
   '/stuck': typeof StuckRoute
   '/team': typeof TeamRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -106,11 +120,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/backlog': typeof BacklogRoute
   '/board': typeof BoardRoute
   '/delivery': typeof DeliveryRoute
   '/engineering': typeof EngineeringRoute
   '/hierarchy': typeof HierarchyRoute
   '/intelligence': typeof IntelligenceRoute
+  '/people': typeof PeopleRoute
   '/stuck': typeof StuckRoute
   '/team': typeof TeamRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -122,11 +138,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/backlog': typeof BacklogRoute
   '/board': typeof BoardRoute
   '/delivery': typeof DeliveryRoute
   '/engineering': typeof EngineeringRoute
   '/hierarchy': typeof HierarchyRoute
   '/intelligence': typeof IntelligenceRoute
+  '/people': typeof PeopleRoute
   '/stuck': typeof StuckRoute
   '/team': typeof TeamRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -138,11 +156,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/backlog'
     | '/board'
     | '/delivery'
     | '/engineering'
     | '/hierarchy'
     | '/intelligence'
+    | '/people'
     | '/stuck'
     | '/team'
     | '/onboarding'
@@ -152,11 +172,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/backlog'
     | '/board'
     | '/delivery'
     | '/engineering'
     | '/hierarchy'
     | '/intelligence'
+    | '/people'
     | '/stuck'
     | '/team'
     | '/onboarding'
@@ -167,11 +189,13 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/backlog'
     | '/board'
     | '/delivery'
     | '/engineering'
     | '/hierarchy'
     | '/intelligence'
+    | '/people'
     | '/stuck'
     | '/team'
     | '/_authenticated/onboarding'
@@ -183,11 +207,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BacklogRoute: typeof BacklogRoute
   BoardRoute: typeof BoardRoute
   DeliveryRoute: typeof DeliveryRoute
   EngineeringRoute: typeof EngineeringRoute
   HierarchyRoute: typeof HierarchyRoute
   IntelligenceRoute: typeof IntelligenceRoute
+  PeopleRoute: typeof PeopleRoute
   StuckRoute: typeof StuckRoute
   TeamRoute: typeof TeamRoute
   ApiPublicCronTickRoute: typeof ApiPublicCronTickRoute
@@ -214,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/backlog': {
+      id: '/backlog'
+      path: '/backlog'
+      fullPath: '/backlog'
+      preLoaderRoute: typeof BacklogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/board': {
@@ -249,6 +282,13 @@ declare module '@tanstack/react-router' {
       path: '/intelligence'
       fullPath: '/intelligence'
       preLoaderRoute: typeof IntelligenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/people': {
+      id: '/people'
+      path: '/people'
+      fullPath: '/people'
+      preLoaderRoute: typeof PeopleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stuck': {
@@ -306,11 +346,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  BacklogRoute: BacklogRoute,
   BoardRoute: BoardRoute,
   DeliveryRoute: DeliveryRoute,
   EngineeringRoute: EngineeringRoute,
   HierarchyRoute: HierarchyRoute,
   IntelligenceRoute: IntelligenceRoute,
+  PeopleRoute: PeopleRoute,
   StuckRoute: StuckRoute,
   TeamRoute: TeamRoute,
   ApiPublicCronTickRoute: ApiPublicCronTickRoute,
