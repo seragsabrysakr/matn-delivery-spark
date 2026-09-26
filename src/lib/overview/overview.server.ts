@@ -33,7 +33,7 @@ export interface RealOverviewPayload extends OverviewResult {
   readonly workItemCount: number;
 }
 
-async function loadFacts(target: ResolvedTeamIteration): Promise<RealWorkItemFact[]> {
+export async function loadFacts(target: ResolvedTeamIteration): Promise<RealWorkItemFact[]> {
   const { data, error } = await supabaseAdmin
     .from("az_work_items")
     .select(
@@ -70,7 +70,7 @@ async function loadFacts(target: ResolvedTeamIteration): Promise<RealWorkItemFac
 }
 
 /** The team's synchronized Azure boards with their columns in Azure order. */
-async function loadBoards(target: ResolvedTeamIteration): Promise<BoardFact[]> {
+export async function loadBoards(target: ResolvedTeamIteration): Promise<BoardFact[]> {
   const [boards, columns] = await Promise.all([
     supabaseAdmin
       .from("az_team_boards")
@@ -116,7 +116,7 @@ async function loadBoards(target: ResolvedTeamIteration): Promise<BoardFact[]> {
   }));
 }
 
-async function loadMembers(target: ResolvedTeamIteration): Promise<MemberFact[]> {
+export async function loadMembers(target: ResolvedTeamIteration): Promise<MemberFact[]> {
   const memberships = await supabaseAdmin
     .from("core_team_memberships")
     .select("member_id")

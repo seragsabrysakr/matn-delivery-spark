@@ -274,7 +274,7 @@ export function computeSprintConfidence(input: {
   return { score: Math.round(weighted / coverage), coverage, components };
 }
 
-const stuckCandidate = (fact: RealWorkItemFact, columnKind: ColumnKind | null) => ({
+export const stuckCandidate = (fact: RealWorkItemFact, columnKind: ColumnKind | null) => ({
   stateCategory: fact.stateCategory,
   isBlocked: fact.isBlocked,
   tags: fact.tags,
