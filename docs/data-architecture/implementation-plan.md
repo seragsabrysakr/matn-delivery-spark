@@ -202,6 +202,17 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Consequences**: Team and Overview load signals use the team's own capacity. No schema change.
 - **Alternatives**: Tenant-entered capacity (rejected — duplicates what the team keeps in Azure), a fixed hours-per-day default (rejected — a guess presented as data).
 
+### ADR-020: Scheduled sync and daily snapshots (Phase 2d)
+
+- **Context**: The mirror must stay live without anyone pressing Sync, and daily snapshots must exist for every day, not only days someone opened the Overview.
+- **Decision**:
+  1. **External scheduler, signed trigger** (per ADR-003) — a GitHub Actions workflow runs every 10 minutes and calls `POST /api/public/cron/tick`, signed with HMAC-SHA256 over `timestamp.nonce.idempotencyKey.body` and a key id (`primary`, `next` for rotation). The app rejects stale timestamps (±5 min), replayed nonces or idempotency keys (`ops_cron_nonces`), and more than 40 triggers a minute; every accepted and rejected trigger is audited. The secret exists only in the app's server environment and in the repository's Actions secrets. No `GET`.
+  2. **One bounded step per request** — each call advances or starts one sync run, or writes one snapshot, then returns; the workflow repeats until the app reports `idle`. Runs are the same resumable runs as the manual Sync button, marked `trigger_kind = scheduled`, so an interrupted run is simply resumed.
+  3. **What is scheduled comes from Azure data** — per tenant, the foundation sync (projects, teams, iterations, members) every 6 hours so new sprints appear on their own; per team, its latest started sprint by Azure's own dates, kept for one more sprint length after its finish date (teams keep working past the end until the next sprint exists); for each, sprint sync every 15 minutes, then backlog and history every 30 minutes per project.
+  4. **Daily snapshot** — after the syncs, the first tick of each Cairo day writes that day's immutable snapshot.
+- **Consequences**: Live data without manual syncs; snapshots on every day. Setup needs one secret in two places (app and GitHub).
+- **Alternatives**: pg_cron (rejected — cannot read the secret securely on this host), one long request per tick (rejected — exceeds Worker limits).
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.

@@ -255,6 +255,40 @@ export async function requireTeamIteration(
   if (scope.teamIds && !scope.teamIds.includes(row.team_id))
     throw new AzureDevOpsError("forbidden");
 
+  return resolveTeamIterationRow(row);
+}
+
+/**
+ * Resolves a team iteration for the scheduler, which acts for the tenant
+ * itself rather than for a user, so no user scope applies. Server-only.
+ */
+export async function resolveScheduledTeamIteration(
+  tenantId: string,
+  teamIterationId: string,
+): Promise<ResolvedTeamIteration> {
+  const { data, error } = await supabaseAdmin
+    .from("core_team_iterations")
+    .select(
+      "id, tenant_id, organization_id, project_id, team_id, iteration_id, time_zone, working_weekdays",
+    )
+    .eq("tenant_id", tenantId)
+    .eq("id", teamIterationId)
+    .maybeSingle();
+  if (error) throw new AzureDevOpsError("unknown");
+  if (!data) throw new AzureDevOpsError("forbidden");
+  return resolveTeamIterationRow(data);
+}
+
+async function resolveTeamIterationRow(row: {
+  id: string;
+  tenant_id: string;
+  organization_id: string;
+  project_id: string;
+  team_id: string;
+  iteration_id: string;
+  time_zone: string;
+  working_weekdays: number[] | null;
+}): Promise<ResolvedTeamIteration> {
   const [iteration, project, team, organization] = await Promise.all([
     supabaseAdmin
       .from("core_iterations")
