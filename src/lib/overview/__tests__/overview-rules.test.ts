@@ -35,6 +35,8 @@ const fact = (over: Partial<RealWorkItemFact> = {}): RealWorkItemFact => ({
   azureUrl: null,
   boardColumn: null,
   boardColumnEnteredAt: null,
+  tags: [],
+  parentAzureWorkItemId: null,
   ...over,
 });
 

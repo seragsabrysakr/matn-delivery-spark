@@ -17,6 +17,7 @@ import {
   type RealWorkItemFact,
   type SnapshotHistoryPoint,
 } from "./overview-rules";
+import { defaultStuckSettings } from "./stuck-rules";
 import type { ResolvedTeamIteration } from "@/lib/workspace/context.server";
 
 export interface RealOverviewPayload extends OverviewResult {
@@ -35,7 +36,7 @@ async function loadFacts(target: ResolvedTeamIteration): Promise<RealWorkItemFac
   const { data, error } = await supabaseAdmin
     .from("az_work_items")
     .select(
-      "id, azure_work_item_id, title, alias, azure_work_item_type, state, state_category, is_blocked, blocked_since, estimate, assigned_to_member_id, counts_toward_scope, state_change_date, changed_at_source, azure_url, board_column, board_column_entered_at",
+      "id, azure_work_item_id, title, alias, azure_work_item_type, state, state_category, is_blocked, blocked_since, estimate, assigned_to_member_id, counts_toward_scope, state_change_date, changed_at_source, azure_url, board_column, board_column_entered_at, tags, parent_azure_work_item_id",
     )
     .eq("tenant_id", target.tenantId)
     .eq("iteration_id", target.iterationId)
@@ -61,6 +62,9 @@ async function loadFacts(target: ResolvedTeamIteration): Promise<RealWorkItemFac
     azureUrl: row.azure_url,
     boardColumn: row.board_column,
     boardColumnEnteredAt: row.board_column_entered_at,
+    tags: row.tags ?? [],
+    parentAzureWorkItemId:
+      row.parent_azure_work_item_id === null ? null : Number(row.parent_azure_work_item_id),
   }));
 }
 
@@ -258,6 +262,10 @@ export async function buildRealOverview(
     calendar,
     history,
     boards,
+    stuckSettings: defaultStuckSettings({
+      workingWeekdays: target.workingWeekdays,
+      timeZone: target.timeZone,
+    }),
     lastSyncedAt: lastSync.data?.last_synced_at ?? null,
     nowIso: new Date().toISOString(),
     iterationId: target.teamIterationId,
