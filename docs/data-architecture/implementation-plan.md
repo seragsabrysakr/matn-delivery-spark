@@ -138,6 +138,31 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Consequences**: The backlog and future sprints are available for the upcoming Backlog/People/Stuck pages; repeat syncs read only what changed. Items that leave a team's areas between full reconciles are corrected within a day. No schema change was needed.
 - **Alternatives**: One query per team (rejected — shared areas would be read twice and ownership would flip), a persisted `in_backlog` flag (rejected — wrong as soon as a sprint rolls over), relying on `State NOT IN ('Closed','Removed')` (rejected — hardcoded names, ADR-013).
 
+### ADR-015: Stuck-work detection from Azure data (Phase 1c)
+
+- **Context**: "Stuck" meant only the Blocked field. A card that silently sits in one column for days, or that the team tags as blocked, was invisible. Azure DevOps stays the single source of truth for the team's work, each person's work and the workflow.
+- **Decision**:
+  1. **An open item is stuck when any of these holds**, each read from synchronized Azure data: the process's Blocked field is set; the item carries a blocked tag (`Blocked`, case-insensitive); or it has been in an **in-progress** board column (Azure `columnType = inProgress`) longer than the threshold. Off the board (e.g. Tasks) the age rule applies only to in-progress/resolved states. Work waiting in an incoming column or sitting in the done column is never aged; closed work is never stuck.
+  2. **Age in column** is measured from `board_column_entered_at` (ADR-013); until the first observed move it falls back to `Microsoft.VSTS.Common.StateChangeDate` and says so (`ageBasis = state_change`, an upper bound). No known instant means an unknown age — null, not zero.
+  3. **Working days, not calendar days** — counted in the team's own working weekdays and time zone (default Sun–Thu, `Africa/Cairo`); the entry day does not count, today does.
+  4. **Threshold** — 3 working days. It is an analysis parameter like a KPI threshold, not a second source of truth, so no configuration table was added. Once revisions are ingested (Phase 2), the per-column threshold will be derived from the team's own Azure history, with 3 days as the fallback.
+  5. **Computed at read time** — age grows every day without a sync, so nothing is persisted.
+  6. **One piece of work is counted once** — a child (e.g. a Task) is not reported when its parent (e.g. its User Story) is itself stuck; a stuck Task under a healthy Story is reported on its own. The funnel counts only items on the team's board, so Stories and their Tasks are never both counted there.
+  7. **Surfaced in the Overview** — a "Stuck work items" risk (not repeating the critical-blocker risk's items) and a stuck count per funnel column.
+- **Consequences**: Silent stalls become visible per column and per item, from Azure data only. Until revisions are ingested, time-in-column for items that have not moved since the first sync is an upper-bound estimate.
+- **Alternatives**: A tenant configuration table for thresholds (rejected for now — a second source of truth outside Azure; revisit only if history-derived thresholds prove insufficient), persisting an `is_stuck` flag (rejected — wrong the next day), calendar days (rejected — weekends would make every Thursday card stuck by Sunday).
+
+### ADR-016: Work item hierarchy — count each piece of work once
+
+- **Context**: Teams plan User Stories and break them into Tasks, often per discipline (Backend / Frontend / QA), and many plan Bugs under their Story like Tasks (Azure team setting "Bugs are managed with tasks"). Stories are frequently left unassigned while the Tasks carry the assignee. Counting Bugs as scope next to their Story, or flagging such Stories as unassigned, double-counts and misreports the work.
+- **Decision**:
+  1. **Bug handling comes from the team's own Azure setting** — `GET {project}/{team}/_apis/work/teamsettings` → `bugsBehavior`: `asRequirements` → bugs are scope; `asTasks` or `off` → bugs are not scope (still synchronized, with their parent). An explicit `core_process_mappings.bug_handling_mode` still wins; with neither, the previous default applies. The sprint sync uses the sprint's team; the backlog sync uses each item's owning team.
+  2. **A Story is owned when it or any of its child items is assigned** — the unassigned-scope risk fires only when nobody holds any part of the Story.
+  3. **Scope rule versioning** — daily snapshots record `metrics.scope_rule` (now `2`); the scope-change KPI only compares against a baseline taken under the same rule, so a rule change is never reported as a scope change.
+  4. **Units never mix across levels** — Story Points stay on Stories (scope, velocity); per-person activity comes from Tasks (assignee, state), in counts unless the Tasks carry hours.
+- **Consequences**: Sprint scope and completion match what the team sees in Azure (e.g. Hoteliana Sprint 2: 19 Stories / 72 points, not 26 items). After deploy, scope change is unavailable until the first new-rule snapshot is a day old.
+- **Alternatives**: A tenant setting for bug handling (rejected as the default — Azure already stores it per team), treating every Bug as a Task (rejected — wrong for teams that plan bugs as requirements).
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.

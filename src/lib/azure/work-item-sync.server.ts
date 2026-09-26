@@ -10,6 +10,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
 import { AzureDevOpsClient } from "./client.server";
 import { AzureDevOpsError, toAzureFailure, type AzureFailure } from "./errors";
+import { bugHandlingFromAzure, effectiveBugHandling } from "./process-mapping";
 import {
   buildIterationWiql,
   buildWorkItemsBatchBody,
@@ -202,6 +203,15 @@ export async function advanceWorkItemSync(
 
   const reference = await loadWorkItemReference(target);
   const { mapping } = reference;
+  // How this team plans bugs comes from its own Azure settings (ADR-016).
+  const teamSettings =
+    (cursor.phase === "discover" || cursor.phase === "read") && target.azureTeamId
+      ? await client.getTeamSettings(target.azureProjectId, target.azureTeamId)
+      : null;
+  const bugHandlingMode = effectiveBugHandling(
+    mapping,
+    bugHandlingFromAzure(teamSettings?.bugsBehavior),
+  );
 
   try {
     if (cursor.phase === "discover") {
@@ -249,6 +259,7 @@ export async function advanceWorkItemSync(
             resolveMember: reference.resolveMember,
             organizationBaseUrl: target.organizationBaseUrl,
             azureProjectName: target.azureProjectName,
+            bugHandlingMode,
           }),
         });
         const { inserted, updated, unchanged, failed } = result;

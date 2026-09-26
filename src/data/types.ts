@@ -124,6 +124,8 @@ export interface FunnelStage {
   label?: string;
   /** Live data: the column's WIP limit from Azure, when one is set. */
   itemLimit?: number | null;
+  /** Live data: items in this column detected as stuck (ADR-015). */
+  stuckCount?: number;
   count: number;
   avgDays: number;
   status: HealthStatus;

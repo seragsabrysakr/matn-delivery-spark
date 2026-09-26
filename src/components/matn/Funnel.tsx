@@ -60,6 +60,11 @@ export function FunnelCard({ stages }: { stages: FunnelStage[] }) {
                   </Iso>
                 </p>
               ) : null}
+              {stage.stuckCount ? (
+                <p className="mt-2 text-[11px] font-medium text-critical">
+                  {t("funnel.stuck")}: <Iso>{stage.stuckCount}</Iso>
+                </p>
+              ) : null}
               {stage.avgDays > 0 ? (
                 <p className="mt-2 text-[11px] text-muted-foreground">
                   {t("funnel.aging")}: <Iso>{days(stage.avgDays)}</Iso>

@@ -42,6 +42,8 @@ export interface ResolvedProcessMapping {
   readonly estimateFields: readonly string[];
   readonly severityField: string | null;
   readonly bugHandlingMode: BugHandlingMode;
+  /** True when the tenant set bug handling explicitly; Azure's team setting then does not apply. */
+  readonly bugHandlingConfigured: boolean;
 }
 
 const DEFAULT_ALIASES: Record<string, WorkItemAlias> = {
@@ -153,7 +155,37 @@ export function resolveProcessMapping(
     estimateFields: estimateFields.length > 0 ? estimateFields : DEFAULT_ESTIMATE_FIELDS,
     severityField: row?.severity_field ?? "Microsoft.VSTS.Common.Severity",
     bugHandlingMode,
+    bugHandlingConfigured: row !== null,
   };
+}
+
+/**
+ * Bug handling from the team's own Azure setting (`teamsettings.bugsBehavior`).
+ * "asTasks": bugs are planned under stories like tasks, so they are not scope.
+ * "off": bugs are not planned on the backlog; they stay synchronized for
+ * visibility but are not scope either. Unknown values give no opinion.
+ */
+export function bugHandlingFromAzure(
+  bugsBehavior: string | null | undefined,
+): BugHandlingMode | null {
+  switch ((bugsBehavior ?? "").toLowerCase()) {
+    case "asrequirements":
+      return "as_requirement";
+    case "astasks":
+    case "off":
+      return "as_task";
+    default:
+      return null;
+  }
+}
+
+/** Explicit tenant configuration wins; otherwise the team's Azure setting; otherwise the mapping default. */
+export function effectiveBugHandling(
+  mapping: ResolvedProcessMapping,
+  teamBugHandling: BugHandlingMode | null | undefined,
+): BugHandlingMode {
+  if (mapping.bugHandlingConfigured) return mapping.bugHandlingMode;
+  return teamBugHandling ?? mapping.bugHandlingMode;
 }
 
 export function aliasFor(mapping: ResolvedProcessMapping, azureType: string): WorkItemAlias {

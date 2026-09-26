@@ -12,6 +12,13 @@ import {
   choosePrimaryBoard,
   type BoardColumnType,
 } from "@/lib/azure/metadata-rules";
+import {
+  assessStuck,
+  defaultStuckSettings,
+  type ColumnKind,
+  type StuckAssessment,
+  type StuckSettings,
+} from "./stuck-rules";
 import type { StateCategory, WorkItemAlias } from "@/types/domain/work-item";
 import type {
   DeliverySnapshot,
@@ -61,6 +68,10 @@ export interface RealWorkItemFact {
   readonly boardColumn: string | null;
   /** When the item was first observed in its current column; null if unknown. */
   readonly boardColumnEnteredAt: string | null;
+  /** `System.Tags` as synchronized. */
+  readonly tags: readonly string[];
+  /** `System.Parent`, e.g. the User Story a Task belongs to. */
+  readonly parentAzureWorkItemId: number | null;
 }
 
 export interface BoardColumnFact {
@@ -84,11 +95,20 @@ export interface MemberFact {
   readonly capacityHours: number | null;
 }
 
+/**
+ * Version of the rule that decides which items are sprint scope. Bumped when
+ * that rule changes (v2: bugs planned as tasks are no longer scope), so a
+ * rule change is never reported as a scope change.
+ */
+export const SCOPE_RULE_VERSION = 2;
+
 export interface SnapshotHistoryPoint {
   readonly snapshotDate: string;
   readonly workingDay: number;
   readonly completedPercent: number;
   readonly scopeTotal: number;
+  /** Scope rule the snapshot was taken under; null for snapshots before versioning. */
+  readonly scopeRule: number | null;
 }
 
 export interface OverviewInput {
@@ -98,6 +118,8 @@ export interface OverviewInput {
   readonly history: readonly SnapshotHistoryPoint[];
   /** The team's synchronized boards; empty until board metadata is synced. */
   readonly boards?: readonly BoardFact[];
+  /** Stuck-work settings; defaults to 3 working days, Sun–Thu, Cairo. */
+  readonly stuckSettings?: StuckSettings;
   readonly lastSyncedAt: string | null;
   readonly nowIso: string;
   readonly iterationId: string;
@@ -251,6 +273,74 @@ export function computeSprintConfidence(input: {
   return { score: Math.round(weighted / coverage), coverage, components };
 }
 
+const stuckCandidate = (fact: RealWorkItemFact, columnKind: ColumnKind | null) => ({
+  stateCategory: fact.stateCategory,
+  isBlocked: fact.isBlocked,
+  tags: fact.tags,
+  columnKind,
+  boardColumnEnteredAt: fact.boardColumnEnteredAt,
+  stateChangeDate: fact.stateChangeDate,
+});
+
+/**
+ * The kind of board column each item sits in, on the board that holds most of
+ * the sprint's items; null for items not on that board (e.g. tasks).
+ */
+export function columnKindsByItem(
+  facts: readonly RealWorkItemFact[],
+  boards: readonly BoardFact[],
+): Map<string, ColumnKind | null> {
+  const result = new Map<string, ColumnKind | null>();
+  const board = choosePrimaryBoard(
+    boards,
+    facts.map((f) => f.azureType),
+  );
+  for (const fact of facts) {
+    const index = board ? boardColumnIndexFor(fact, board.columns) : null;
+    result.set(fact.id, index === null || !board ? null : board.columns[index]!.columnType);
+  }
+  return result;
+}
+
+export interface StuckItem {
+  readonly fact: RealWorkItemFact;
+  readonly assessment: StuckAssessment;
+}
+
+/**
+ * Every stuck open item, oldest in column first (unknown age last). A child
+ * (e.g. a Task) is not reported when its parent (e.g. its User Story) is
+ * itself stuck, so one piece of work is never counted twice; a stuck Task
+ * under a healthy Story is still reported on its own.
+ */
+export function computeStuckItems(
+  facts: readonly RealWorkItemFact[],
+  boards: readonly BoardFact[],
+  nowIso: string,
+  stuckSettings: StuckSettings = defaultStuckSettings(),
+): StuckItem[] {
+  const kinds = columnKindsByItem(facts, boards);
+  const stuck = facts
+    .map((fact) => ({
+      fact,
+      assessment: assessStuck(
+        stuckCandidate(fact, kinds.get(fact.id) ?? null),
+        nowIso,
+        stuckSettings,
+      ),
+    }))
+    .filter((item) => item.assessment.stuck);
+  const stuckIds = new Set(stuck.map((item) => item.fact.azureWorkItemId));
+  return stuck
+    .filter(
+      (item) =>
+        item.fact.parentAzureWorkItemId === null || !stuckIds.has(item.fact.parentAzureWorkItemId),
+    )
+    .sort(
+      (a, b) => (b.assessment.workingDaysInColumn ?? -1) - (a.assessment.workingDaysInColumn ?? -1),
+    );
+}
+
 /**
  * The delivery funnel is the team's own Azure board: one stage per column, in
  * Azure's order, named exactly as in Azure (ADR-013). The board shown is the
@@ -261,6 +351,7 @@ export function computeFunnel(
   facts: readonly RealWorkItemFact[],
   boards: readonly BoardFact[],
   nowIso: string,
+  stuckSettings: StuckSettings = defaultStuckSettings(),
 ): FunnelStage[] {
   const board = choosePrimaryBoard(
     boards,
@@ -283,6 +374,9 @@ export function computeFunnel(
       .filter((v): v is number => v !== null);
     const avgDays = ages.length > 0 ? round(ages.reduce((a, b) => a + b, 0) / ages.length) : 0;
     const overLimit = column.itemLimit !== null && stageItems.length > column.itemLimit;
+    const stuckCount = stageItems.filter(
+      (f) => assessStuck(stuckCandidate(f, column.columnType), nowIso, stuckSettings).stuck,
+    ).length;
     const status: HealthStatus =
       column.columnType === "outgoing"
         ? "healthy"
@@ -295,6 +389,7 @@ export function computeFunnel(
       id: column.id,
       label: column.name,
       itemLimit: column.itemLimit,
+      stuckCount,
       count: stageItems.length,
       avgDays,
       status,
@@ -351,6 +446,7 @@ export function computeRisks(
   facts: readonly RealWorkItemFact[],
   calendar: SprintCalendar | null,
   nowIso: string,
+  stuck: readonly StuckItem[] = [],
 ): Risk[] {
   const risks: Risk[] = [];
   const blockers = computeCriticalBlockers(facts, nowIso);
@@ -378,8 +474,45 @@ export function computeRisks(
     });
   }
 
+  // Stuck for a reason the blocked-items risk does not already cover.
+  const blockerIds = new Set(blockers.items.map((f) => f.id));
+  const stuckOnly = stuck.filter((item) => !blockerIds.has(item.fact.id));
+  if (stuckOnly.length > 0) {
+    const aged = stuckOnly.filter((i) => i.assessment.reasons.includes("aged_in_column")).length;
+    const tagged = stuckOnly.filter((i) => i.assessment.reasons.includes("blocked_tag")).length;
+    const flagged = stuckOnly.filter((i) => i.assessment.reasons.includes("blocked_field")).length;
+    risks.push({
+      id: "risk-stuck",
+      severity: stuckOnly.length >= 3 ? "high" : "medium",
+      title: { ar: "عناصر عمل عالقة", en: "Stuck work items" },
+      explanation: {
+        ar: `${stuckOnly.length} عنصر عالق: ${aged} تجاوز مدة البقاء في العمود، ${tagged} عليه وسم حجب، ${flagged} محجوب في Azure.`,
+        en: `${stuckOnly.length} items are stuck: ${aged} over their time in column, ${tagged} tagged blocked, ${flagged} flagged blocked in Azure.`,
+      },
+      recommendation: {
+        ar: "راجع العناصر العالقة مع مسؤوليها وحدد ما يعطلها.",
+        en: "Review the stuck items with their owners and name what holds each one.",
+      },
+      owner: "",
+      ageDays: stuckOnly[0]?.assessment.workingDaysInColumn ?? 0,
+      items: stuckOnly.slice(0, 5).map((i) => toRef(i.fact)),
+      adoUrl: stuckOnly[0]?.fact.azureUrl ?? "",
+    });
+  }
+
+  // A Story is owned when it or any of its child items (e.g. Tasks) is assigned:
+  // teams often assign the work on the Tasks and leave the Story itself open.
+  const assignedParents = new Set(
+    facts
+      .filter((f) => f.assignedToMemberId && f.parentAzureWorkItemId !== null)
+      .map((f) => f.parentAzureWorkItemId),
+  );
   const unassigned = facts.filter(
-    (f) => f.countsTowardScope && !f.assignedToMemberId && f.stateCategory !== "completed",
+    (f) =>
+      f.countsTowardScope &&
+      !f.assignedToMemberId &&
+      !assignedParents.has(f.azureWorkItemId) &&
+      f.stateCategory !== "completed",
   );
   if (unassigned.length > 0) {
     risks.push({
@@ -613,7 +746,9 @@ export function buildOverview(input: OverviewInput): OverviewResult {
   // first synchronized day the baseline is the current state, so any delta would
   // be 0% by construction rather than by measurement.
   const today = cairoToday(new Date(Date.parse(nowIso)));
-  const firstSnapshot = input.history.length > 0 ? input.history[0]! : null;
+  // Only a baseline taken under the current scope rule is comparable.
+  const firstSnapshot =
+    input.history.find((point) => point.scopeRule === SCOPE_RULE_VERSION) ?? null;
   const baseline =
     firstSnapshot && firstSnapshot.snapshotDate < today && firstSnapshot.scopeTotal > 0
       ? firstSnapshot
@@ -946,7 +1081,9 @@ export function buildOverview(input: OverviewInput): OverviewResult {
   unavailable["release"] = "not_synchronized";
   unavailable["engineering"] = "not_synchronized";
 
-  const risks = computeRisks(facts, calendar, nowIso);
+  const stuckSettings = input.stuckSettings ?? defaultStuckSettings();
+  const stuckItems = computeStuckItems(facts, input.boards ?? [], nowIso, stuckSettings);
+  const risks = computeRisks(facts, calendar, nowIso, stuckItems);
   const lastSyncMinutesAgo = input.lastSyncedAt
     ? Math.max(0, Math.round((Date.parse(nowIso) - Date.parse(input.lastSyncedAt)) / 60_000))
     : 0;
@@ -958,7 +1095,7 @@ export function buildOverview(input: OverviewInput): OverviewResult {
     kpis,
     trajectory: buildTrajectory(input.history, calendar, scope.percent),
     risks,
-    funnel: computeFunnel(facts, input.boards ?? [], nowIso),
+    funnel: computeFunnel(facts, input.boards ?? [], nowIso, stuckSettings),
     teamLoad: computeTeamLoad(facts, input.members),
     engineering: {
       activePullRequests: 0,

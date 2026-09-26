@@ -177,6 +177,7 @@ export const dictionary = {
   "funnel.items": { ar: "عنصر", en: "items" },
   "funnel.aging": { ar: "متوسط المكوث", en: "Avg. time in stage" },
   "funnel.wipLimit": { ar: "حد العمل الجاري", en: "WIP limit" },
+  "funnel.stuck": { ar: "عالق", en: "Stuck" },
 
   "team.title": { ar: "حِمل الفريق", en: "Team Load" },
   "team.subtitle": {
