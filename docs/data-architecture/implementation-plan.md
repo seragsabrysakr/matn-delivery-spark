@@ -281,6 +281,17 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
   6. **Sync counters folded** into a collapsed "last sync details" section that opens by itself when a sync failed or was partial.
 - **Consequences**: No migration. The Overview payload gains a `summary` computed by `summarizeSprint` (pure, tested).
 
+### ADR-028: Current sprint = latest started, late until the next starts; Overview as a command center
+
+- **Context**: The owner's rule: when the next sprint has not started, the current sprint is still the one the team works in — it is late, not over. The app treated a past sprint as "ended" (Overview) or dropped it one sprint length after its finish (scheduler, stuck), and the sprint selector only called a sprint current while today was inside its dates. A review of the Overview on real data also found analytics that did not hold up: a composite confidence score with arbitrary weights, a forecast band fixed at ±15%, a blockers KPI reading 0 while 12 tasks were stuck, recommended actions copied from the risks, and team load adding story points as hours.
+- **Decision**:
+  1. **One phase rule** (`sprintPhase`): running (inside its dates), overdue (past its finish, no later sprint started), ended (a later sprint has started — history), inactive (overdue for more than 30 calendar days, `OVERDUE_LIMIT_DAYS`), not started, undated. The scheduler, stuck work, the sprint selector's default and the Overview all use it; the 30-day limit keeps dormant projects (e.g. a sprint ten months past) from reading as "late".
+  2. **Portfolio first** — the Overview opens on a command header (active sprints, late sprints, stuck items, stories behind their tasks, across every visible team) and one card per team's current sprint (status, stories, tasks, days left or late, stuck), problems first; inactive teams are folded into one line. Selecting a card selects that sprint.
+  3. **Selected sprint** — sprint status (stories and tasks, never mixed), needs attention (stuck work plus people with work in progress who stopped updating Azure), delivery trend (say/do of the last finished sprints, average velocity, carry-over, ADR-018), deliverables (ADR-021) and an Azure data-health strip (unestimated stories, stories nobody holds, open tasks unassigned, people without capacity).
+  4. **Removed from the live Overview**: confidence score, trajectory forecast, KPI grid, risks, recommended actions, funnel (on the Board page), team load, engineering. Demo mode is unchanged.
+  5. **Team load counts hours only** — estimates are summed only when their unit is hours; story points never read as hours.
+- **Consequences**: No migration. Hoteliana Sprint 2 reads "late 6 working days" until Sprint 3 starts or 17 Oct; the scheduler keeps syncing it until then.
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.

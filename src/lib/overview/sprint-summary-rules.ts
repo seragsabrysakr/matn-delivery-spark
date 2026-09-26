@@ -7,9 +7,10 @@
  * progress is a separate, labelled count. Tasks never count toward scope.
  */
 import { countWorkingDays, sprintCalendar } from "@/lib/calendar/cairo";
-import { computeScopeCompletion, type RealWorkItemFact } from "./overview-rules";
+import { sprintPhase, type SprintPhase } from "@/lib/scheduler/scheduler-rules";
+import { computeScopeCompletion, type MemberFact, type RealWorkItemFact } from "./overview-rules";
 
-export type SprintPhase = "running" | "ended" | "notStarted" | "undated";
+export type { SprintPhase };
 
 export interface ProgressCounts {
   readonly total: number;
@@ -24,7 +25,7 @@ export interface SprintSummary {
   readonly finishDate: string | null;
   /** Running: working days left including today. Null otherwise. */
   readonly workingDaysLeft: number | null;
-  /** Ended: working days since the finish date. Null otherwise. */
+  /** Past its finish date (overdue, inactive or ended): working days since. Null otherwise. */
   readonly workingDaysSinceEnd: number | null;
   /** Expected completion by today on a straight line; null when undated. */
   readonly expectedPercent: number | null;
@@ -37,6 +38,16 @@ export interface SprintSummary {
   };
   readonly tasks: ProgressCounts & { readonly percent: number | null };
   /** Stories still not started although some of their tasks are active or done. */
+  /** Gaps in the Azure data behind these numbers; each is a count, never a guess. */
+  readonly dataHealth: {
+    readonly storiesUnestimated: number;
+    /** Open stories nobody holds, on the story or on any of its tasks (ADR-016). */
+    readonly storiesUnowned: number;
+    readonly openTasksUnassigned: number;
+    /** Team members holding sprint work with no capacity entered in Azure. */
+    readonly membersWithoutCapacity: number;
+    readonly members: number;
+  };
   readonly storiesBehindTasks: readonly {
     readonly azureId: number;
     readonly title: string;
@@ -71,6 +82,9 @@ export function summarizeSprint(input: {
   /** Today in the team's time zone (YYYY-MM-DD). */
   readonly today: string;
   readonly workingWeekdays: readonly number[];
+  /** Whether the team has a later sprint that has already started (ADR-028). */
+  readonly laterSprintStarted: boolean;
+  readonly members: readonly MemberFact[];
 }): SprintSummary {
   const { startDate, finishDate, today, workingWeekdays } = input;
   const live = input.facts.filter((f) => f.stateCategory !== "removed");
@@ -80,11 +94,13 @@ export function summarizeSprint(input: {
   const calendar = sprintCalendar(startDate, finishDate, today, workingWeekdays);
   const phase: SprintPhase = !calendar
     ? "undated"
-    : today > calendar.finishDate
-      ? "ended"
-      : today < calendar.startDate
-        ? "notStarted"
-        : "running";
+    : sprintPhase({
+        startDate: calendar.startDate,
+        finishDate: calendar.finishDate,
+        today,
+        laterSprintStarted: input.laterSprintStarted,
+      });
+  const pastFinish = phase === "overdue" || phase === "inactive" || phase === "ended";
 
   const points = scope.reduce((s, f) => s + (f.estimate ?? 0), 0);
   const pointsDone = scope
@@ -119,6 +135,8 @@ export function summarizeSprint(input: {
     .map(({ moving: _moving, ...rest }) => rest);
 
   const taskCounts = counts(tasks);
+  const holderIds = new Set(live.map((f) => f.assignedToMemberId).filter(Boolean));
+  const holders = input.members.filter((m) => holderIds.has(m.id));
   return {
     phase,
     startDate: calendar?.startDate ?? null,
@@ -128,7 +146,7 @@ export function summarizeSprint(input: {
         ? countWorkingDays(today, calendar.finishDate, workingWeekdays)
         : null,
     workingDaysSinceEnd:
-      phase === "ended" && calendar
+      pastFinish && calendar
         ? countWorkingDays(addDays(calendar.finishDate, 1), today, workingWeekdays)
         : null,
     expectedPercent: calendar ? calendar.expectedCompletionPercent : null,
@@ -140,6 +158,23 @@ export function summarizeSprint(input: {
       basis: completion.percent === null ? null : completion.basis,
     },
     tasks: { ...taskCounts, percent: pct(taskCounts.done, taskCounts.total) },
+    dataHealth: {
+      storiesUnestimated: scope.filter((f) => f.estimate === null || !(f.estimate > 0)).length,
+      storiesUnowned: scope.filter(
+        (story) =>
+          OPEN(story) &&
+          !story.assignedToMemberId &&
+          !(children.get(story.azureWorkItemId) ?? []).some((k) => k.assignedToMemberId),
+      ).length,
+      openTasksUnassigned: tasks.filter((t) => OPEN(t) && !t.assignedToMemberId).length,
+      membersWithoutCapacity: holders.filter(
+        (m) => !(typeof m.capacityHours === "number" && m.capacityHours > 0),
+      ).length,
+      members: holders.length,
+    },
     storiesBehindTasks,
   };
 }
+
+const OPEN = (f: RealWorkItemFact) =>
+  f.stateCategory !== "completed" && f.stateCategory !== "removed";

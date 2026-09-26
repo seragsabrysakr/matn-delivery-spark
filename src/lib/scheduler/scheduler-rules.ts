@@ -66,29 +66,68 @@ const DAY_MS = 86_400_000;
 const toMs = (day: string) => Date.parse(`${day}T00:00:00Z`);
 
 /**
- * The sprint each team is working in: its latest dated sprint that has
- * started (dates from Azure). Teams often keep working in a sprint past its
- * finish date before the next one is created, so a finished sprint stays
- * scheduled for one more sprint length — the team's own cadence — after
- * which the team has no scheduled sprint until Azure has a new one.
+ * A sprint past its finish date stays the team's current sprint — late —
+ * until the next one starts in Azure (ADR-028). After this many calendar
+ * days with no new sprint, the team is treated as having no active sprint.
  */
-export function pickScheduledSprints(
-  candidates: readonly SprintCandidate[],
+export const OVERDUE_LIMIT_DAYS = 30;
+
+export type SprintPhase = "running" | "overdue" | "inactive" | "ended" | "notStarted" | "undated";
+
+/**
+ * Where a sprint stands today. `laterSprintStarted` is whether the same team
+ * has a later dated sprint that has already started: a past sprint is then
+ * history ("ended"); otherwise it is still the current sprint, running late
+ * ("overdue"), up to OVERDUE_LIMIT_DAYS after its finish ("inactive" beyond).
+ */
+export function sprintPhase(input: {
+  readonly startDate: string | null;
+  readonly finishDate: string | null;
+  readonly today: string;
+  readonly laterSprintStarted: boolean;
+}): SprintPhase {
+  const { startDate, finishDate, today } = input;
+  if (!startDate || !finishDate) return "undated";
+  if (today < startDate) return "notStarted";
+  if (today <= finishDate) return "running";
+  if (input.laterSprintStarted) return "ended";
+  return toMs(today) - toMs(finishDate) > OVERDUE_LIMIT_DAYS * DAY_MS ? "inactive" : "overdue";
+}
+
+/** Each team's latest dated sprint that has started, whatever its age. */
+export function latestStartedSprints<T extends SprintCandidate>(
+  candidates: readonly T[],
   today: string,
-): SprintCandidate[] {
-  const byTeam = new Map<string, SprintCandidate>();
+): T[] {
+  const byTeam = new Map<string, T>();
   for (const sprint of candidates) {
     if (!sprint.startDate || !sprint.finishDate || sprint.startDate > today) continue;
     const key = `${sprint.tenantId}:${sprint.teamId}`;
     const current = byTeam.get(key);
     if (!current || sprint.startDate > (current.startDate ?? "")) byTeam.set(key, sprint);
   }
-  const todayMs = toMs(today);
-  return [...byTeam.values()]
+  return [...byTeam.values()];
+}
+
+/**
+ * The sprint each team is working in: its latest dated sprint that has
+ * started (dates from Azure), while it is running or overdue (ADR-028). A
+ * team with no new sprint for OVERDUE_LIMIT_DAYS after the last one ended
+ * has no scheduled sprint until Azure has a new one.
+ */
+export function pickScheduledSprints(
+  candidates: readonly SprintCandidate[],
+  today: string,
+): SprintCandidate[] {
+  return latestStartedSprints(candidates, today)
     .filter((sprint) => {
-      const finish = toMs(sprint.finishDate!);
-      const length = finish - toMs(sprint.startDate!) + DAY_MS;
-      return todayMs <= finish + length;
+      const phase = sprintPhase({
+        startDate: sprint.startDate,
+        finishDate: sprint.finishDate,
+        today,
+        laterSprintStarted: false,
+      });
+      return phase === "running" || phase === "overdue";
     })
     .sort((a, b) =>
       `${a.tenantId}:${a.teamIterationId}`.localeCompare(`${b.tenantId}:${b.teamIterationId}`),

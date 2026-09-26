@@ -16,6 +16,7 @@ import {
   SCOPE_RULE_VERSION,
   type BoardFact,
   type RealWorkItemFact,
+  computeTeamLoad,
 } from "../overview-rules";
 
 const fact = (over: Partial<RealWorkItemFact> = {}): RealWorkItemFact => ({
@@ -428,5 +429,26 @@ describe("scope baseline across a scope-rule change", () => {
 
   it("uses a baseline taken under the current rule", () => {
     expect(run(SCOPE_RULE_VERSION).unavailable["scopeChange"]).toBeUndefined();
+  });
+});
+
+describe("computeTeamLoad", () => {
+  it("counts hours only, never story points as hours", () => {
+    const load = computeTeamLoad(
+      [
+        fact({ id: "a", assignedToMemberId: "m1", estimate: 5, estimateUnit: "storyPoints" }),
+        fact({ id: "b", assignedToMemberId: "m1", estimate: 6, estimateUnit: "hours" }),
+        fact({ id: "c", assignedToMemberId: "m2", estimate: 8, estimateUnit: "storyPoints" }),
+      ],
+      [
+        { id: "m1", displayName: "A", capacityHours: 10 },
+        { id: "m2", displayName: "B", capacityHours: 10 },
+      ],
+    );
+    expect(load.find((m) => m.id === "m1")!.assignedHours).toBe(6);
+    expect(load.find((m) => m.id === "m2")).toMatchObject({
+      assignedHours: null,
+      signal: "unknown",
+    });
   });
 });

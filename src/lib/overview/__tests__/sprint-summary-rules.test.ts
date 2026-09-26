@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { summarizeSprint } from "../sprint-summary-rules";
+import type { MemberFact } from "../overview-rules";
+
+const summarize = (
+  input: Omit<Parameters<typeof summarizeSprint>[0], "laterSprintStarted" | "members"> & {
+    laterSprintStarted?: boolean;
+    members?: MemberFact[];
+  },
+) => summarizeSprint({ laterSprintStarted: false, members: [], ...input });
 import type { RealWorkItemFact } from "../overview-rules";
 
 const WEEK = [0, 1, 2, 3, 4];
@@ -15,7 +23,7 @@ const fact = (id: number, over: Partial<RealWorkItemFact> = {}): RealWorkItemFac
   isBlocked: false,
   blockedSince: null,
   estimate: 3,
-  assignedToMemberId: null,
+  assignedToMemberId: "m1",
   countsTowardScope: true,
   stateChangeDate: null,
   changedAtSource: "2026-09-10T08:00:00Z",
@@ -51,15 +59,15 @@ describe("summarizeSprint", () => {
     task(15, 99, "removed"),
   ];
 
-  it("reports an ended sprint with working days since the end", () => {
-    const s = summarizeSprint({
+  it("keeps a past sprint current and late until the next one starts", () => {
+    const s = summarize({
       facts,
       startDate: "2026-09-06",
       finishDate: "2026-09-17",
       today: "2026-09-27",
       workingWeekdays: WEEK,
     });
-    expect(s.phase).toBe("ended");
+    expect(s.phase).toBe("overdue");
     // Sun 20 – Thu 24 and Sun 27.
     expect(s.workingDaysSinceEnd).toBe(6);
     expect(s.workingDaysLeft).toBeNull();
@@ -67,7 +75,7 @@ describe("summarizeSprint", () => {
   });
 
   it("keeps stories and tasks apart and uses the scope KPI rule", () => {
-    const s = summarizeSprint({
+    const s = summarize({
       facts,
       startDate: "2026-09-06",
       finishDate: "2026-09-17",
@@ -88,7 +96,7 @@ describe("summarizeSprint", () => {
   });
 
   it("lists stories still New whose tasks moved", () => {
-    const s = summarizeSprint({
+    const s = summarize({
       facts,
       startDate: "2026-09-06",
       finishDate: "2026-09-17",
@@ -102,7 +110,7 @@ describe("summarizeSprint", () => {
   });
 
   it("counts working days left in a running sprint, today included", () => {
-    const s = summarizeSprint({
+    const s = summarize({
       facts: [],
       startDate: "2026-09-20",
       finishDate: "2026-10-01",
@@ -119,7 +127,7 @@ describe("summarizeSprint", () => {
 
   it("marks undated and future sprints without inventing dates", () => {
     expect(
-      summarizeSprint({
+      summarize({
         facts: [],
         startDate: null,
         finishDate: null,
@@ -128,7 +136,7 @@ describe("summarizeSprint", () => {
       }),
     ).toMatchObject({ phase: "undated", expectedPercent: null, startDate: null });
     expect(
-      summarizeSprint({
+      summarize({
         facts: [],
         startDate: "2026-10-04",
         finishDate: "2026-10-15",
@@ -139,7 +147,7 @@ describe("summarizeSprint", () => {
   });
 
   it("reports unestimated scope as unknown points, not zero", () => {
-    const s = summarizeSprint({
+    const s = summarize({
       facts: [fact(1, { estimate: null }), fact(2, { estimate: null })],
       startDate: "2026-09-06",
       finishDate: "2026-09-17",
@@ -147,5 +155,52 @@ describe("summarizeSprint", () => {
       workingWeekdays: WEEK,
     });
     expect(s.stories).toMatchObject({ points: null, pointsDone: null, basis: "count", percent: 0 });
+  });
+});
+
+describe("summarizeSprint phases and data health", () => {
+  it("is history once a later sprint has started", () => {
+    const s = summarize({
+      facts: [],
+      startDate: "2026-09-06",
+      finishDate: "2026-09-17",
+      today: "2026-09-27",
+      workingWeekdays: WEEK,
+      laterSprintStarted: true,
+    });
+    expect(s.phase).toBe("ended");
+    expect(s.workingDaysSinceEnd).toBe(6);
+  });
+
+  it("counts gaps in the Azure data", () => {
+    const s = summarize({
+      facts: [
+        fact(1, { estimate: null }),
+        fact(2, { assignedToMemberId: null }),
+        fact(3, { assignedToMemberId: null }),
+        fact(4, { assignedToMemberId: null, stateCategory: "completed" }),
+        { ...task(10, 3, "inProgress"), assignedToMemberId: "m2" },
+        { ...task(11, 3, "proposed"), assignedToMemberId: null },
+        { ...task(12, 1, "completed"), assignedToMemberId: null },
+      ],
+      startDate: "2026-09-20",
+      finishDate: "2026-10-01",
+      today: "2026-09-27",
+      workingWeekdays: WEEK,
+      members: [
+        { id: "m1", displayName: "A", capacityHours: 40 },
+        { id: "m2", displayName: "B", capacityHours: null },
+        { id: "m3", displayName: "C", capacityHours: null },
+      ],
+    });
+    expect(s.dataHealth).toEqual({
+      storiesUnestimated: 1,
+      // Story 3 is held through its task; story 4 is closed.
+      storiesUnowned: 1,
+      openTasksUnassigned: 1,
+      // m3 holds no sprint work, so it is not counted.
+      membersWithoutCapacity: 1,
+      members: 2,
+    });
   });
 });

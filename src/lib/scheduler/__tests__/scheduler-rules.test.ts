@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { decideSync, pickScheduledSprints, SYNC_INTERVAL_MS } from "../scheduler-rules";
+import {
+  decideSync,
+  OVERDUE_LIMIT_DAYS,
+  pickScheduledSprints,
+  sprintPhase,
+  SYNC_INTERVAL_MS,
+} from "../scheduler-rules";
 
 const NOW = Date.parse("2026-09-26T12:00:00Z");
 const ago = (ms: number) => new Date(NOW - ms).toISOString();
@@ -65,10 +71,36 @@ describe("pickScheduledSprints", () => {
     expect(picked.map((s) => s.teamIterationId)).toEqual(["s2"]);
   });
 
-  it("keeps a finished sprint for one more sprint length, the team's own cadence", () => {
-    // 12-day sprint ending 17 Sep: still followed through 29 Sep.
+  it("keeps a late sprint current until the next one starts, up to the overdue limit", () => {
+    // Ended 17 Sep, no Sprint 3 yet: still the team's sprint through 17 Oct.
     const s2 = sprint("hot", "s2", "2026-09-06", "2026-09-17");
     expect(pickScheduledSprints([s2], "2026-09-29")).toHaveLength(1);
-    expect(pickScheduledSprints([s2], "2026-09-30")).toHaveLength(0);
+    expect(pickScheduledSprints([s2], "2026-10-17")).toHaveLength(1);
+    expect(pickScheduledSprints([s2], "2026-10-18")).toHaveLength(0);
+    // Once Sprint 3 starts, it replaces Sprint 2.
+    const s3 = sprint("hot", "s3", "2026-09-28", "2026-10-09");
+    expect(pickScheduledSprints([s2, s3], "2026-09-29").map((s) => s.teamIterationId)).toEqual([
+      "s3",
+    ]);
+  });
+});
+
+describe("sprintPhase", () => {
+  const phase = (
+    startDate: string | null,
+    finishDate: string | null,
+    today: string,
+    laterSprintStarted = false,
+  ) => sprintPhase({ startDate, finishDate, today, laterSprintStarted });
+
+  it("classifies a sprint against today and the team's later sprints", () => {
+    expect(phase(null, null, "2026-09-27")).toBe("undated");
+    expect(phase("2026-10-04", "2026-10-15", "2026-09-27")).toBe("notStarted");
+    expect(phase("2026-09-20", "2026-09-27", "2026-09-27")).toBe("running");
+    expect(phase("2026-09-06", "2026-09-17", "2026-09-27")).toBe("overdue");
+    expect(phase("2026-09-06", "2026-09-17", "2026-09-27", true)).toBe("ended");
+    expect(phase("2026-09-06", "2026-09-17", `2026-10-17`)).toBe("overdue");
+    expect(phase("2026-09-06", "2026-09-17", `2026-10-18`)).toBe("inactive");
+    expect(OVERDUE_LIMIT_DAYS).toBe(30);
   });
 });

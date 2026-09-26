@@ -40,7 +40,7 @@ export async function loadFacts(target: ResolvedTeamIteration): Promise<RealWork
   const { data, error } = await supabaseAdmin
     .from("az_work_items")
     .select(
-      "id, azure_work_item_id, title, alias, azure_work_item_type, state, state_category, is_blocked, blocked_since, estimate, assigned_to_member_id, counts_toward_scope, state_change_date, changed_at_source, azure_url, board_column, board_column_entered_at, tags, parent_azure_work_item_id",
+      "id, azure_work_item_id, title, alias, azure_work_item_type, state, state_category, is_blocked, blocked_since, estimate, estimate_unit, assigned_to_member_id, counts_toward_scope, state_change_date, changed_at_source, azure_url, board_column, board_column_entered_at, tags, parent_azure_work_item_id",
     )
     .eq("tenant_id", target.tenantId)
     .eq("iteration_id", target.iterationId)
@@ -59,6 +59,7 @@ export async function loadFacts(target: ResolvedTeamIteration): Promise<RealWork
     isBlocked: row.is_blocked,
     blockedSince: row.blocked_since,
     estimate: row.estimate === null ? null : Number(row.estimate),
+    estimateUnit: row.estimate_unit,
     assignedToMemberId: row.assigned_to_member_id,
     countsTowardScope: row.counts_toward_scope,
     stateChangeDate: row.state_change_date,
@@ -236,6 +237,24 @@ export async function persistDailySnapshot(
   await supabaseAdmin.from("an_daily_iteration_snapshots").insert(payload);
 }
 
+/** Whether the team has a dated sprint that started after this one and by today (ADR-028). */
+export async function laterSprintStarted(
+  target: ResolvedTeamIteration,
+  today: string,
+): Promise<boolean> {
+  if (!target.startDate) return false;
+  const { data } = await supabaseAdmin
+    .from("core_team_iterations")
+    .select("id, core_iterations!inner(start_date)")
+    .eq("tenant_id", target.tenantId)
+    .eq("team_id", target.teamId)
+    .eq("is_deleted", false)
+    .gt("core_iterations.start_date", target.startDate)
+    .lte("core_iterations.start_date", today)
+    .limit(1);
+  return (data ?? []).length > 0;
+}
+
 export async function buildRealOverview(
   target: ResolvedTeamIteration,
 ): Promise<RealOverviewPayload> {
@@ -296,6 +315,8 @@ export async function buildRealOverview(
       finishDate: target.finishDate,
       today,
       workingWeekdays: target.workingWeekdays,
+      laterSprintStarted: await laterSprintStarted(target, today),
+      members,
     }),
   };
 }

@@ -60,6 +60,8 @@ export interface RealWorkItemFact {
   readonly isBlocked: boolean;
   readonly blockedSince: string | null;
   readonly estimate: number | null;
+  /** Unit of `estimate` as synchronized ("storyPoints", "hours", …); absent when unknown. */
+  readonly estimateUnit?: string | null;
   readonly assignedToMemberId: string | null;
   readonly countsTowardScope: boolean;
   readonly stateChangeDate: string | null;
@@ -415,8 +417,10 @@ export function computeTeamLoad(
     .map((member) => {
       const items = assigned.get(member.id) ?? [];
       const active = items.filter((f) => ACTIVE_CATEGORIES.includes(f.stateCategory));
-      // Effort is only reportable when at least one assigned item carries an estimate.
-      const estimated = items.filter((f) => typeof f.estimate === "number" && f.estimate > 0);
+      // Hours only: story points are not hours and never mix with capacity (ADR-016).
+      const estimated = items.filter(
+        (f) => f.estimateUnit === "hours" && typeof f.estimate === "number" && f.estimate > 0,
+      );
       const assignedHours =
         estimated.length > 0
           ? round(estimated.reduce((sum, f) => sum + (f.estimate ?? 0), 0))
