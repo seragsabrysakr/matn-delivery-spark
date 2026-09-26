@@ -11,6 +11,7 @@ import {
   StatusPill,
 } from "@/components/matn/primitives";
 import { Button } from "@/components/ui/button";
+import { DeliveryExportMenu } from "@/components/matn/DeliveryExportMenu";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -103,16 +104,21 @@ export function DeliverablesSection() {
         subtitle={t("dl.subtitle")}
         bodyClassName="p-0"
         action={
-          schedule?.canEdit && schedule.mapping ? (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => void refresh()}
-              disabled={refreshing}
-            >
-              <RefreshCw className={refreshing ? "size-3.5 animate-spin" : "size-3.5"} />
-              {refreshing ? t("dl.refreshing") : t("dl.refresh")}
-            </Button>
+          schedule?.mapping ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {schedule.deliverables.length > 0 ? <DeliveryExportMenu schedule={schedule} /> : null}
+              {schedule.canEdit ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void refresh()}
+                  disabled={refreshing}
+                >
+                  <RefreshCw className={refreshing ? "size-3.5 animate-spin" : "size-3.5"} />
+                  {refreshing ? t("dl.refreshing") : t("dl.refresh")}
+                </Button>
+              ) : null}
+            </div>
           ) : undefined
         }
       >

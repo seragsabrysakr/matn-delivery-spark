@@ -227,6 +227,17 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Consequences**: A forward migration (three tables, one function, forced RLS, select-only for clients). Export to Excel/PDF (internal and client versions) follows in Phase 3b.
 - **Alternatives**: Team velocity for every deliverable (rejected — assumes the team works only on that deliverable), storing dates in Azure fields (rejected — Azure stays read-only), `az_work_item_relations` (rejected — the parent field on synced items already gives the tree; the link query only discovers ids).
 
+### ADR-022: Delivery schedule export (Phase 3b)
+
+- **Context**: The delivery schedule must leave the platform: a full internal workbook for the team and a clean version for the client.
+- **Decision**:
+  1. **Two variants**: internal (every deliverable with progress, forecast range and reason, committed and baseline dates, owner, sprints, notes, Azure link, plus the date-change log) and client (only deliverables marked client-visible, with title, committed date, forecast date, status and delivery date — no owners, notes, baselines, ranges or internal reasons).
+  2. **Excel** is a real `.xlsx` generated in the browser by a small dependency-free writer (stored ZIP + SpreadsheetML): bold, frozen header row, column widths, right-to-left sheets in Arabic. No new package, so the lockfile is unchanged.
+  3. **PDF** is a self-contained, escaped, direction-aware report opened in a print window ("Save as PDF"): the browser's own text shaping renders Arabic correctly, which PDF libraries without shaping cannot.
+  4. Exports use the data the viewer already sees; nothing new is fetched.
+- **Consequences**: Arabic and English exports with correct direction; no server load.
+- **Alternatives**: SheetJS/ExcelJS (rejected — new dependency and lockfile churn for a small need), jsPDF/pdfmake (rejected — no Arabic shaping without extra font and shaping work).
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.
