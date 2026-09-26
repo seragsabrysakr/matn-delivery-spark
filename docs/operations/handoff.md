@@ -35,21 +35,16 @@ Paste this file (or point to it) at the start of any new Claude Code session.
 | Scope from Azure backlog levels   | 023 | Rule v3; verified: only User Stories are scope                                                |
 | Hierarchy page `/hierarchy`       | 024 |                                                                                               |
 
-## In progress — Phase 4a (branch `claude/determined-fermi-iqg6f2`, not yet a PR)
+## In progress — Phase 4a (branch `claude/determined-fermi-iqg6f2`, PR open)
 
-Committed and tested (server + rules), UI not built yet:
+Built and checked locally (tsc, vitest, eslint, prettier, vite build):
 
-- `src/lib/board/board-rules.ts` + tests — `buildSprintBoard` (team's Azure board, WIP limits, card age, stuck, children roll-up, off-board items).
-- `src/lib/board/board.server.ts` — `buildSprintBoardPayload(target)`, `buildStuckAcrossTeams(tenant)`.
-- Server functions `getSprintBoard`, `getStuckWork` in `src/lib/workspace/workspace.functions.ts`.
-- i18n keys `nav.board`, `nav.stuck`, `bd.*`, `st.*` already added.
+- Rules + server: `src/lib/board/board-rules.ts` (+ tests), `src/lib/board/board.server.ts`, server functions `getSprintBoard`, `getStuckWork`.
+- `src/routes/board.tsx` — team's Azure board columns, count / WIP limit (red when over), points; cards with age in column, stuck reasons, tasks, open bugs, unassigned children; off-board list.
+- `src/routes/stuck.tsx` — stuck items across each visible team's current sprint, oldest first, with search.
+- Nav items `/board` (`Columns3`) and `/stuck` (`OctagonAlert`) in `AppShell.tsx`.
 
-Next steps:
-
-1. `src/routes/board.tsx` — columns side by side (horizontal scroll), header = name, count / WIP limit (red when over), points; cards = type, #id + link, title, assignee, points, age badge (`bd.days` / `bd.daysApprox` when `ageBasis === "state_change"`), stuck reasons (`st.reason.*`), tasks x/y, open bugs, unassigned children; "off board" list below; method line `bd.method` with the threshold.
-2. `src/routes/stuck.tsx` — table from `getStuckWork`: age, item, project/team/sprint, column/state, assignee, reasons; search box.
-3. Add nav items in `src/components/matn/AppShell.tsx` (`/board` icon `Columns3`, `/stuck` icon `OctagonAlert` from lucide-react) — only together with the routes, or the build breaks.
-4. `vite build` (regenerates `routeTree.gen.ts`), lint, typecheck, tests, prettier → PR → merge → Publish (no migration).
+Next steps: merge PR → confirm Lovable has the code → Publish (no migration) → owner hard-refreshes and checks both pages. There is no current sprint in Azure yet, so `/stuck` may be empty until Sprint 3 exists.
 
 ## Remaining roadmap
 
