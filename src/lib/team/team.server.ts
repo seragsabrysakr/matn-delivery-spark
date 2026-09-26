@@ -208,7 +208,7 @@ export async function buildTeamPage(
 }
 
 /** Identity comes from the existing core_users.member_id link, never from email. */
-async function resolveSelfMemberId(tenant: TenantContext): Promise<string | null> {
+export async function resolveSelfMemberId(tenant: TenantContext): Promise<string | null> {
   const { data } = await supabaseAdmin
     .from("core_users")
     .select("member_id")

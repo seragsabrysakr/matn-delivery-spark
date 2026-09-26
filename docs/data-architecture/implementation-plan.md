@@ -251,6 +251,36 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Decision**: `/hierarchy` shows every synchronized item of the selected sprint's project as a collapsible tree ordered depth-first (portfolio, requirements, bugs, tasks, then items on no backlog). Every node carries a roll-up computed with the same scope rule as all analytics (leaf scope only; containers and tasks never count): progress by points or count, remaining points, tasks done/total with remaining hours, open/total bugs, blocked and unassigned work below. Items whose parent is not synchronized stay visible as flagged roots. A data-quality panel lists stories without a parent, tasks and bugs without a parent, missing parents, unestimated stories and open tasks without remaining hours. Search, level filter and "open only" keep each match's ancestors.
 - **Consequences**: Read-only, computed at request time from stored items; no migration.
 
+### ADR-025: Sprint board and cross-team stuck work (Phase 4a)
+
+- **Context**: The delivery manager needs the team's board as the team sees it in Azure, and one list of everything stuck across teams.
+- **Decision**: `/board` renders the team's primary Azure board (columns in Azure order, Azure names, WIP limits) filled with the selected sprint's items; each card carries its age in the column in working days, stuck reasons (ADR-015) and a roll-up of its children (tasks done, open bugs, unassigned children). Scope items with no board column are listed separately. `/stuck` lists stuck items in each visible team's current sprint (latest started, ADR-020), oldest first.
+- **Consequences**: Read-only, computed at request time; no migration.
+
+### ADR-026: Backlog and People pages (Phase 4b)
+
+- **Context**: Grooming needs the open backlog with what each item lacks; managing people needs each person's sprint work, what they did yesterday and who stopped updating Azure.
+- **Decision**:
+  1. **Backlog** = the selected sprint's team's open scope items (ADR-023) not in a sprint that contains today. Placement (no sprint / ended sprint / later sprint) comes from the item's sprint dates at read time (ADR-014). Checks from Azure data only: no estimate, no assignee, no parent, stale (unchanged in Azure for 30+ calendar days). **Ready = estimated and linked to a parent**; description and acceptance criteria are not synchronized, so they are not part of readiness. Ordered by Azure Priority, then id.
+  2. **People** = team members plus anyone assigned sprint work. Counts per person over every sprint item they hold, by Azure state category (proposed = not started, in progress/resolved = in progress, completed = done, unmapped shown separately). Stuck items follow ADR-015, one piece of work counted once.
+  3. **Yesterday** = the team's previous working day (team calendar and time zone). Activity comes from stored revisions and transitions and is credited to the mover (ADR-017): the items touched, their state moves and the number of changes.
+  4. **No-update alert** = holds work in progress and made no change in Azure for 2+ working days (or none in the 21-day window read).
+  5. **Visibility** follows the Team page: detail roles see everyone, others only themselves, executive viewers aggregate only.
+- **Consequences**: Read-only, no migration. "Yesterday" is only as fresh as the last history sync; the page shows how far revision history is synced.
+- **Alternatives**: A tenant "Definition of Ready" setting (deferred — a second source of truth; revisit if the team keeps readiness in a tag or field in Azure), calendar-day idle alerts (rejected — weekends would flag everyone on Sunday).
+
+### ADR-027: Overview rebuilt around what a delivery manager acts on
+
+- **Context**: The owner found the Overview's look and data very poor on real data. On Hoteliana Sprint 2 all 19 stories were still New while 62 of 120 tasks were closed, the sprint had ended ten days earlier with no Sprint 3, and the page opened with sync counters, "unavailable" cards (release, engineering, confidence) and a disabled Copilot button. Every number was correct; the page did not say what it meant.
+- **Decision** (real mode only; demo mode unchanged):
+  1. **Sprint phase first** — when the selected sprint has ended (or not started), a notice says so with the dates, instead of scoring a finished sprint as if it were running.
+  2. **Sprint status card** — stories (scope, same rule as the scope KPI) and tasks shown side by side, each with done / in progress / not started; they are never added together (ADR-016). Stories still New whose tasks have moved are listed with a plain explanation, so a team that never moves stories in Azure sees why completion reads low.
+  3. **Needs attention** — the sprint's stuck work with owner and age (ADR-015, ADR-025), next to the risks.
+  4. **Delivery status** — the project's deliverables by status (ADR-021), late and at-risk first; hidden until a delivery mapping exists.
+  5. **No "unavailable" cards** — a KPI or card with no synchronized source is left out; pace-based KPIs (expected, confidence) are left out once the sprint has ended; trajectory shows only while the sprint runs. The Copilot placeholder is removed.
+  6. **Sync counters folded** into a collapsed "last sync details" section that opens by itself when a sync failed or was partial.
+- **Consequences**: No migration. The Overview payload gains a `summary` computed by `summarizeSprint` (pure, tested).
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.

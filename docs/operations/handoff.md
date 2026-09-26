@@ -34,26 +34,29 @@ Paste this file (or point to it) at the start of any new Claude Code session.
 | Export Excel/PDF                  | 022 |                                                                                               |
 | Scope from Azure backlog levels   | 023 | Rule v3; verified: only User Stories are scope                                                |
 | Hierarchy page `/hierarchy`       | 024 |                                                                                               |
+| Sprint board `/board`, `/stuck`   | 025 | Published 2026-09-27                                                                          |
 
-## In progress — Phase 4a (branch `claude/determined-fermi-iqg6f2`, PR open)
+## In progress — Phase 4b (branch `claude/determined-fermi-iqg6f2`, PR open)
 
-Built and checked locally (tsc, vitest, eslint, prettier, vite build):
+Built and checked locally (tsc, vitest, eslint, prettier, vite build); ADR-026:
 
-- Rules + server: `src/lib/board/board-rules.ts` (+ tests), `src/lib/board/board.server.ts`, server functions `getSprintBoard`, `getStuckWork`.
-- `src/routes/board.tsx` — team's Azure board columns, count / WIP limit (red when over), points; cards with age in column, stuck reasons, tasks, open bugs, unassigned children; off-board list.
-- `src/routes/stuck.tsx` — stuck items across each visible team's current sprint, oldest first, with search.
-- Nav items `/board` (`Columns3`) and `/stuck` (`OctagonAlert`) in `AppShell.tsx`.
+- `/backlog` — `src/lib/backlog/backlog-page-rules.ts` (+ tests), `backlog-page.server.ts`, server fn `getBacklog`. Ready = estimated + has a parent (description/acceptance criteria are not synced). Stale = unchanged 30+ days.
+- `/people` — `src/lib/people/people-rules.ts` (+ tests), `people.server.ts`, server fn `getPeople`. Previous working day's activity from revisions/transitions (mover); no-update alert after 2 working days with work in progress; visibility as the Team page.
+- Nav items `/backlog` (`ListTodo`) and `/people` (`UserRoundSearch`).
 
-Next steps: merge PR → confirm Lovable has the code → Publish (no migration) → owner hard-refreshes and checks both pages. There is no current sprint in Azure yet, so `/stuck` may be empty until Sprint 3 exists.
+Next steps: merge PR (Phase 4b + Overview) → confirm Lovable has the code → Publish (no migration).
+
+## Overview rebuild (ADR-027, same branch/PR)
+
+Owner feedback 2026-09-27: Overview look and data were very poor on real data. Rebuilt (real mode only): sprint-phase notice, stories vs tasks card with "stories still New while tasks moved", needs-attention (stuck) + risks, delivery status, no "unavailable" cards, sync counters folded. Not yet seen by the owner on the live site.
 
 ## Remaining roadmap
 
-- Phase 4b: Backlog page (filters: unestimated, unassigned, old, not ready) and People page (done / in progress / not started / stuck per person, what they did yesterday from revisions, no-update alert).
 - Phase 4c: Portfolio (all projects/teams/current sprints: progress, stuck, days left).
 - Phase 5: daily digest and alerts.
 - New requests (answers pending from the owner): Release planning vs a product folder; Scrum ceremony tracking from a meetings folder with automatic AI reports. Open questions: folder location (Drive/SharePoint), product file format, how releases are defined in Azure, meeting platform and transcripts, an AI API key as a server secret.
 - Open decision: task discipline (BE/FE/QA) from tags vs Activity vs title prefix.
-- Known data facts: no current sprint exists (Sprint 2 ended 17 Sep, no Sprint 3 in Azure); tasks carry no remaining hours; capacity not filled in Azure.
+- Known data facts: no current sprint exists (Sprint 2 ended 17 Sep, no Sprint 3 in Azure); Hoteliana Sprint 2: all 19 stories still New while 62/120 tasks closed (team does not move stories); tasks carry no remaining hours; capacity not filled in Azure.
 
 ## Local checks
 

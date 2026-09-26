@@ -481,3 +481,39 @@ export const getStuckWork = createServerFn({ method: "GET" })
       return { ok: false as const, failure: toAzureFailure(error) };
     }
   });
+
+/** Open scope items of the selected sprint's team outside its current sprint (ADR-026). */
+export const getBacklog = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => teamIterationInput.parse(data))
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext } = await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { buildBacklogPayload } = await import("@/lib/backlog/backlog-page.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      return { ok: true as const, backlog: await buildBacklogPayload(target) };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
+
+/** Per-person sprint work and previous-day activity from revisions (ADR-026). */
+export const getPeople = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => teamIterationInput.parse(data))
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext } = await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { buildPeoplePayload } = await import("@/lib/people/people.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      return { ok: true as const, people: await buildPeoplePayload(tenant, target) };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
