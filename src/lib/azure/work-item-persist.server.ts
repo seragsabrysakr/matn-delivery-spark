@@ -10,6 +10,7 @@ import { AzureDevOpsError } from "./errors";
 import { boardColumnEnteredAt } from "./metadata-rules";
 import {
   loadAzureStateIndex,
+  loadBacklogLevels,
   recordStateResolutionGaps,
   type StateResolutionGap,
 } from "./metadata-sync.server";
@@ -41,7 +42,7 @@ export interface WorkItemScope {
 
 /** Process mapping (with synced Azure states) and the member resolver for a project. */
 export async function loadWorkItemReference(scope: WorkItemScope): Promise<WorkItemReference> {
-  const [mappingRow, members, azureStates] = await Promise.all([
+  const [mappingRow, members, azureStates, backlogLevels] = await Promise.all([
     scope.processMappingId
       ? supabaseAdmin
           .from("core_process_mappings")
@@ -58,6 +59,7 @@ export async function loadWorkItemReference(scope: WorkItemScope): Promise<WorkI
       .eq("tenant_id", scope.tenantId)
       .eq("organization_id", scope.organizationId),
     loadAzureStateIndex(scope.tenantId, scope.projectId),
+    loadBacklogLevels(scope.tenantId, scope.projectId),
   ]);
 
   const memberByDescriptor = new Map<string, string>();
@@ -73,6 +75,7 @@ export async function loadWorkItemReference(scope: WorkItemScope): Promise<WorkI
       (mappingRow.data as ProcessMappingRow | null) ?? null,
       scope.processTemplateKind,
       azureStates,
+      backlogLevels,
     ),
     resolveMember: (ref) => {
       if (!ref) return null;

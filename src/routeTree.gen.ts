@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DeliveryRouteImport } from './routes/delivery'
 import { Route as EngineeringRouteImport } from './routes/engineering'
+import { Route as HierarchyRouteImport } from './routes/hierarchy'
 import { Route as IntelligenceRouteImport } from './routes/intelligence'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -42,6 +43,11 @@ const DeliveryRoute = DeliveryRouteImport.update({
 const EngineeringRoute = EngineeringRouteImport.update({
   id: '/engineering',
   path: '/engineering',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HierarchyRoute = HierarchyRouteImport.update({
+  id: '/hierarchy',
+  path: '/hierarchy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IntelligenceRoute = IntelligenceRouteImport.update({
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/delivery': typeof DeliveryRoute
   '/engineering': typeof EngineeringRoute
+  '/hierarchy': typeof HierarchyRoute
   '/intelligence': typeof IntelligenceRoute
   '/team': typeof TeamRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/delivery': typeof DeliveryRoute
   '/engineering': typeof EngineeringRoute
+  '/hierarchy': typeof HierarchyRoute
   '/intelligence': typeof IntelligenceRoute
   '/team': typeof TeamRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/delivery': typeof DeliveryRoute
   '/engineering': typeof EngineeringRoute
+  '/hierarchy': typeof HierarchyRoute
   '/intelligence': typeof IntelligenceRoute
   '/team': typeof TeamRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/delivery'
     | '/engineering'
+    | '/hierarchy'
     | '/intelligence'
     | '/team'
     | '/onboarding'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/delivery'
     | '/engineering'
+    | '/hierarchy'
     | '/intelligence'
     | '/team'
     | '/onboarding'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/delivery'
     | '/engineering'
+    | '/hierarchy'
     | '/intelligence'
     | '/team'
     | '/_authenticated/onboarding'
@@ -149,6 +161,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DeliveryRoute: typeof DeliveryRoute
   EngineeringRoute: typeof EngineeringRoute
+  HierarchyRoute: typeof HierarchyRoute
   IntelligenceRoute: typeof IntelligenceRoute
   TeamRoute: typeof TeamRoute
   ApiPublicCronTickRoute: typeof ApiPublicCronTickRoute
@@ -189,6 +202,13 @@ declare module '@tanstack/react-router' {
       path: '/engineering'
       fullPath: '/engineering'
       preLoaderRoute: typeof EngineeringRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hierarchy': {
+      id: '/hierarchy'
+      path: '/hierarchy'
+      fullPath: '/hierarchy'
+      preLoaderRoute: typeof HierarchyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/intelligence': {
@@ -248,6 +268,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DeliveryRoute: DeliveryRoute,
   EngineeringRoute: EngineeringRoute,
+  HierarchyRoute: HierarchyRoute,
   IntelligenceRoute: IntelligenceRoute,
   TeamRoute: TeamRoute,
   ApiPublicCronTickRoute: ApiPublicCronTickRoute,

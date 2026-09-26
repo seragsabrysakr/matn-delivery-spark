@@ -1825,6 +1825,7 @@ export type Database = {
       }
       az_work_item_types: {
         Row: {
+          backlog_level: string | null
           color: string | null
           created_at: string
           deleted_at_source: string | null
@@ -1844,6 +1845,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          backlog_level?: string | null
           color?: string | null
           created_at?: string
           deleted_at_source?: string | null
@@ -1863,6 +1865,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          backlog_level?: string | null
           color?: string | null
           created_at?: string
           deleted_at_source?: string | null

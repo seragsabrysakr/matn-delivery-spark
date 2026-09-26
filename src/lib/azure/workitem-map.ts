@@ -14,6 +14,7 @@ import {
   type ResolvedProcessMapping,
   type StateCategorySource,
 } from "./process-mapping";
+import type { BacklogLevel } from "./metadata-rules";
 
 type SeverityEnum = Database["public"]["Enums"]["severity_level"];
 
@@ -159,6 +160,29 @@ export function resolveEstimate(
   return { estimate: null, unit: null, sourceField: null };
 }
 
+/**
+ * Whether a work item type is sprint scope (ADR-023). With the project's
+ * Azure backlog levels: requirement-backlog types, and bug types when bugs
+ * are planned as requirements. Portfolio containers (Epic, Feature), tasks
+ * and types on no backlog (Test Case, …) never are. Without synchronized
+ * levels, the older alias rule applies.
+ */
+export function isScopeType(
+  type: string,
+  alias: WorkItemAlias,
+  bugHandling: BugHandlingMode,
+  levels: ReadonlyMap<string, BacklogLevel> | null,
+): boolean {
+  if (levels) {
+    const level = levels.get(type.toLowerCase());
+    if (level === "requirement") return true;
+    if (level === "bug") return bugHandling === "as_requirement";
+    return false;
+  }
+  if (alias === "bug") return bugHandling === "as_requirement";
+  return alias !== "task";
+}
+
 export function mapAzureWorkItem(
   raw: { readonly id: number; readonly rev?: number; readonly fields: AzureFields },
   mapping: ResolvedProcessMapping,
@@ -189,8 +213,8 @@ export function mapAzureWorkItem(
   // A bug planned like a task (under its story) or not planned at all is not
   // scope of its own: counting it would double-count its parent story.
   const bugHandling = ctx.bugHandlingMode ?? mapping.bugHandlingMode;
-  const bugOutOfScope = alias === "bug" && bugHandling !== "as_requirement";
-  const countsTowardScope = !bugOutOfScope && alias !== "task" && stateCategory !== "removed";
+  const countsTowardScope =
+    stateCategory !== "removed" && isScopeType(type, alias, bugHandling, mapping.backlogLevels);
 
   return {
     azureWorkItemId: raw.id,
@@ -253,7 +277,7 @@ export function mapAzureWorkItem(
  * then re-reads every stored item so no row keeps the old interpretation.
  * v2: bugs planned as tasks are not scope (ADR-016).
  */
-export const WORK_ITEM_RULE_VERSION = 2;
+export const WORK_ITEM_RULE_VERSION = 3;
 
 export type WorkItemDiff =
   | { readonly kind: "unchanged" }
