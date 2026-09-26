@@ -1,0 +1,58 @@
+# Keeps the live Azure DevOps mirror fresh (ADR-020). Every 10 minutes this
+# calls the app's signed scheduler endpoint repeatedly; each call performs one
+# bounded sync step, until the app reports that nothing is due.
+#
+# Required repository secret (Settings -> Secrets and variables -> Actions):
+#   MATN_CRON_SECRET  the same value as the app's MATN_CRON_SECRET (>= 32 chars)
+# Optional repository variable:
+#   MATN_APP_URL      defaults to https://matn-delivery-spark.lovable.app
+name: Scheduler
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: scheduler
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Run scheduler steps
+        env:
+          SECRET: ${{ secrets.MATN_CRON_SECRET }}
+          APP_URL: ${{ vars.MATN_APP_URL || 'https://matn-delivery-spark.lovable.app' }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SECRET}" ]; then
+            echo "MATN_CRON_SECRET is not set; nothing to do."
+            exit 0
+          fi
+          url="${APP_URL%/}/api/public/cron/tick"
+          body='{}'
+          for i in $(seq 1 30); do
+            ts=$(date +%s)
+            nonce=$(openssl rand -hex 16)
+            key="gh-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${i}"
+            sig=$(printf '%s' "${ts}.${nonce}.${key}.${body}" \
+              | openssl dgst -sha256 -hmac "${SECRET}" -hex | sed 's/^.* //')
+            response=$(curl -sS --max-time 60 -X POST "${url}" \
+              -H "content-type: application/json" \
+              -H "x-matn-key-id: primary" \
+              -H "x-matn-timestamp: ${ts}" \
+              -H "x-matn-nonce: ${nonce}" \
+              -H "x-matn-idempotency-key: ${key}" \
+              -H "x-matn-signature: ${sig}" \
+              -w '\n%{http_code}' --data "${body}") || { echo "request failed"; exit 1; }
+            code=$(printf '%s' "${response}" | tail -n1)
+            payload=$(printf '%s' "${response}" | sed '$d')
+            echo "step ${i}: HTTP ${code} ${payload}"
+            if [ "${code}" != "200" ]; then exit 1; fi
+            if printf '%s' "${payload}" | grep -q '"status":"idle"'; then break; fi
+          done

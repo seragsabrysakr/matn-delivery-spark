@@ -248,6 +248,7 @@ export interface StartJobInput {
   readonly tenantId: string;
   readonly actorUserId: string | null;
   readonly organizationName: string;
+  readonly trigger?: "manual" | "scheduled";
 }
 
 export interface StartJobResult {
@@ -342,7 +343,7 @@ export async function startFoundationJob(input: StartJobInput): Promise<StartJob
     tenant_id: input.tenantId,
     connection_id: connectionId,
     organization_id: organizationId,
-    trigger_kind: "manual",
+    trigger_kind: input.trigger ?? "manual",
     status: "queued",
     entity_kinds: [...SYNC_DOMAINS],
     started_at: nowIso,

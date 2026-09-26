@@ -96,6 +96,7 @@ async function checkpoint(
 export async function startWorkItemSync(
   target: ResolvedTeamIteration,
   actorUserId: string,
+  trigger: "manual" | "scheduled" = "manual",
 ): Promise<WorkItemSyncStatus> {
   const active = await supabaseAdmin
     .from("ops_sync_runs")
@@ -132,7 +133,7 @@ export async function startWorkItemSync(
       connection_id: connectionId,
       organization_id: target.organizationId,
       project_id: target.projectId,
-      trigger_kind: "manual",
+      trigger_kind: trigger,
       status: "running",
       entity_kinds: ["work_items"],
       started_at: new Date().toISOString(),

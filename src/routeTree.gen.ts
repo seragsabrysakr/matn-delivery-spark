@@ -18,6 +18,7 @@ import { Route as IntelligenceRouteImport } from './routes/intelligence'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSettingsAzureRouteImport } from './routes/_authenticated/settings.azure'
+import { Route as ApiPublicCronTickRouteImport } from './routes/api/public/cron/tick'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,6 +65,11 @@ const AuthenticatedSettingsAzureRoute =
     path: '/settings/azure',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicCronTickRoute = ApiPublicCronTickRouteImport.update({
+  id: '/api/public/cron/tick',
+  path: '/api/public/cron/tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof TeamRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings/azure': typeof AuthenticatedSettingsAzureRoute
+  '/api/public/cron/tick': typeof ApiPublicCronTickRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/team': typeof TeamRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings/azure': typeof AuthenticatedSettingsAzureRoute
+  '/api/public/cron/tick': typeof ApiPublicCronTickRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/team': typeof TeamRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings/azure': typeof AuthenticatedSettingsAzureRoute
+  '/api/public/cron/tick': typeof ApiPublicCronTickRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/onboarding'
     | '/settings/azure'
+    | '/api/public/cron/tick'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/onboarding'
     | '/settings/azure'
+    | '/api/public/cron/tick'
   id:
     | '__root__'
     | '/'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/_authenticated/onboarding'
     | '/_authenticated/settings/azure'
+    | '/api/public/cron/tick'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   EngineeringRoute: typeof EngineeringRoute
   IntelligenceRoute: typeof IntelligenceRoute
   TeamRoute: typeof TeamRoute
+  ApiPublicCronTickRoute: typeof ApiPublicCronTickRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -206,6 +219,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsAzureRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/cron/tick': {
+      id: '/api/public/cron/tick'
+      path: '/api/public/cron/tick'
+      fullPath: '/api/public/cron/tick'
+      preLoaderRoute: typeof ApiPublicCronTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -230,6 +250,7 @@ const rootRouteChildren: RootRouteChildren = {
   EngineeringRoute: EngineeringRoute,
   IntelligenceRoute: IntelligenceRoute,
   TeamRoute: TeamRoute,
+  ApiPublicCronTickRoute: ApiPublicCronTickRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

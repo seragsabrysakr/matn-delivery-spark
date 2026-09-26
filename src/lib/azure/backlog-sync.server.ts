@@ -169,6 +169,7 @@ async function readWatermark(tenantId: string, connectionId: string, projectId: 
 export async function startBacklogSync(
   target: ResolvedTeamIteration,
   actorUserId: string,
+  trigger: "manual" | "scheduled" = "manual",
 ): Promise<BacklogSyncStatus> {
   const active = await supabaseAdmin
     .from("ops_sync_runs")
@@ -206,7 +207,7 @@ export async function startBacklogSync(
       connection_id: connectionId,
       organization_id: target.organizationId,
       project_id: target.projectId,
-      trigger_kind: "manual",
+      trigger_kind: trigger,
       status: "running",
       entity_kinds: [ENTITY_KIND],
       started_at: new Date().toISOString(),
