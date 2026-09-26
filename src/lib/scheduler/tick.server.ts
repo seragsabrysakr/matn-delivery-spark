@@ -24,6 +24,7 @@ const ENTITY_KIND: Readonly<Record<Exclude<ScheduledSyncKind, "foundation">, str
   sprint: "work_items",
   backlog: "work_items_backlog",
   history: "work_item_history",
+  delivery: "deliverables",
 };
 
 export interface TickStep {
@@ -157,8 +158,12 @@ async function startRun(
     const { startBacklogSync } = await import("@/lib/azure/backlog-sync.server");
     return (await startBacklogSync(target, SCHEDULER_ACTOR, "scheduled")) as RunStatus;
   }
-  const { startHistorySync } = await import("@/lib/azure/history-sync.server");
-  return (await startHistorySync(target, SCHEDULER_ACTOR, "scheduled")) as RunStatus;
+  if (kind === "history") {
+    const { startHistorySync } = await import("@/lib/azure/history-sync.server");
+    return (await startHistorySync(target, SCHEDULER_ACTOR, "scheduled")) as RunStatus;
+  }
+  const { startDeliverySync } = await import("@/lib/delivery/delivery-sync.server");
+  return (await startDeliverySync(target, SCHEDULER_ACTOR, "scheduled")) as RunStatus;
 }
 
 async function advanceRun(
@@ -174,8 +179,17 @@ async function advanceRun(
     const { advanceBacklogSync } = await import("@/lib/azure/backlog-sync.server");
     return (await advanceBacklogSync(runId, target)) as RunStatus;
   }
-  const { advanceHistorySync } = await import("@/lib/azure/history-sync.server");
-  return (await advanceHistorySync(runId, target)) as RunStatus;
+  if (kind === "history") {
+    const { advanceHistorySync } = await import("@/lib/azure/history-sync.server");
+    return (await advanceHistorySync(runId, target)) as RunStatus;
+  }
+  const { advanceDeliverySync } = await import("@/lib/delivery/delivery-sync.server");
+  return (await advanceDeliverySync(runId, target)) as RunStatus;
+}
+
+async function hasDeliveryMapping(target: ResolvedTeamIteration): Promise<boolean> {
+  const { loadDeliveryMapping } = await import("@/lib/delivery/delivery-sync.server");
+  return (await loadDeliveryMapping(target.tenantId, target.projectId)) !== null;
 }
 
 async function hasSnapshotToday(target: ResolvedTeamIteration): Promise<boolean> {
@@ -218,6 +232,7 @@ export async function runSchedulerTick(nowMs: number = Date.now()): Promise<Tick
       if (projectsDone.has(scopeKey)) continue;
       projectsDone.add(scopeKey);
       if (kind === "foundation") continue;
+      if (kind === "delivery" && !(await hasDeliveryMapping(target))) continue;
       const decision = decideSync(await latestRun(target, kind), kind, nowMs);
       if (decision.action === "wait") continue;
       const step = {

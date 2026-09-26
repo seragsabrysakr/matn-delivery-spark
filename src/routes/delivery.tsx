@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/matn/AppShell";
 import { PlaceholderPage } from "@/components/matn/PlaceholderPage";
+import { DeliverablesSection } from "@/components/matn/DeliverablesSection";
 import {
   ErrorBlock,
   Iso,
@@ -83,7 +84,7 @@ function SprintHistorySection() {
         <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
           {t("delivery.title")}
         </h1>
-        <p className="text-sm text-muted-foreground">{t("sh.subtitle")}</p>
+        <p className="text-sm text-muted-foreground">{t("delivery.subtitle")}</p>
       </header>
 
       {payload && payload.coverage.complete < payload.coverage.items ? (
@@ -96,6 +97,8 @@ function SprintHistorySection() {
           })}
         />
       ) : null}
+
+      <DeliverablesSection />
 
       <SectionCard
         title={t("sh.title")}

@@ -220,7 +220,7 @@ export async function startBacklogSync(
 }
 
 /** Team areas from Azure's team field values; falls back to the synced list. */
-async function resolveTeamAreas(
+export async function resolveTeamAreas(
   target: ResolvedTeamIteration,
   client: AzureDevOpsClient,
 ): Promise<{
@@ -303,7 +303,7 @@ async function loadOpenStates(tenantId: string, projectId: string) {
   };
 }
 
-async function loadIterationIdsByPath(
+export async function loadIterationIdsByPath(
   tenantId: string,
   projectId: string,
 ): Promise<Map<string, string>> {

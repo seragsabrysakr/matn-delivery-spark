@@ -3145,6 +3145,238 @@ export type Database = {
           },
         ]
       }
+      dlv_date_changes: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          created_at: string
+          deliverable_id: string
+          field: string
+          id: string
+          new_date: string
+          old_date: string | null
+          project_id: string
+          reason: string
+          tenant_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          created_at?: string
+          deliverable_id: string
+          field?: string
+          id?: string
+          new_date: string
+          old_date?: string | null
+          project_id: string
+          reason: string
+          tenant_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          created_at?: string
+          deliverable_id?: string
+          field?: string
+          id?: string
+          new_date?: string
+          old_date?: string | null
+          project_id?: string
+          reason?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dlv_date_changes_deliverable_fk"
+            columns: ["tenant_id", "project_id", "deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "dlv_deliverables"
+            referencedColumns: ["tenant_id", "project_id", "id"]
+          },
+          {
+            foreignKeyName: "dlv_date_changes_user_fk"
+            columns: ["tenant_id", "changed_by"]
+            isOneToOne: false
+            referencedRelation: "core_users"
+            referencedColumns: ["tenant_id", "id"]
+          },
+        ]
+      }
+      dlv_deliverables: {
+        Row: {
+          actual_date: string | null
+          azure_work_item_id: number
+          baseline_date: string | null
+          client_visible: boolean
+          committed_date: string | null
+          completed_items: number
+          computed_at: string | null
+          contributing_sprints: string[]
+          created_at: string
+          deleted_at_source: string | null
+          forecast_date: string | null
+          forecast_high: string | null
+          forecast_low: string | null
+          forecast_reason: string | null
+          id: string
+          is_deleted: boolean
+          last_seen_at: string | null
+          notes: string | null
+          owner_member_id: string | null
+          progress_basis: string | null
+          progress_percent: number | null
+          project_id: string
+          remaining_points: number | null
+          scope_items: number
+          source_ref: string
+          source_status: Database["public"]["Enums"]["source_status"]
+          tenant_id: string
+          title: string
+          updated_at: string
+          work_item_id: string | null
+          work_item_type: string | null
+        }
+        Insert: {
+          actual_date?: string | null
+          azure_work_item_id: number
+          baseline_date?: string | null
+          client_visible?: boolean
+          committed_date?: string | null
+          completed_items?: number
+          computed_at?: string | null
+          contributing_sprints?: string[]
+          created_at?: string
+          deleted_at_source?: string | null
+          forecast_date?: string | null
+          forecast_high?: string | null
+          forecast_low?: string | null
+          forecast_reason?: string | null
+          id?: string
+          is_deleted?: boolean
+          last_seen_at?: string | null
+          notes?: string | null
+          owner_member_id?: string | null
+          progress_basis?: string | null
+          progress_percent?: number | null
+          project_id: string
+          remaining_points?: number | null
+          scope_items?: number
+          source_ref: string
+          source_status?: Database["public"]["Enums"]["source_status"]
+          tenant_id: string
+          title: string
+          updated_at?: string
+          work_item_id?: string | null
+          work_item_type?: string | null
+        }
+        Update: {
+          actual_date?: string | null
+          azure_work_item_id?: number
+          baseline_date?: string | null
+          client_visible?: boolean
+          committed_date?: string | null
+          completed_items?: number
+          computed_at?: string | null
+          contributing_sprints?: string[]
+          created_at?: string
+          deleted_at_source?: string | null
+          forecast_date?: string | null
+          forecast_high?: string | null
+          forecast_low?: string | null
+          forecast_reason?: string | null
+          id?: string
+          is_deleted?: boolean
+          last_seen_at?: string | null
+          notes?: string | null
+          owner_member_id?: string | null
+          progress_basis?: string | null
+          progress_percent?: number | null
+          project_id?: string
+          remaining_points?: number | null
+          scope_items?: number
+          source_ref?: string
+          source_status?: Database["public"]["Enums"]["source_status"]
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+          work_item_id?: string | null
+          work_item_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dlv_deliverables_owner_fk"
+            columns: ["tenant_id", "owner_member_id"]
+            isOneToOne: false
+            referencedRelation: "core_members"
+            referencedColumns: ["tenant_id", "id"]
+          },
+          {
+            foreignKeyName: "dlv_deliverables_project_fk"
+            columns: ["tenant_id", "project_id"]
+            isOneToOne: false
+            referencedRelation: "core_projects"
+            referencedColumns: ["tenant_id", "id"]
+          },
+          {
+            foreignKeyName: "dlv_deliverables_work_item_fk"
+            columns: ["tenant_id", "work_item_id"]
+            isOneToOne: false
+            referencedRelation: "az_work_items"
+            referencedColumns: ["tenant_id", "id"]
+          },
+        ]
+      }
+      dlv_project_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          mode: string
+          project_id: string
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          mode: string
+          project_id: string
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          mode?: string
+          project_id?: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dlv_project_mappings_project_fk"
+            columns: ["tenant_id", "project_id"]
+            isOneToOne: true
+            referencedRelation: "core_projects"
+            referencedColumns: ["tenant_id", "id"]
+          },
+          {
+            foreignKeyName: "dlv_project_mappings_user_fk"
+            columns: ["tenant_id", "updated_by"]
+            isOneToOne: false
+            referencedRelation: "core_users"
+            referencedColumns: ["tenant_id", "id"]
+          },
+        ]
+      }
       intel_copilot_answers: {
         Row: {
           answer: string
@@ -3904,6 +4136,54 @@ export type Database = {
       current_core_user_id: {
         Args: { target_tenant_id: string }
         Returns: string
+      }
+      dlv_set_committed_date: {
+        Args: {
+          p_actor: string
+          p_deliverable_id: string
+          p_new_date: string
+          p_reason: string
+          p_tenant_id: string
+        }
+        Returns: {
+          actual_date: string | null
+          azure_work_item_id: number
+          baseline_date: string | null
+          client_visible: boolean
+          committed_date: string | null
+          completed_items: number
+          computed_at: string | null
+          contributing_sprints: string[]
+          created_at: string
+          deleted_at_source: string | null
+          forecast_date: string | null
+          forecast_high: string | null
+          forecast_low: string | null
+          forecast_reason: string | null
+          id: string
+          is_deleted: boolean
+          last_seen_at: string | null
+          notes: string | null
+          owner_member_id: string | null
+          progress_basis: string | null
+          progress_percent: number | null
+          project_id: string
+          remaining_points: number | null
+          scope_items: number
+          source_ref: string
+          source_status: Database["public"]["Enums"]["source_status"]
+          tenant_id: string
+          title: string
+          updated_at: string
+          work_item_id: string | null
+          work_item_type: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "dlv_deliverables"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       grant_project_scope: {
         Args: {
