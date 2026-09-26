@@ -63,6 +63,8 @@ export type WorkItemSyncReport = {
   readonly detached: number;
   readonly failed: number;
   readonly truncated: boolean;
+  /** Sprint capacity read from Azure; null when unavailable. */
+  readonly capacity: { members: number; configured: number; teamDaysOff: number } | null;
   readonly status: "succeeded" | "partial" | "failed";
 };
 
@@ -413,6 +415,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         detached: c.removedFromSprint,
         failed: c.failed,
         truncated: c.truncated,
+        capacity: c.capacity
+          ? {
+              members: c.capacity.members,
+              configured: c.capacity.configured,
+              teamDaysOff: c.capacity.teamDaysOff,
+            }
+          : null,
         status:
           status.status === "partial"
             ? "partial"

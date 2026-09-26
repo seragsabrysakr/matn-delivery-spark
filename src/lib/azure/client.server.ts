@@ -11,11 +11,14 @@ import type {
   AzureBoardColumn,
   AzureBoardReference,
   AzureIteration,
+  AzureIterationCapacity,
   AzureListResponse,
   AzureIdentityRef,
   AzureProject,
   AzureTeam,
+  AzureTeamDaysOff,
   AzureTeamFieldValues,
+  AzureTeamMemberCapacity,
   AzureTeamSettings,
   AzureWorkItemStateColor,
   AzureWorkItemType,
@@ -312,6 +315,34 @@ export class AzureDevOpsClient {
     } catch {
       return null;
     }
+  }
+
+  /** Per-member capacity, activities and personal days off for one sprint. */
+  async listIterationCapacities(
+    projectId: string,
+    teamId: string,
+    iterationId: string,
+    signal?: AbortSignal,
+  ): Promise<AzureTeamMemberCapacity[]> {
+    const { body } = await this.get<AzureIterationCapacity>(
+      `/${encodeURIComponent(projectId)}/${encodeURIComponent(teamId)}/_apis/work/teamsettings/iterations/${encodeURIComponent(iterationId)}/capacities`,
+      { signal },
+    );
+    return [...(body.teamMembers ?? body.value ?? [])];
+  }
+
+  /** Team-wide days off for one sprint. */
+  async getTeamDaysOff(
+    projectId: string,
+    teamId: string,
+    iterationId: string,
+    signal?: AbortSignal,
+  ): Promise<AzureTeamDaysOff> {
+    const { body } = await this.get<AzureTeamDaysOff>(
+      `/${encodeURIComponent(projectId)}/${encodeURIComponent(teamId)}/_apis/work/teamsettings/iterations/${encodeURIComponent(iterationId)}/teamdaysoff`,
+      { signal },
+    );
+    return { daysOff: body.daysOff ?? [] };
   }
 
   listWorkItemTypes(projectId: string, signal?: AbortSignal): Promise<AzureWorkItemType[]> {

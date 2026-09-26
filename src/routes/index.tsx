@@ -131,7 +131,15 @@ function OverviewPage() {
               e: syncReport.unchanged,
               f: syncReport.detached,
               g: syncReport.failed,
-            })}${syncReport.truncated ? ` — ${t("real.sync.truncated")}` : ""}`}
+            })}${syncReport.truncated ? ` — ${t("real.sync.truncated")}` : ""} · ${
+              syncReport.capacity
+                ? t("real.sync.capacity", {
+                    a: syncReport.capacity.configured,
+                    b: syncReport.capacity.members,
+                    c: syncReport.capacity.teamDaysOff,
+                  })
+                : t("real.sync.capacityUnavailable")
+            }`}
           />
         ) : null}
         {backlogReport ? (

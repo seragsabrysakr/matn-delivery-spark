@@ -189,6 +189,19 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Consequences**: Say/do, velocity, carry-over and late delivery become measurable per sprint from Azure data alone. On Hoteliana today, both sprints read 0% say/do by their end dates, with Sprint 1's 52 stories closed a median half-day after the end — a process finding, not a data gap.
 - **Alternatives**: WIQL `ASOF` per sprint boundary (rejected as the primary path — two extra queries per sprint and still no mid-sprint detail), counting post-end closures as delivered (rejected — hides that the sprint did not finish).
 
+### ADR-019: Sprint capacity from Azure team capacity (Phase 2c)
+
+- **Context**: Load and utilization need each member's real availability, which the team already maintains on Azure's sprint capacity page. `core_member_capacity` existed and was read by the Team and Overview pages, but nothing filled it.
+- **Decision**:
+  1. **Read-only from Azure** — the sprint sync's discover phase GETs `teamsettings/iterations/{id}/capacities` and `.../teamdaysoff` for the selected team-sprint. Nothing is written back.
+  2. **Calendar from Azure** — the team's working weekdays come from its Azure team settings (`workingDays`) and team days off from Azure; both are stored on `core_team_iterations` (`working_weekdays`, `non_working_days`).
+  3. **Net capacity computed like Azure** — hours per day (sum over activities) × the sprint's working days, minus team days off and personal days off (overlaps and weekends are not double-counted).
+  4. **Unknown is not zero** — a member with no hours configured, or an undated sprint, gets `net_capacity_hours = null`.
+  5. **Identity matching** — by descriptor or id, then unique name; unmatched members are reported, not guessed. Members Azure stops listing for the sprint are tombstoned.
+  6. **Advisory** — a capacity read failure never fails the sprint sync; the sync report states whether capacity was available.
+- **Consequences**: Team and Overview load signals use the team's own capacity. No schema change.
+- **Alternatives**: Tenant-entered capacity (rejected — duplicates what the team keeps in Azure), a fixed hours-per-day default (rejected — a guess presented as data).
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.

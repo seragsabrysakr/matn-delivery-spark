@@ -249,6 +249,14 @@ export const dictionary = {
     ar: "تم اكتشاف {a} عنصرًا · قراءة {b} · إضافة {c} · تحديث {d} · دون تغيير {e} · خارج السبرنت {f} · فشل {g}",
     en: "{a} discovered · {b} read · {c} inserted · {d} updated · {e} unchanged · {f} detached · {g} failed",
   },
+  "real.sync.capacity": {
+    ar: "الطاقة (Capacity): {a} من {b} عضوًا لهم ساعات مسجلة في Azure · أيام إجازة الفريق {c}",
+    en: "Capacity: {a} of {b} members have hours set in Azure · {c} team days-off ranges",
+  },
+  "real.sync.capacityUnavailable": {
+    ar: "الطاقة (Capacity): غير متاحة من Azure لهذا السبرنت",
+    en: "Capacity: not available from Azure for this sprint",
+  },
   "real.sync.truncated": {
     ar: "تم بلوغ الحد الأقصى لعدد العناصر، لذلك النتيجة غير مكتملة.",
     en: "The per-sprint item ceiling was reached, so this result is incomplete.",
