@@ -208,8 +208,19 @@ export function parseBacklogToken(token: string | null | undefined): string | nu
   }
 }
 
-export const serializeBacklogToken = (lastFullReconcileAt: string): string =>
-  JSON.stringify({ lastFullReconcileAt });
+/** The work item rule version the stored rows were last fully refreshed under. */
+export function parseBacklogRuleVersion(token: string | null | undefined): number | null {
+  if (!token) return null;
+  try {
+    const value = (JSON.parse(token) as { ruleVersion?: unknown }).ruleVersion;
+    return typeof value === "number" && Number.isInteger(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+export const serializeBacklogToken = (lastFullReconcileAt: string, ruleVersion: number): string =>
+  JSON.stringify({ lastFullReconcileAt, ruleVersion });
 
 /** Full on the first run and at most once a day after that; incremental otherwise. */
 export function decideBacklogMode(state: BacklogCursorState | null, nowMs: number): BacklogMode {

@@ -265,6 +265,19 @@ export const dictionary = {
     en: "The backlog item ceiling was reached, so this result is incomplete.",
   },
   "real.backlog.failed": { ar: "فشلت مزامنة الـ Backlog", en: "Backlog sync failed" },
+  "real.history.reportTitle": {
+    ar: "نتيجة مزامنة سجل التغييرات",
+    en: "Change history sync result",
+  },
+  "real.history.report": {
+    ar: "تم تحديث سجل {a} عنصرًا · {b} مراجعة جديدة · {c} انتقال حالة · {d} تغيير نطاق · فشل {e}",
+    en: "History updated for {a} items · {b} new revisions · {c} state transitions · {d} scope changes · {e} failed",
+  },
+  "real.history.remaining": {
+    ar: "باقي {a} عنصرًا سيُستكمل سجلها في المزامنة القادمة",
+    en: "{a} items left; their history continues on the next sync",
+  },
+  "real.history.failed": { ar: "فشلت مزامنة سجل التغييرات", en: "Change history sync failed" },
   "overview.copilot.comingSoon": { ar: "قريبًا", en: "Coming soon" },
 
   "common.na": { ar: "غير متاح", en: "N/A" },

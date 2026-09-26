@@ -8,6 +8,7 @@ import {
   laterOf,
   normalizeTeamAreas,
   openStatesByType,
+  parseBacklogRuleVersion,
   parseBacklogToken,
   resolveOwningTeam,
   serializeBacklogToken,
@@ -187,9 +188,14 @@ describe("backlog watermark and mode", () => {
   });
 
   it("round-trips the last full reconcile token and rejects garbage", () => {
-    expect(parseBacklogToken(serializeBacklogToken("2026-09-26T06:00:00.000Z"))).toBe(
-      "2026-09-26T06:00:00.000Z",
-    );
+    const token = serializeBacklogToken("2026-09-26T06:00:00.000Z", 2);
+    expect(parseBacklogToken(token)).toBe("2026-09-26T06:00:00.000Z");
+    expect(parseBacklogRuleVersion(token)).toBe(2);
+    // Tokens written before rule versioning carry no version: a refresh is due.
+    expect(
+      parseBacklogRuleVersion(JSON.stringify({ lastFullReconcileAt: "2026-09-26T06:00:00.000Z" })),
+    ).toBeNull();
+    expect(parseBacklogRuleVersion("not json")).toBeNull();
     expect(parseBacklogToken("not json")).toBeNull();
     expect(parseBacklogToken(JSON.stringify({ lastFullReconcileAt: "nope" }))).toBeNull();
     expect(parseBacklogToken(null)).toBeNull();

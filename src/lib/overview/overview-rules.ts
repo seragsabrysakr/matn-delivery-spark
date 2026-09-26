@@ -12,6 +12,7 @@ import {
   choosePrimaryBoard,
   type BoardColumnType,
 } from "@/lib/azure/metadata-rules";
+import { WORK_ITEM_RULE_VERSION } from "@/lib/azure/workitem-map";
 import {
   assessStuck,
   defaultStuckSettings,
@@ -100,7 +101,7 @@ export interface MemberFact {
  * that rule changes (v2: bugs planned as tasks are no longer scope), so a
  * rule change is never reported as a scope change.
  */
-export const SCOPE_RULE_VERSION = 2;
+export const SCOPE_RULE_VERSION = WORK_ITEM_RULE_VERSION;
 
 export interface SnapshotHistoryPoint {
   readonly snapshotDate: string;

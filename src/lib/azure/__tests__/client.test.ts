@@ -206,3 +206,25 @@ describe("AzureDevOpsClient backlog WIQL", () => {
     expect(seenUrl).toContain("%24top=5001");
   });
 });
+
+describe("AzureDevOpsClient revisions", () => {
+  it("pages one item's revisions with GET from the last ingested rev", async () => {
+    const calls: string[] = [];
+    const page = (from: number, count: number) =>
+      Array.from({ length: count }, (_, i) => ({ id: 42, rev: from + i + 1, fields: {} }));
+    const client = makeClient(async (url, init) => {
+      calls.push(`${String(init?.method)} ${String(url)}`);
+      const skip = Number(new URL(String(url)).searchParams.get("$skip"));
+      return jsonResponse({ value: skip === 5 ? page(5, 200) : page(skip, 3) });
+    });
+
+    const revisions = await client.listWorkItemRevisions("proj-1", 42, 5);
+
+    expect(revisions.map((r) => r.rev)).toEqual(Array.from({ length: 203 }, (_, i) => i + 6));
+    expect(calls).toHaveLength(2);
+    expect(calls.every((c) => c.startsWith("GET "))).toBe(true);
+    expect(calls[0]).toContain("/proj-1/_apis/wit/workItems/42/revisions?");
+    expect(calls[0]).toContain("%24skip=5");
+    expect(calls[1]).toContain("%24skip=205");
+  });
+});

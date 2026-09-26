@@ -163,6 +163,19 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Consequences**: Sprint scope and completion match what the team sees in Azure (e.g. Hoteliana Sprint 2: 19 Stories / 72 points, not 26 items). After deploy, scope change is unavailable until the first new-rule snapshot is a day old.
 - **Alternatives**: A tenant setting for bug handling (rejected as the default — Azure already stores it per team), treating every Bug as a Task (rejected — wrong for teams that plan bugs as requirements).
 
+### ADR-017: Work item revision history (Phase 2a)
+
+- **Context**: Current state alone cannot say who moved a card, when it entered its column, how long each state took, or what was added to or removed from a sprint after it started. Azure DevOps keeps every revision; that is the source of truth for all of it.
+- **Decision**:
+  1. **Per-item gap fill** — `az_work_items.revisions_synced_rev` records the highest ingested revision. Each history run lists the project's items whose `azure_rev` is ahead and reads only the missing revisions with `GET {project}/_apis/wit/workItems/{id}/revisions?$skip=<synced>` (GET only). The first run backfills complete histories; later runs touch only items that changed. Items outside our synchronized scope are never read.
+  2. **Append-only storage** — revisions, transitions and scope changes are inserted with `ON CONFLICT DO NOTHING` on their natural keys; the existing append-only triggers keep history immutable, and re-runs never duplicate.
+  3. **Mover vs owner** — each revision stores `ChangedBy` (who made the change) separately from `AssignedTo` (who owned the item then). Personal activity is attributed to the mover; ownership to the assignee.
+  4. **Derived from the whole stored history** — transitions (with seconds spent in the previous state; the first only from a complete history), scope changes (`added` / `removed` / `reestimated` per synchronized iteration, from `IterationPath` and estimate history), and the exact board-column entry time, which replaces the first-sighting estimate from ADR-013 once the history is complete.
+  5. **Bounded and resumable** — up to 2,000 items per run, checkpointed; the rest continue on the next sync and are reported.
+  6. **Rule changes re-apply to every row** — `WORK_ITEM_RULE_VERSION` is stored with the backlog watermark; when it changes, the next backlog sync is a full pass whose reconcile re-reads every stored item of the project (open and closed), so no row keeps an old interpretation (e.g. bugs as scope, ADR-016).
+- **Consequences**: Who-did-what, cycle and state times, sprint scope history and accurate time-in-column become available from Azure data. The first backfill makes one GET per synchronized item; afterwards the cost follows the rate of change.
+- **Alternatives**: The project-wide reporting revisions stream (rejected for now — it returns revisions of items outside our scope and loses history for items that enter scope later), storing only transitions (rejected — loses re-estimates, area/iteration moves and the mover).
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.

@@ -355,6 +355,33 @@ export class AzureDevOpsClient {
     );
   }
 
+  /**
+   * Revisions of one work item after `skip` (its last ingested rev), paged
+   * with `$top`/`$skip` up to a hard page ceiling.
+   */
+  async listWorkItemRevisions(
+    projectId: string,
+    workItemId: number,
+    skip: number,
+    signal?: AbortSignal,
+  ): Promise<{ id: number; rev: number; fields: Record<string, unknown> }[]> {
+    const pageSize = 200;
+    const items: { id: number; rev: number; fields: Record<string, unknown> }[] = [];
+    for (let page = 0, offset = Math.max(0, skip); page < this.maxPages; page += 1) {
+      const { body } = await this.get<
+        AzureListResponse<{ id: number; rev: number; fields: Record<string, unknown> }>
+      >(`/${encodeURIComponent(projectId)}/_apis/wit/workItems/${workItemId}/revisions`, {
+        query: { $top: pageSize, $skip: offset },
+        signal,
+      });
+      const value = body.value ?? [];
+      items.push(...value);
+      if (value.length < pageSize) break;
+      offset += value.length;
+    }
+    return items;
+  }
+
   listTeamMembers(
     projectId: string,
     teamId: string,
