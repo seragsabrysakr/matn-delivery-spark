@@ -246,3 +246,33 @@ export function isMetadataStale(
   const at = Date.parse(lastSyncedAt);
   return !Number.isFinite(at) || nowMs - at >= maxAgeMs;
 }
+
+export type BacklogLevel = "portfolio" | "requirement" | "task" | "bug";
+
+/**
+ * Work item type name → backlog level, from the project's Azure process
+ * configuration. A type that is both a bug and a requirement (bugs planned as
+ * requirements) is a bug, so the team's bug handling decides its scope.
+ * Types on no backlog (e.g. Test Case) are absent.
+ */
+export function backlogLevelsFromProcessConfiguration(config: {
+  readonly requirementBacklog?: { readonly workItemTypes?: readonly { readonly name: string }[] };
+  readonly taskBacklog?: { readonly workItemTypes?: readonly { readonly name: string }[] };
+  readonly portfolioBacklogs?: readonly {
+    readonly workItemTypes?: readonly { readonly name: string }[];
+  }[];
+  readonly bugWorkItems?: { readonly workItemTypes?: readonly { readonly name: string }[] };
+}): Map<string, BacklogLevel> {
+  const levels = new Map<string, BacklogLevel>();
+  const put = (types: readonly { readonly name: string }[] | undefined, level: BacklogLevel) => {
+    for (const type of types ?? []) {
+      const name = type?.name?.trim();
+      if (name) levels.set(name.toLowerCase(), level);
+    }
+  };
+  for (const portfolio of config.portfolioBacklogs ?? []) put(portfolio.workItemTypes, "portfolio");
+  put(config.taskBacklog?.workItemTypes, "task");
+  put(config.requirementBacklog?.workItemTypes, "requirement");
+  put(config.bugWorkItems?.workItemTypes, "bug");
+  return levels;
+}

@@ -10,11 +10,13 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { AzureDevOpsClient } from "./client.server";
 import {
+  backlogLevelsFromProcessConfiguration,
   buildAzureStateIndex,
   isMetadataStale,
   normalizeBoardColumns,
   normalizeTypeStates,
   type AzureStateIndex,
+  type BacklogLevel,
   type NormalizedBoardColumn,
 } from "./metadata-rules";
 import type { StateCategorySource } from "./process-mapping";
@@ -56,6 +58,16 @@ export async function syncProjectProcessMetadata(
   let tombstoned = 0;
 
   const types = await client.listWorkItemTypes(scope.azureProjectId);
+  // Backlog levels decide what counts as sprint scope (ADR-023). When they
+  // cannot be read, stored levels are left untouched rather than cleared.
+  let levels: Map<string, BacklogLevel> | null = null;
+  try {
+    levels = backlogLevelsFromProcessConfiguration(
+      await client.getProcessConfiguration(scope.azureProjectId),
+    );
+  } catch {
+    warnings.push("backlog_levels_unavailable");
+  }
 
   for (const type of types) {
     if (!type?.name) continue;
@@ -83,6 +95,7 @@ export async function syncProjectProcessMetadata(
           color: type.color ?? null,
           icon_url: type.icon?.url ?? null,
           is_disabled: type.isDisabled === true,
+          ...(levels ? { backlog_level: levels.get(type.name.toLowerCase()) ?? null } : {}),
           source_status: "active",
           is_deleted: false,
           deleted_at_source: null,
@@ -298,7 +311,12 @@ export async function ensureProcessMetadataFresh(
   nowMs: number = Date.now(),
 ): Promise<readonly string[]> {
   const typesAt = await latestTypesSync(scope.tenantId, scope.projectId);
-  if (!isMetadataStale(typesAt, nowMs)) return [];
+  // Also refresh when backlog levels were never recorded (first run after ADR-023).
+  if (
+    !isMetadataStale(typesAt, nowMs) &&
+    (await loadBacklogLevels(scope.tenantId, scope.projectId))
+  )
+    return [];
   try {
     return (await syncProjectProcessMetadata(scope, client)).warnings;
   } catch {
@@ -326,6 +344,22 @@ export async function ensureMetadataFresh(
     }
   }
   return warnings;
+}
+
+/** Type name (lower-cased) → backlog level for the project, or null when none are recorded. */
+export async function loadBacklogLevels(
+  tenantId: string,
+  projectId: string,
+): Promise<ReadonlyMap<string, BacklogLevel> | null> {
+  const { data, error } = await supabaseAdmin
+    .from("az_work_item_types")
+    .select("name, backlog_level")
+    .eq("tenant_id", tenantId)
+    .eq("project_id", projectId)
+    .eq("is_deleted", false)
+    .not("backlog_level", "is", null);
+  if (error || !data || data.length === 0) return null;
+  return new Map(data.map((row) => [row.name.toLowerCase(), row.backlog_level as BacklogLevel]));
 }
 
 /** The project's synchronized state categories, or null when none exist yet. */

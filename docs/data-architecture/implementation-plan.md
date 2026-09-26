@@ -238,6 +238,19 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Consequences**: Arabic and English exports with correct direction; no server load.
 - **Alternatives**: SheetJS/ExcelJS (rejected — new dependency and lockfile churn for a small need), jsPDF/pdfmake (rejected — no Arabic shaping without extra font and shaping work).
 
+### ADR-023: Sprint scope from Azure backlog levels
+
+- **Context**: Scope was "every type that is not a Task" (bugs per the team's setting). On real data that counted Epics, Features and Test Cases as scope; the deliverable roll-up worked around it, but the rule itself must be right for every analysis.
+- **Decision**: Read the project's backlog levels from Azure (`GET {project}/_apis/work/processconfiguration`: portfolio, requirement, task and bug types) with the process metadata sync, and store them on `az_work_item_types.backlog_level`. A type is scope when it is on the requirement backlog, or is a bug type while the team plans bugs as requirements. Portfolio containers, tasks and types on no backlog (Test Case, …) never are. Until levels are synchronized the previous alias rule applies. `WORK_ITEM_RULE_VERSION` 3 re-derives every stored item on the next backlog sync, and the metadata sync runs early when no levels are recorded yet.
+- **Consequences**: One forward migration (a nullable column). Scope follows each project's own process, custom processes included.
+- **Alternatives**: A hardcoded type list per template (rejected — breaks on custom processes), team-level `/work/backlogs` (rejected — per team, and bugs are not listed there).
+
+### ADR-024: Work item hierarchy page
+
+- **Context**: The delivery manager needs to see the whole tree — Epic → Feature → Story → Task / Bug — and how each level feeds the analytics.
+- **Decision**: `/hierarchy` shows every synchronized item of the selected sprint's project as a collapsible tree ordered depth-first (portfolio, requirements, bugs, tasks, then items on no backlog). Every node carries a roll-up computed with the same scope rule as all analytics (leaf scope only; containers and tasks never count): progress by points or count, remaining points, tasks done/total with remaining hours, open/total bugs, blocked and unassigned work below. Items whose parent is not synchronized stay visible as flagged roots. A data-quality panel lists stories without a parent, tasks and bugs without a parent, missing parents, unestimated stories and open tasks without remaining hours. Search, level filter and "open only" keep each match's ancestors.
+- **Consequences**: Read-only, computed at request time from stored items; no migration.
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.

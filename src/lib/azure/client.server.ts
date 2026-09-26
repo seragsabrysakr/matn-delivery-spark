@@ -13,6 +13,7 @@ import type {
   AzureIteration,
   AzureIterationCapacity,
   AzureListResponse,
+  AzureProcessConfiguration,
   AzureIdentityRef,
   AzureProject,
   AzureTeam,
@@ -315,6 +316,18 @@ export class AzureDevOpsClient {
     } catch {
       return null;
     }
+  }
+
+  /** The project's backlog levels (requirement, task, bug and portfolio types). */
+  async getProcessConfiguration(
+    projectId: string,
+    signal?: AbortSignal,
+  ): Promise<AzureProcessConfiguration> {
+    const { body } = await this.get<AzureProcessConfiguration>(
+      `/${encodeURIComponent(projectId)}/_apis/work/processconfiguration`,
+      { signal },
+    );
+    return body;
   }
 
   /** Runs a saved (shared) query by id with GET; returns its flat or tree result. */

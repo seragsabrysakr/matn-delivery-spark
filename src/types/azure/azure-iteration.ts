@@ -27,3 +27,16 @@ export interface AzureTeamSettings {
 export interface AzureTeamDaysOff {
   readonly daysOff: readonly { readonly start: string; readonly end: string }[];
 }
+
+/** GET {project}/_apis/work/processconfiguration — the project's backlog levels. */
+export interface AzureBacklogLevel {
+  readonly name?: string;
+  readonly referenceName?: string;
+  readonly workItemTypes?: readonly { readonly name: string }[];
+}
+export interface AzureProcessConfiguration {
+  readonly requirementBacklog?: AzureBacklogLevel;
+  readonly taskBacklog?: AzureBacklogLevel;
+  readonly portfolioBacklogs?: readonly AzureBacklogLevel[];
+  readonly bugWorkItems?: AzureBacklogLevel;
+}

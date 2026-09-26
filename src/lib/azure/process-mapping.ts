@@ -12,7 +12,11 @@
  */
 import type { Database } from "@/integrations/supabase/types";
 import type { StateCategory, WorkItemAlias } from "@/types/domain/work-item";
-import { lookupAzureStateCategory, type AzureStateIndex } from "./metadata-rules";
+import {
+  lookupAzureStateCategory,
+  type AzureStateIndex,
+  type BacklogLevel,
+} from "./metadata-rules";
 
 export type ProcessTemplateKind = Database["public"]["Enums"]["process_template_kind"];
 export type BugHandlingMode = Database["public"]["Enums"]["bug_handling_mode"];
@@ -44,6 +48,11 @@ export interface ResolvedProcessMapping {
   readonly bugHandlingMode: BugHandlingMode;
   /** True when the tenant set bug handling explicitly; Azure's team setting then does not apply. */
   readonly bugHandlingConfigured: boolean;
+  /**
+   * Type name (lower-cased) → Azure backlog level from the project's process
+   * configuration (ADR-023); null until synchronized.
+   */
+  readonly backlogLevels: ReadonlyMap<string, BacklogLevel> | null;
 }
 
 const DEFAULT_ALIASES: Record<string, WorkItemAlias> = {
@@ -119,6 +128,7 @@ export function resolveProcessMapping(
   row: ProcessMappingRow | null,
   templateKind: ProcessTemplateKind = "agile",
   azureStates: AzureStateIndex | null = null,
+  backlogLevels: ReadonlyMap<string, BacklogLevel> | null = null,
 ): ResolvedProcessMapping {
   const bugHandlingMode = row?.bug_handling_mode ?? "as_requirement";
 
@@ -156,6 +166,7 @@ export function resolveProcessMapping(
     severityField: row?.severity_field ?? "Microsoft.VSTS.Common.Severity",
     bugHandlingMode,
     bugHandlingConfigured: row !== null,
+    backlogLevels: backlogLevels && backlogLevels.size > 0 ? backlogLevels : null,
   };
 }
 

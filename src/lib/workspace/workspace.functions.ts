@@ -424,3 +424,21 @@ export const updateDeliverable = createServerFn({ method: "POST" })
       return { ok: false as const, failure: toAzureFailure(error) };
     }
   });
+
+/** The selected sprint's project as a work item tree with roll-ups (ADR-024). */
+export const getProjectHierarchy = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => teamIterationInput.parse(data))
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext } = await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { buildProjectHierarchy } = await import("@/lib/hierarchy/hierarchy.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      return { ok: true as const, hierarchy: await buildProjectHierarchy(target) };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
