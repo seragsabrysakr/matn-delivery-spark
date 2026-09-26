@@ -111,7 +111,8 @@ async function loadMembers(
       .from("core_member_capacity")
       .select("member_id, net_capacity_hours")
       .eq("tenant_id", target.tenantId)
-      .eq("team_iteration_id", target.teamIterationId),
+      .eq("team_iteration_id", target.teamIterationId)
+      .eq("is_deleted", false),
   ]);
   if (members.error) throw new AzureDevOpsError("unknown");
 

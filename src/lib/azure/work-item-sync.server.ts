@@ -20,6 +20,7 @@ import {
   WORK_ITEM_REQUEST_TIMEOUT_MS,
 } from "./wiql";
 import { ensureMetadataFresh } from "./metadata-sync.server";
+import { syncTeamIterationCapacity, type CapacitySyncResult } from "./capacity-sync.server";
 import { loadWorkItemReference, persistWorkItemBatch } from "./work-item-persist.server";
 import { ensureConnection } from "./sync.server";
 import type { ResolvedTeamIteration } from "@/lib/workspace/context.server";
@@ -39,6 +40,8 @@ export interface WorkItemSyncCursor {
   readonly failed: number;
   readonly removedFromSprint: number;
   readonly truncated: boolean;
+  /** Sprint capacity read from Azure (ADR-019); null when not read or unavailable. */
+  readonly capacity?: CapacitySyncResult | null;
 }
 
 export interface WorkItemSyncStatus {
@@ -215,6 +218,13 @@ export async function advanceWorkItemSync(
 
   try {
     if (cursor.phase === "discover") {
+      // Capacity is advisory: a failure here never fails the sprint sync.
+      let capacity: CapacitySyncResult | null = null;
+      try {
+        capacity = await syncTeamIterationCapacity(target, client, teamSettings);
+      } catch {
+        capacity = null;
+      }
       const wiql = buildIterationWiql({
         projectName: target.azureProjectName,
         iterationPath: target.iterationPath,
@@ -233,6 +243,7 @@ export async function advanceWorkItemSync(
         ids,
         totalBatches: chunkIds(ids, BATCH_SIZE).length,
         truncated: allIds.length > ids.length,
+        capacity,
       };
       await checkpoint(runId, cursor);
     }

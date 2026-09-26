@@ -7,3 +7,14 @@ export interface AzureTeamMemberCapacity {
   readonly daysOff: readonly { readonly start: string; readonly end: string }[];
   readonly url?: string;
 }
+
+/**
+ * The capacities response. api-version 6.0+ wraps members in `teamMembers`;
+ * older versions return the standard `value` list.
+ */
+export interface AzureIterationCapacity {
+  readonly teamMembers?: readonly AzureTeamMemberCapacity[];
+  readonly value?: readonly AzureTeamMemberCapacity[];
+  readonly totalCapacityPerDay?: number;
+  readonly totalDaysOff?: number;
+}
