@@ -21,6 +21,7 @@ import {
   incrementalSince,
   laterOf,
   openStatesByType,
+  parseBacklogRuleVersion,
   parseBacklogToken,
   resolveOwningTeam,
   serializeBacklogToken,
@@ -34,6 +35,7 @@ import {
   type BugHandlingMode,
 } from "./process-mapping";
 import { ensureConnection } from "./sync.server";
+import { WORK_ITEM_RULE_VERSION } from "./workitem-map";
 import {
   buildWorkItemsBatchBody,
   chunkIds,
@@ -60,6 +62,12 @@ export interface BacklogSyncCursor {
   readonly phase: BacklogSyncPhase;
   readonly projectId: string;
   readonly mode: BacklogMode;
+  /**
+   * The work item rules changed since the last full refresh: the reconcile
+   * re-reads every stored item of the project (open and closed), not only
+   * the open ones, so no row keeps the old interpretation.
+   */
+  readonly refreshAll: boolean;
   readonly areas: readonly TeamArea[];
   /** Each team's bug handling from its Azure settings, by internal team id. */
   readonly teamBugHandling: Readonly<Record<string, BugHandlingMode>>;
@@ -91,6 +99,7 @@ const emptyCursor = (projectId: string, mode: BacklogMode = "full"): BacklogSync
   phase: "discover",
   projectId,
   mode,
+  refreshAll: false,
   areas: [],
   teamBugHandling: {},
   ids: [],
@@ -135,6 +144,7 @@ interface CursorRow {
   readonly id: string;
   readonly watermarkAt: string | null;
   readonly lastFullReconcileAt: string | null;
+  readonly ruleVersion: number | null;
 }
 
 async function readWatermark(tenantId: string, connectionId: string, projectId: string) {
@@ -151,6 +161,7 @@ async function readWatermark(tenantId: string, connectionId: string, projectId: 
     id: data.id,
     watermarkAt: data.watermark_at,
     lastFullReconcileAt: parseBacklogToken(data.watermark_token),
+    ruleVersion: parseBacklogRuleVersion(data.watermark_token),
   } satisfies CursorRow;
 }
 
@@ -180,7 +191,14 @@ export async function startBacklogSync(
 
   const connectionId = await ensureConnection(target.tenantId, target.organizationId);
   const watermark = await readWatermark(target.tenantId, connectionId, target.projectId);
-  const cursor = emptyCursor(target.projectId, decideBacklogMode(watermark, Date.now()));
+  const refreshAll = watermark?.ruleVersion !== WORK_ITEM_RULE_VERSION;
+  const cursor = {
+    ...emptyCursor(
+      target.projectId,
+      refreshAll ? "full" : decideBacklogMode(watermark, Date.now()),
+    ),
+    refreshAll,
+  };
   const { data, error } = await supabaseAdmin
     .from("ops_sync_runs")
     .insert({
@@ -484,19 +502,26 @@ export async function advanceBacklogSync(
     }
 
     if (cursor.phase === "reconcile" && Date.now() < deadline) {
-      // Stored open items in this project that the full pass did not return.
-      const { data } = await supabaseAdmin
-        .from("az_work_items")
-        .select("azure_work_item_id")
-        .eq("tenant_id", target.tenantId)
-        .eq("project_id", target.projectId)
-        .eq("is_deleted", false)
-        .not("state_category", "in", "(completed,removed)")
-        .limit(MAX_BACKLOG_ITEMS + 1);
+      // Stored items the full pass did not return: the open ones, or every
+      // stored item of the project after a work item rule change.
+      const storedIds: number[] = [];
+      for (let from = 0; storedIds.length <= MAX_BACKLOG_ITEMS; from += 1_000) {
+        let query = supabaseAdmin
+          .from("az_work_items")
+          .select("azure_work_item_id")
+          .eq("tenant_id", target.tenantId)
+          .eq("project_id", target.projectId)
+          .eq("is_deleted", false);
+        if (!cursor.refreshAll) query = query.not("state_category", "in", "(completed,removed)");
+        const { data, error } = await query
+          .order("azure_work_item_id", { ascending: true })
+          .range(from, from + 999);
+        if (error) throw new AzureDevOpsError("unknown");
+        storedIds.push(...(data ?? []).map((row) => Number(row.azure_work_item_id)));
+        if ((data ?? []).length < 1_000) break;
+      }
       const returned = new Set(cursor.ids);
-      const stale = (data ?? [])
-        .map((row) => Number(row.azure_work_item_id))
-        .filter((id) => !returned.has(id));
+      const stale = storedIds.filter((id) => !returned.has(id));
       cursor = {
         ...cursor,
         staleIds: stale.slice(0, MAX_BACKLOG_ITEMS),
@@ -578,7 +603,7 @@ async function saveWatermark(
       entity_kind: BACKLOG_CURSOR_KIND,
       project_id: target.projectId,
       watermark_at: watermarkAt,
-      watermark_token: serializeBacklogToken(lastFull),
+      watermark_token: serializeBacklogToken(lastFull, WORK_ITEM_RULE_VERSION),
       last_run_id: runId,
     },
     { onConflict: "tenant_id,connection_id,entity_kind,project_id" },

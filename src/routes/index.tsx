@@ -49,6 +49,7 @@ function OverviewPage() {
     runSync,
     syncReport,
     backlogReport,
+    historyReport,
     sprintDatesUnavailable,
   } = useWorkspace();
 
@@ -157,6 +158,27 @@ function OverviewPage() {
                     f: backlogReport.unavailable,
                     g: backlogReport.failed,
                   })}${backlogReport.truncated ? ` — ${t("real.backlog.truncated")}` : ""}`
+            }
+          />
+        ) : null}
+        {historyReport ? (
+          <Notice
+            tone={historyReport.status === "succeeded" ? "neutral" : "warning"}
+            title={t("real.history.reportTitle")}
+            body={
+              historyReport.status === "failed"
+                ? (historyReport.message ?? t("real.history.failed"))
+                : `${t("real.history.report", {
+                    a: historyReport.items,
+                    b: historyReport.revisions,
+                    c: historyReport.transitions,
+                    d: historyReport.scopeChanges,
+                    e: historyReport.failed,
+                  })}${
+                    historyReport.remaining > 0
+                      ? ` — ${t("real.history.remaining", { a: historyReport.remaining })}`
+                      : ""
+                  }`
             }
           />
         ) : null}

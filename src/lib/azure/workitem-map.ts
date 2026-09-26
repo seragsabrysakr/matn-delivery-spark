@@ -247,6 +247,14 @@ export function mapAzureWorkItem(
   };
 }
 
+/**
+ * Version of the rules that derive stored work item columns (scope, bug
+ * handling, …). Bump it whenever those rules change: the next backlog sync
+ * then re-reads every stored item so no row keeps the old interpretation.
+ * v2: bugs planned as tasks are not scope (ADR-016).
+ */
+export const WORK_ITEM_RULE_VERSION = 2;
+
 export type WorkItemDiff =
   | { readonly kind: "unchanged" }
   | { readonly kind: "update"; readonly patch: Partial<WorkItemMutablePayload> };
@@ -277,4 +285,67 @@ export function diffWorkItem(
   }
   if (Object.keys(patch).length === 0) return { kind: "unchanged" };
   return { kind: "update", patch: patch as Partial<WorkItemMutablePayload> };
+}
+
+/** A revision as read from Azure, mapped with the same rules as work items. */
+export interface MappedRevision {
+  readonly rev: number;
+  readonly revisedAt: string;
+  readonly revisedByMemberId: string | null;
+  readonly state: string | null;
+  readonly stateCategory: StateCategory;
+  readonly iterationPath: string | null;
+  readonly areaPath: string | null;
+  readonly estimate: number | null;
+  readonly remainingWork: number | null;
+  readonly completedWork: number | null;
+  readonly isBlocked: boolean;
+  readonly assignedToMemberId: string | null;
+  readonly boardColumn: string | null;
+  /** Compact subset kept verbatim for later analysis. */
+  readonly fields: Record<string, Json>;
+}
+
+/**
+ * `ChangedBy` is who made this revision; `AssignedTo` is who owned the item
+ * at that point. They are kept apart: the mover is often not the owner.
+ */
+export function mapRawRevision(
+  raw: { readonly rev?: number; readonly fields: AzureFields },
+  mapping: ResolvedProcessMapping,
+  resolveMember: (ref: AzureIdentityLike | null | undefined) => string | null,
+): MappedRevision | null {
+  const f = raw.fields;
+  const rev = num(f["System.Rev"]) ?? raw.rev ?? null;
+  const revisedAt = iso(f["System.ChangedDate"]) ?? iso(f["System.CreatedDate"]);
+  if (rev === null || !revisedAt) return null;
+  const type = str(f["System.WorkItemType"]);
+  const state = str(f["System.State"]);
+  const estimate = resolveEstimate(f, mapping);
+  const tags = str(f["System.Tags"]);
+  return {
+    rev,
+    revisedAt,
+    revisedByMemberId: resolveMember(identity(f["System.ChangedBy"])),
+    state,
+    stateCategory: state ? resolveStateCategory(mapping, state, type).category : "unknown",
+    iterationPath: str(f["System.IterationPath"]),
+    areaPath: str(f["System.AreaPath"]),
+    estimate: estimate.estimate,
+    remainingWork: num(f["Microsoft.VSTS.Scheduling.RemainingWork"]),
+    completedWork: num(f["Microsoft.VSTS.Scheduling.CompletedWork"]),
+    isBlocked: resolveBlocked(f, mapping).blocked,
+    assignedToMemberId: resolveMember(identity(f["System.AssignedTo"])),
+    boardColumn: str(f["System.BoardColumn"]),
+    fields: {
+      type: type,
+      reason: str(f["System.Reason"]),
+      tags,
+      boardColumn: str(f["System.BoardColumn"]),
+      boardColumnDone:
+        typeof f["System.BoardColumnDone"] === "boolean" ? f["System.BoardColumnDone"] : null,
+      boardLane: str(f["System.BoardLane"]),
+      parent: num(f["System.Parent"]),
+    },
+  };
 }

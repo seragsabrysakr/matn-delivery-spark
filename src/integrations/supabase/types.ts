@@ -1947,6 +1947,7 @@ export type Database = {
           project_id: string
           reason: string | null
           remaining_work: number | null
+          revisions_synced_rev: number | null
           resolved_date: string | null
           severity: Database["public"]["Enums"]["severity_level"] | null
           source_status: Database["public"]["Enums"]["source_status"]
@@ -2008,6 +2009,7 @@ export type Database = {
           project_id: string
           reason?: string | null
           remaining_work?: number | null
+          revisions_synced_rev?: number | null
           resolved_date?: string | null
           severity?: Database["public"]["Enums"]["severity_level"] | null
           source_status?: Database["public"]["Enums"]["source_status"]
@@ -2069,6 +2071,7 @@ export type Database = {
           project_id?: string
           reason?: string | null
           remaining_work?: number | null
+          revisions_synced_rev?: number | null
           resolved_date?: string | null
           severity?: Database["public"]["Enums"]["severity_level"] | null
           source_status?: Database["public"]["Enums"]["source_status"]

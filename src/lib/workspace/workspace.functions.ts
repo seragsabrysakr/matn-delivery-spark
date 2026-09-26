@@ -167,6 +167,59 @@ export const advanceBacklogWorkItemSync = createServerFn({ method: "POST" })
     }
   });
 
+/** Starts (or rejoins) the resumable revision-history sync for the sprint's project. */
+export const startHistoryWorkItemSync = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => teamIterationInput.parse(data))
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext, assertCanRunSync, writeAudit } =
+      await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { startHistorySync } = await import("@/lib/azure/history-sync.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      assertCanRunSync(tenant);
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      const status = await startHistorySync(target, tenant.coreUserId);
+      await writeAudit({
+        tenantId: tenant.tenantId,
+        actorUserId: tenant.coreUserId,
+        action: "azure.history.sync.start",
+        entityType: "core_projects",
+        entityId: target.projectId,
+        outcome: "success",
+      });
+      return { ok: true as const, status };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
+
+/** Performs one bounded, checkpointed slice of the history sync. Call until done. */
+export const advanceHistoryWorkItemSync = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({ teamIterationId: uuid, runId: uuid, tenantId: uuid.optional() })
+      .strict()
+      .parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext, assertCanRunSync } = await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { advanceHistorySync } = await import("@/lib/azure/history-sync.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      assertCanRunSync(tenant);
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      return { ok: true as const, status: await advanceHistorySync(data.runId, target) };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
+
 /** Real, tenant-scoped Team page payload for one validated team iteration. */
 export const getRealTeamPage = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
