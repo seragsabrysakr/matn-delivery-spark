@@ -213,6 +213,20 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Consequences**: Live data without manual syncs; snapshots on every day. Setup needs one secret in two places (app and GitHub).
 - **Alternatives**: pg_cron (rejected — cannot read the secret securely on this host), one long request per tick (rejected — exceeds Worker limits).
 
+### ADR-021: Delivery schedule (Phase 3a)
+
+- **Context**: Delivery dates are not defined in Azure DevOps, and how a deliverable is represented differs per project. The delivery manager needs one place with each deliverable's real progress, a defensible forecast, the date promised, and every change to that promise.
+- **Decision**:
+  1. **Per-project mapping** (`dlv_project_mappings`): a work item type (options come from the synced types), a tag, an area path (top-level items in it), or a saved query (run with GET). Unmapped projects say so.
+  2. **Discovery from Azure, read-only**: the roots by the mapping, then every descendant with a recursive hierarchy link query (`WorkItemLinks … MODE (Recursive)` through the allowlisted WIQL endpoint), re-read and persisted with the same team and bug rules as the backlog sync, so closed work is in the tree too.
+  3. **Progress** rolls up the scope under the deliverable: scope items (ADR-016) with no scope below them, so an Epic's Features are never counted next to their own stories and tasks never count; points when ≥ 60 % are estimated, else count.
+  4. **Forecast** = remaining ÷ the deliverable's own completions per sprint over the last 6 finished sprints of the project calendar (buckets run from a sprint's start to the next one's, so work closed between sprints counts), times the sprint cadence; the range uses the best and worst sprint. Fewer than 2 finished sprints, no recent progress, or unestimated remaining work give no date and say why.
+  5. **Platform-owned dates** (`dlv_deliverables`): committed date, baseline (set once on the first confirmation, enforced by a trigger), client visibility, notes. Committed dates change only through `dlv_set_committed_date()` (service role), which appends the change with a required reason to the append-only `dlv_date_changes` in the same transaction. Only delivery managers and admins may change them; every change is audited.
+  6. **Status** at read time: Delivered (actual date), No committed date, Late (past the committed date), At risk (forecast after it, or no forecast), On track.
+  7. **Freshness**: a Refresh button on the Delivery page, and the scheduler refreshes mapped projects every 30 minutes (ADR-020).
+- **Consequences**: A forward migration (three tables, one function, forced RLS, select-only for clients). Export to Excel/PDF (internal and client versions) follows in Phase 3b.
+- **Alternatives**: Team velocity for every deliverable (rejected — assumes the team works only on that deliverable), storing dates in Azure fields (rejected — Azure stays read-only), `az_work_item_relations` (rejected — the parent field on synced items already gives the tree; the link query only discovers ids).
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.

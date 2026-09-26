@@ -317,6 +317,16 @@ export class AzureDevOpsClient {
     }
   }
 
+  /** Runs a saved (shared) query by id with GET; returns its flat or tree result. */
+  async runSavedQuery<T>(projectId: string, queryId: string, signal?: AbortSignal): Promise<T> {
+    if (!/^[0-9a-f-]{36}$/i.test(queryId)) throw new AzureDevOpsError("invalid_configuration");
+    const { body } = await this.get<T>(
+      `/${encodeURIComponent(projectId)}/_apis/wit/wiql/${encodeURIComponent(queryId)}`,
+      { signal },
+    );
+    return body;
+  }
+
   /** Per-member capacity, activities and personal days off for one sprint. */
   async listIterationCapacities(
     projectId: string,

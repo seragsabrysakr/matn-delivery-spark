@@ -5,7 +5,7 @@
  * until the tick reports idle.
  */
 
-export type ScheduledSyncKind = "foundation" | "sprint" | "backlog" | "history";
+export type ScheduledSyncKind = "foundation" | "sprint" | "backlog" | "history" | "delivery";
 
 /** Minimum time between completed runs of each kind. */
 export const SYNC_INTERVAL_MS: Readonly<Record<ScheduledSyncKind, number>> = {
@@ -14,10 +14,19 @@ export const SYNC_INTERVAL_MS: Readonly<Record<ScheduledSyncKind, number>> = {
   sprint: 15 * 60_000,
   backlog: 30 * 60_000,
   history: 30 * 60_000,
+  delivery: 30 * 60_000,
 };
 
-/** Per sprint, in order: history follows the items the sprint and backlog syncs wrote. */
-export const SPRINT_SYNC_ORDER: readonly ScheduledSyncKind[] = ["sprint", "backlog", "history"];
+/**
+ * Per sprint, in order: history follows the items the sprint and backlog
+ * syncs wrote; deliverables roll up everything before them.
+ */
+export const SPRINT_SYNC_ORDER: readonly ScheduledSyncKind[] = [
+  "sprint",
+  "backlog",
+  "history",
+  "delivery",
+];
 
 export interface LatestRun {
   readonly id: string;

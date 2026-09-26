@@ -255,3 +255,172 @@ export const getRealTeamPage = createServerFn({ method: "GET" })
       return { ok: false as const, failure: toAzureFailure(error) };
     }
   });
+
+/** Delivery schedule of the selected sprint's project (ADR-021). */
+export const getDeliverySchedule = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => teamIterationInput.parse(data))
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext } = await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { buildDeliverySchedule } = await import("@/lib/delivery/deliverables.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      return { ok: true as const, schedule: await buildDeliverySchedule(tenant, target) };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
+
+/** Saves how the project's deliverables are found in Azure. Delivery managers and admins. */
+export const saveDeliveryMapping = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        teamIterationId: uuid,
+        tenantId: uuid.optional(),
+        mode: z.enum(["work_item_type", "tag", "area_path", "saved_query"]),
+        value: z.string().min(1).max(400),
+      })
+      .strict()
+      .parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext } = await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { saveDeliveryMapping: save } = await import("@/lib/delivery/deliverables.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      await save(tenant, target, { mode: data.mode, value: data.value });
+      return { ok: true as const };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
+
+/** Starts (or rejoins) the resumable deliverables refresh for the project. */
+export const startDeliveryRefresh = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => teamIterationInput.parse(data))
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext, writeAudit } = await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { canManageDelivery } = await import("@/lib/delivery/deliverables.server");
+    const { startDeliverySync } = await import("@/lib/delivery/delivery-sync.server");
+    const { AzureDevOpsError, toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      if (!canManageDelivery(tenant)) throw new AzureDevOpsError("forbidden");
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      const status = await startDeliverySync(target, tenant.coreUserId);
+      await writeAudit({
+        tenantId: tenant.tenantId,
+        actorUserId: tenant.coreUserId,
+        action: "delivery.refresh.start",
+        entityType: "core_projects",
+        entityId: target.projectId,
+        outcome: "success",
+      });
+      return { ok: true as const, status };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
+
+/** One bounded, checkpointed slice of the deliverables refresh. Call until done. */
+export const advanceDeliveryRefresh = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({ teamIterationId: uuid, runId: uuid, tenantId: uuid.optional() })
+      .strict()
+      .parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext } = await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { canManageDelivery } = await import("@/lib/delivery/deliverables.server");
+    const { advanceDeliverySync } = await import("@/lib/delivery/delivery-sync.server");
+    const { AzureDevOpsError, toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      if (!canManageDelivery(tenant)) throw new AzureDevOpsError("forbidden");
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      return { ok: true as const, status: await advanceDeliverySync(data.runId, target) };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
+
+/** Confirms or changes a deliverable's committed date, with a required reason. */
+export const setDeliverableCommittedDate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        teamIterationId: uuid,
+        tenantId: uuid.optional(),
+        deliverableId: uuid,
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        reason: z.string().trim().min(3).max(1000),
+      })
+      .strict()
+      .parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext } = await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { setCommittedDate } = await import("@/lib/delivery/deliverables.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      await setCommittedDate(tenant, target, {
+        deliverableId: data.deliverableId,
+        date: data.date,
+        reason: data.reason,
+      });
+      return { ok: true as const };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
+
+/** Client visibility and notes of a deliverable. */
+export const updateDeliverable = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        teamIterationId: uuid,
+        tenantId: uuid.optional(),
+        deliverableId: uuid,
+        clientVisible: z.boolean().optional(),
+        notes: z.string().max(4000).nullable().optional(),
+      })
+      .strict()
+      .parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext } = await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { updateDeliverableDetails } = await import("@/lib/delivery/deliverables.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      await updateDeliverableDetails(tenant, target, {
+        deliverableId: data.deliverableId,
+        clientVisible: data.clientVisible,
+        notes: data.notes,
+      });
+      return { ok: true as const };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
