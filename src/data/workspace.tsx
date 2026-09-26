@@ -26,9 +26,11 @@ import type {
   WorkspaceFilters,
 } from "./types";
 import {
+  advanceBacklogWorkItemSync,
   advanceSprintWorkItemSync,
   getRealOverview,
   getWorkspaceSelectors,
+  startBacklogWorkItemSync,
   startSprintWorkItemSync,
 } from "@/lib/workspace/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +64,21 @@ export type WorkItemSyncReport = {
   readonly status: "succeeded" | "partial" | "failed";
 };
 
+/** Result of the project backlog sync that follows a sprint sync (ADR-014). */
+export type BacklogSyncReport = {
+  readonly mode: "full" | "incremental";
+  readonly discoveredIds: number;
+  readonly inserted: number;
+  readonly updated: number;
+  readonly unchanged: number;
+  readonly rechecked: number;
+  readonly unavailable: number;
+  readonly failed: number;
+  readonly truncated: boolean;
+  readonly status: "succeeded" | "partial" | "failed";
+  readonly message: string | null;
+};
+
 type Ctx = {
   mode: WorkspaceMode;
   filters: WorkspaceFilters;
@@ -81,6 +98,7 @@ type Ctx = {
   options: Options;
   dataState: RealDataState;
   syncReport: WorkItemSyncReport | null;
+  backlogReport: BacklogSyncReport | null;
   /** True when the sprint has no real start/finish dates. */
   sprintDatesUnavailable: boolean;
 };
@@ -88,6 +106,47 @@ type Ctx = {
 const WorkspaceContext = createContext<Ctx | null>(null);
 
 const MAX_SYNC_ADVANCES = 40;
+
+async function runBacklogSync(teamIterationId: string): Promise<BacklogSyncReport> {
+  const failed = (message: string | null): BacklogSyncReport => ({
+    mode: "full",
+    discoveredIds: 0,
+    inserted: 0,
+    updated: 0,
+    unchanged: 0,
+    rechecked: 0,
+    unavailable: 0,
+    failed: 0,
+    truncated: false,
+    status: "failed",
+    message,
+  });
+  const started = await startBacklogWorkItemSync({ data: { teamIterationId } });
+  if (!started.ok) return failed(started.failure.message);
+  let status = started.status;
+  for (let i = 0; i < MAX_SYNC_ADVANCES && status.cursor.phase !== "done"; i += 1) {
+    const advanced = await advanceBacklogWorkItemSync({
+      data: { teamIterationId, runId: status.runId },
+    });
+    if (!advanced.ok) return failed(advanced.failure.message);
+    status = advanced.status;
+    if (status.status === "failed") return failed(status.failure?.message ?? null);
+  }
+  const c = status.cursor;
+  return {
+    mode: c.mode,
+    discoveredIds: c.ids.length,
+    inserted: c.inserted,
+    updated: c.updated,
+    unchanged: c.unchanged,
+    rechecked: c.staleIds.length,
+    unavailable: c.unavailable,
+    failed: c.failed,
+    truncated: c.truncated,
+    status: status.status === "succeeded" ? "succeeded" : "partial",
+    message: null,
+  };
+}
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
@@ -99,6 +158,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [syncReport, setSyncReport] = useState<WorkItemSyncReport | null>(null);
+  const [backlogReport, setBacklogReport] = useState<BacklogSyncReport | null>(null);
   const [syncFailed, setSyncFailed] = useState(false);
 
   // Protected server functions need a bearer token: never call them during SSR
@@ -263,6 +323,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setSyncing(true);
     setSyncMessage(null);
     setSyncReport(null);
+    setBacklogReport(null);
     try {
       const started = await startSprintWorkItemSync({
         data: { teamIterationId: filters.iterationId },
@@ -309,6 +370,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       });
       await queryClient.invalidateQueries({ queryKey: ["workspace", "overview"] });
       setTick((t) => t + 1);
+      // The backlog follows the sprint; its outcome never changes the sprint's.
+      setBacklogReport(await runBacklogSync(filters.iterationId));
     } finally {
       setSyncing(false);
     }
@@ -370,6 +433,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       options,
       dataState,
       syncReport,
+      backlogReport,
       sprintDatesUnavailable: mode === "real" && Boolean(unavailable["sprintCalendar"]),
     };
   }, [
@@ -391,6 +455,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     runSync,
     options,
     syncReport,
+    backlogReport,
     syncFailed,
   ]);
 
