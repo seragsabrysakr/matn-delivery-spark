@@ -465,7 +465,10 @@ export const getSprintBoard = createServerFn({ method: "GET" })
 export const getStuckWork = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({ tenantId: uuid.optional() }).strict().parse(data ?? {}),
+    z
+      .object({ tenantId: uuid.optional() })
+      .strict()
+      .parse(data ?? {}),
   )
   .handler(async ({ context, data }) => {
     const { resolveTenantContext } = await import("@/lib/azure/authz.server");
