@@ -176,6 +176,19 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
 - **Consequences**: Who-did-what, cycle and state times, sprint scope history and accurate time-in-column become available from Azure data. The first backfill makes one GET per synchronized item; afterwards the cost follows the rate of change.
 - **Alternatives**: The project-wide reporting revisions stream (rejected for now — it returns revisions of items outside our scope and loses history for items that enter scope later), storing only transitions (rejected — loses re-estimates, area/iteration moves and the mover).
 
+### ADR-018: Sprint history from revision history (Phase 2b)
+
+- **Context**: Delivery managers need each past and current sprint as it actually happened — what was committed, what changed mid-sprint, what was delivered, what slipped — not today's state of those items.
+- **Decision**:
+  1. **Reconstructed from Azure revisions (ADR-017), not re-queried** — an item's sprint membership, state category and estimate at any instant are those of its latest revision at or before that instant. This is equivalent to WIQL `ASOF` for every instant at once, needs no extra Azure calls, and works for every past sprint.
+  2. **Commitment = scope at the end of the sprint's first working day** (team calendar and time zone). Teams plan on day one (Hoteliana put all 52 Sprint 1 stories in on its first morning), so midnight-before-start would misreport planned work as mid-sprint additions.
+  3. **Per sprint**: committed, added and removed during the sprint, delivered by the end (local midnight after the finish date), carried over (open at the end), **delivered after the end** (open at the end, later closed without leaving the sprint, with the median delay), say/do (delivered-of-committed; by points when every committed item is estimated, else by count), velocity (points of everything delivered; unknown — not 0 — when delivered items are unestimated), and history gaps.
+  4. **Strict by design** — work closed after the end is not counted as delivered in the sprint; it is shown separately so late closing is visible instead of hidden. Work closed and then reopened before the end is not delivered.
+  5. **Scope** follows ADR-016 (Tasks and bugs planned as tasks are not scope). Average velocity uses the last three completed sprints and needs at least two.
+  6. **Computed at read time** — no new tables; the Delivery page shows it for the selected sprint's team.
+- **Consequences**: Say/do, velocity, carry-over and late delivery become measurable per sprint from Azure data alone. On Hoteliana today, both sprints read 0% say/do by their end dates, with Sprint 1's 52 stories closed a median half-day after the end — a process finding, not a data gap.
+- **Alternatives**: WIQL `ASOF` per sprint boundary (rejected as the primary path — two extra queries per sprint and still no mid-sprint detail), counting post-end closures as delivered (rejected — hides that the sprint did not finish).
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.

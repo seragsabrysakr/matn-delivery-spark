@@ -220,6 +220,24 @@ export const advanceHistoryWorkItemSync = createServerFn({ method: "POST" })
     }
   });
 
+/** Sprint history of the selected sprint's team, from revision history (ADR-018). */
+export const getSprintHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => teamIterationInput.parse(data))
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext } = await import("@/lib/azure/authz.server");
+    const { requireTeamIteration } = await import("./context.server");
+    const { buildSprintHistory } = await import("@/lib/delivery/sprint-history.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      const target = await requireTeamIteration(tenant, data.teamIterationId);
+      return { ok: true as const, history: await buildSprintHistory(target) };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
+
 /** Real, tenant-scoped Team page payload for one validated team iteration. */
 export const getRealTeamPage = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
