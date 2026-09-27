@@ -37,17 +37,16 @@ Paste this file (or point to it) at the start of any new Claude Code session.
 | Sprint board `/board`, `/stuck`      | 025 | Published 2026-09-27                                                                          |
 | Backlog `/backlog`, People `/people` | 026 | Published 2026-09-27                                                                          |
 | Overview rebuild (stories vs tasks)  | 027 | Published 2026-09-27                                                                          |
+| Command center, late-sprint rule     | 028 | Published 2026-09-27                                                                          |
 
-## In progress — Overview command center (branch `claude/determined-fermi-iqg6f2`, PR open)
+## In progress — Sidebar consolidation (branch `claude/determined-fermi-iqg6f2`, PR open)
 
-ADR-028. Phase 4b (Backlog, People) and ADR-027 were published 2026-09-27.
+ADR-029. ADR-028 (command center, late-sprint rule) was published 2026-09-27.
 
-- Rule: current sprint = the team's latest started sprint; past its finish with no later sprint started it is **overdue** ("late"), for up to 30 days (`OVERDUE_LIMIT_DAYS`), then **inactive**. `sprintPhase` / `pickScheduledSprints` in `src/lib/scheduler/scheduler-rules.ts`; used by the scheduler, `/stuck`, the sprint selector default and the Overview.
-- Overview (real mode): command header + portfolio cards (`getPortfolio`, `src/lib/portfolio/`), selected sprint status, needs attention (+ people not updating), delivery trend (say/do), deliverables, data health. Confidence, trajectory, KPI grid, risks, actions, funnel, team load, engineering removed from the live Overview.
-- Team load counts hours only (was adding story points as hours).
-- Design checked in a local preview with numbers shaped like the real data; not yet seen by the owner on real data.
+- Sidebar: Overview; Sprint: Board (tabs: board, stuck across teams), Team (People cards + items); Planning: Backlog, Delivery, Hierarchy; Settings. Engineering and Intelligence removed from the sidebar (routes still exist). `/people` → `/team`, `/stuck` → `/board?tab=stuck`.
+- Owner rule: one working sprint per team; a sprint replaced by a later one shows only its result at its end (Overview `SprintResultCard` from sprint history); Board/Team show `EndedSprintNotice`. The late current sprint is never backlog.
 
-Next steps: merge PR → confirm Lovable has the code → Publish (no migration) → owner checks the Overview.
+Next steps: merge PR → confirm Lovable has the code → Publish (no migration).
 
 ## Remaining roadmap
 

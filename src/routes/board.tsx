@@ -1,8 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 import { AppShell } from "@/components/matn/AppShell";
 import { PlaceholderPage } from "@/components/matn/PlaceholderPage";
+import { StuckAcrossTeams } from "@/components/matn/StuckAcrossTeams";
+import { EndedSprintNotice } from "@/components/matn/OverviewSections";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ErrorBlock, Iso, LoadingBlock, Notice, SectionCard } from "@/components/matn/primitives";
 import { cn } from "@/lib/utils";
 import { useI18n, type TKey } from "@/lib/i18n";
@@ -21,6 +24,8 @@ export const Route = createFileRoute("/board")({
       },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): { tab?: "stuck" } =>
+    search["tab"] === "stuck" ? { tab: "stuck" } : {},
   component: BoardPage,
 });
 
@@ -41,7 +46,43 @@ function BoardPage() {
   );
 }
 
+/** The team's board and, on its own tab, stuck work across all teams (ADR-029). */
 function BoardView() {
+  const { t } = useI18n();
+  const { tab } = Route.useSearch();
+  const navigate = useNavigate({ from: "/board" });
+  const current = tab === "stuck" ? "stuck" : "board";
+  return (
+    <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-4">
+      <Tabs
+        value={current}
+        onValueChange={(value) =>
+          void navigate({ search: value === "stuck" ? { tab: "stuck" } : {}, replace: true })
+        }
+      >
+        <TabsList>
+          <TabsTrigger value="board">{t("bd.tab.board")}</TabsTrigger>
+          <TabsTrigger value="stuck">{t("bd.tab.stuck")}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="board" className="mt-4 flex flex-col gap-4">
+          <EndedSprintNotice />
+          <SprintBoardTab />
+        </TabsContent>
+        <TabsContent value="stuck" className="mt-4 flex flex-col gap-4">
+          <header className="flex flex-col gap-1">
+            <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+              {t("st.title")}
+            </h1>
+            <p className="text-sm text-muted-foreground">{t("st.subtitle")}</p>
+          </header>
+          <StuckAcrossTeams />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function SprintBoardTab() {
   const { t } = useI18n();
   const { filters } = useWorkspace();
   const query = useQuery({
@@ -53,7 +94,7 @@ function BoardView() {
   const payload = query.data?.ok ? query.data.board : null;
 
   return (
-    <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
         <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
           {t("bd.title")}

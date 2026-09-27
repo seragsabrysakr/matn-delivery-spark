@@ -7,19 +7,15 @@ import {
   ChevronsRight,
   Columns3,
   ListTodo,
-  UserRoundSearch,
   CircleUserRound,
-  Cpu,
   Gauge,
   LayoutGrid,
   Network,
-  OctagonAlert,
   LogOut,
   Menu,
   Moon,
   RefreshCw,
   Settings,
-  Sparkles,
   Sun,
   Users,
 } from "lucide-react";
@@ -48,19 +44,33 @@ import { isDevPreview, useWorkspace, type PreviewState } from "@/data/workspace"
 import { Iso, statusDot } from "./primitives";
 import type { DataFreshness, WorkspaceFilters } from "@/data/types";
 
-const navItems = [
-  { to: "/", key: "nav.overview", icon: LayoutGrid },
-  { to: "/delivery", key: "nav.delivery", icon: Gauge },
-  { to: "/board", key: "nav.board", icon: Columns3 },
-  { to: "/stuck", key: "nav.stuck", icon: OctagonAlert },
-  { to: "/backlog", key: "nav.backlog", icon: ListTodo },
-  { to: "/people", key: "nav.people", icon: UserRoundSearch },
-  { to: "/team", key: "nav.team", icon: Users },
-  { to: "/hierarchy", key: "nav.hierarchy", icon: Network },
-  { to: "/engineering", key: "nav.engineering", icon: Cpu },
-  { to: "/intelligence", key: "nav.intelligence", icon: Sparkles },
-  { to: "/settings/azure", key: "nav.settings", icon: Settings },
-] as const;
+/** The sidebar (ADR-029): one page per question, grouped by what the manager is doing. */
+const navGroups: readonly {
+  readonly labelKey: TKey | null;
+  readonly items: readonly {
+    readonly to: string;
+    readonly key: TKey;
+    readonly icon: typeof LayoutGrid;
+  }[];
+}[] = [
+  { labelKey: null, items: [{ to: "/", key: "nav.overview", icon: LayoutGrid }] },
+  {
+    labelKey: "nav.group.sprint",
+    items: [
+      { to: "/board", key: "nav.board", icon: Columns3 },
+      { to: "/team", key: "nav.team", icon: Users },
+    ],
+  },
+  {
+    labelKey: "nav.group.planning",
+    items: [
+      { to: "/backlog", key: "nav.backlog", icon: ListTodo },
+      { to: "/delivery", key: "nav.delivery", icon: Gauge },
+      { to: "/hierarchy", key: "nav.hierarchy", icon: Network },
+    ],
+  },
+  { labelKey: null, items: [{ to: "/settings/azure", key: "nav.settings", icon: Settings }] },
+];
 
 function BrandMark({ compact }: { compact?: boolean }) {
   const { t } = useI18n();
@@ -89,35 +99,46 @@ function NavList({ compact, onNavigate }: { compact?: boolean; onNavigate?: () =
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="flex flex-col gap-1 px-2" aria-label={t("shell.menu")}>
-      {navItems.map((item) => {
-        const active = pathname === item.to;
-        const Icon = item.icon;
-        const link = (
-          <Link
-            key={item.to}
-            to={item.to}
-            onClick={onNavigate}
-            aria-label={compact ? t(item.key as TKey) : undefined}
-            className={cn(
-              "flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors motion-reduce:transition-none",
-              compact && "justify-center px-2",
-              active
-                ? "bg-navy text-navy-foreground"
-                : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-            )}
-          >
-            <Icon className="size-4 shrink-0" aria-hidden />
-            {!compact && <span className="truncate">{t(item.key as TKey)}</span>}
-          </Link>
-        );
-        if (!compact) return link;
-        return (
-          <Tooltip key={item.to}>
-            <TooltipTrigger asChild>{link}</TooltipTrigger>
-            <TooltipContent side={tipSide}>{t(item.key as TKey)}</TooltipContent>
-          </Tooltip>
-        );
-      })}
+      {navGroups.map((group, index) => (
+        <div key={group.labelKey ?? `g${index}`} className="flex flex-col gap-1">
+          {group.labelKey && !compact ? (
+            <p className="mt-3 px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">
+              {t(group.labelKey)}
+            </p>
+          ) : index > 0 ? (
+            <div className="mx-3 my-2 border-t border-sidebar-border" aria-hidden />
+          ) : null}
+          {group.items.map((item) => {
+            const active = pathname === item.to;
+            const Icon = item.icon;
+            const link = (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={onNavigate}
+                aria-label={compact ? t(item.key) : undefined}
+                className={cn(
+                  "flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors motion-reduce:transition-none",
+                  compact && "justify-center px-2",
+                  active
+                    ? "bg-navy text-navy-foreground"
+                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                )}
+              >
+                <Icon className="size-4 shrink-0" aria-hidden />
+                {!compact && <span className="truncate">{t(item.key)}</span>}
+              </Link>
+            );
+            if (!compact) return link;
+            return (
+              <Tooltip key={item.to}>
+                <TooltipTrigger asChild>{link}</TooltipTrigger>
+                <TooltipContent side={tipSide}>{t(item.key)}</TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
+      ))}
     </nav>
   );
 }

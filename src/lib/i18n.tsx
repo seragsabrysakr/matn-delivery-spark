@@ -26,6 +26,15 @@ export const dictionary = {
   "nav.stuck": { ar: "الشغل المتعطل", en: "Stuck work" },
   "nav.backlog": { ar: "الـ Backlog", en: "Backlog" },
   "nav.people": { ar: "الأشخاص", en: "People" },
+  "nav.group.sprint": { ar: "السبرنت", en: "Sprint" },
+  "nav.group.planning": { ar: "التخطيط", en: "Planning" },
+  "bd.tab.board": { ar: "البورد", en: "Board" },
+  "bd.tab.stuck": { ar: "المتعطل في كل الفرق", en: "Stuck across teams" },
+  "tp.people.title": { ar: "الأشخاص", en: "People" },
+  "tp.people.subtitle": {
+    ar: "شغل كل شخص في السبرنت، وإيه اللي عمله في Azure آخر يوم عمل، ومين ماحدّثش شغله.",
+    en: "Each person's sprint work, what they did in Azure on the last working day, and who has not updated their work.",
+  },
   "nav.engineering": { ar: "الهندسة", en: "Engineering" },
   "nav.intelligence": { ar: "الذكاء التحليلي", en: "Intelligence" },
 
@@ -751,6 +760,33 @@ export const dictionary = {
   "ov.phase.ended.body": {
     ar: "{a} انتهى في {b} وبدأ بعده سبرنت جديد — ده عرض تاريخي.",
     en: "{a} ended on {b} and a later sprint has started — this is a historical view.",
+  },
+  "ov.result.title": { ar: "نتيجة السبرنت", en: "Sprint result" },
+  "ov.result.subtitle": {
+    ar: "{a} انتهى في {b} — النتايج دي هي اللي حصلت فيه لحد نهايته بس.",
+    en: "{a} ended on {b} — these are only what happened in it, up to its end.",
+  },
+  "ov.result.none": {
+    ar: "لا يوجد سجل كامل لهذا السبرنت بعد.",
+    en: "No complete history for this sprint yet.",
+  },
+  "ov.result.sayDo": {
+    ar: "من اللي اتوعد بيه أول يوم، كام اتسلّم فعلاً قبل نهاية السبرنت.",
+    en: "Of what was committed on day one, how much was delivered before the sprint ended.",
+  },
+  "ov.result.committed": { ar: "اتوعد بيه", en: "Committed" },
+  "ov.result.added": { ar: "اتضاف أثناءه", en: "Added" },
+  "ov.result.removed": { ar: "اتشال", en: "Removed" },
+  "ov.result.delivered": { ar: "اتسلّم قبل النهاية", en: "Delivered by the end" },
+  "ov.result.carried": { ar: "اتنقل لبعده", en: "Carried over" },
+  "ov.result.velocity": { ar: "السرعة (نقطة)", en: "Velocity (pts)" },
+  "ov.result.lateClosed": {
+    ar: "{a} عنصر اتقفل بعد نهاية السبرنت (بمتوسط {b} يوم) — مش محسوب في نتيجته.",
+    en: "{a} items were closed after the sprint ended (median {b} days) — not counted in its result.",
+  },
+  "ov.phase.ended.live": {
+    ar: "{a} انتهى في {b} وبدأ بعده سبرنت جديد. الصفحة دي بتعرض العناصر اللي لسه عليه في Azure؛ نتيجته الفعلية في صفحة التسليم.",
+    en: "{a} ended on {b} and a later sprint has started. This page shows the items still on it in Azure; its actual result is on the Delivery page.",
   },
   "ov.lateBy": { ar: "متأخر {a} يوم عمل", en: "{a} working days late" },
   "ov.inactiveSince": { ar: "غير نشط من {a}", en: "Inactive since {a}" },

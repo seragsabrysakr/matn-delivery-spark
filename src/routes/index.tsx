@@ -16,6 +16,7 @@ import {
   PortfolioGrid,
   SprintHeading,
   SprintPhaseNotice,
+  SprintResultCard,
   SprintSummaryCard,
 } from "@/components/matn/OverviewSections";
 import { ErrorBlock, Iso, LoadingBlock, Notice, SectionCard } from "@/components/matn/primitives";
@@ -160,13 +161,27 @@ function RealOverview() {
       <PortfolioGrid />
       <SprintHeading summary={sprintSummary} sprintName={sprintName} />
       <SprintPhaseNotice summary={sprintSummary} sprintName={sprintName} />
-      <SprintSummaryCard summary={sprintSummary} />
-      <div className="grid gap-4 xl:grid-cols-2">
-        <AttentionCard teamIterationId={filters.iterationId} />
-        <DeliveryTrendCard teamIterationId={filters.iterationId} />
-      </div>
+      {sprintSummary.phase === "ended" ? (
+        // A replaced sprint shows only what happened in it, up to its end (ADR-029).
+        <>
+          <SprintResultCard
+            teamIterationId={filters.iterationId}
+            summary={sprintSummary}
+            sprintName={sprintName}
+          />
+          <DeliveryTrendCard teamIterationId={filters.iterationId} />
+        </>
+      ) : (
+        <>
+          <SprintSummaryCard summary={sprintSummary} />
+          <div className="grid gap-4 xl:grid-cols-2">
+            <AttentionCard teamIterationId={filters.iterationId} />
+            <DeliveryTrendCard teamIterationId={filters.iterationId} />
+          </div>
+        </>
+      )}
       <DeliveryStatusCard teamIterationId={filters.iterationId} />
-      <DataHealthStrip summary={sprintSummary} />
+      {sprintSummary.phase === "ended" ? null : <DataHealthStrip summary={sprintSummary} />}
       <SyncDetails />
     </>
   );

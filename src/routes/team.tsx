@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, Users } from "lucide-react";
 import { AppShell } from "@/components/matn/AppShell";
+import { PeopleSection } from "@/components/matn/PeopleSection";
+import { EndedSprintNotice } from "@/components/matn/OverviewSections";
 import {
   ErrorBlock,
   Iso,
@@ -135,6 +137,7 @@ type Payload = TeamPageContract;
 function TeamBody({ payload }: { payload: Payload }) {
   const { t, locale, n } = useI18n();
   const { summary, members, workItems, distribution, accessLevel, context } = payload;
+  const { filters } = useWorkspace();
   const [sort, setSort] = useState<SortKey>("name");
   const [selected, setSelected] = useState<TeamWorkItemRow | null>(null);
 
@@ -169,30 +172,6 @@ function TeamBody({ payload }: { payload: Payload }) {
 
   const notices = useMemo(() => {
     const out: { key: string; title: string; body: string; tone: "warning" | "neutral" }[] = [];
-    if (!summary.capacityAvailable)
-      out.push({
-        key: "cap",
-        tone: "neutral",
-        title: t("tp.capacity.notConfigured"),
-        body: t("tp.notice.capacity"),
-      });
-    if (summary.unassignedItems > 0)
-      out.push({
-        key: "assign",
-        tone: "warning",
-        title: t("tp.card.unassigned"),
-        body: t("tp.notice.assignment", {
-          a: n(summary.assignmentCoveragePercent ?? 0),
-          b: n(summary.unassignedItems),
-        }),
-      });
-    if (summary.estimateCoveragePercent !== null && summary.estimateCoveragePercent < 60)
-      out.push({
-        key: "est",
-        tone: "warning",
-        title: t("tp.card.estimateCoverage"),
-        body: t("tp.notice.estimate", { a: n(summary.estimateCoveragePercent) }),
-      });
     if (context.dataState === "partial")
       out.push({
         key: "partial",
@@ -208,7 +187,7 @@ function TeamBody({ payload }: { payload: Payload }) {
         body: t("tp.notice.stale"),
       });
     return out;
-  }, [summary, context.dataState, t, n]);
+  }, [context.dataState, t]);
 
   if (!context.completeness.hasWorkItems) {
     return (
@@ -221,52 +200,8 @@ function TeamBody({ payload }: { payload: Payload }) {
     );
   }
 
-  const cards = [
-    { key: "members", label: t("tp.card.members"), value: n(summary.memberCount), hint: "" },
-    {
-      key: "active",
-      label: t("tp.card.active"),
-      value: n(summary.activeItems),
-      hint: t("tp.card.ofTotal", { a: n(summary.totalItems) }),
-    },
-    {
-      key: "completed",
-      label: t("tp.card.completed"),
-      value: n(summary.completedItems),
-      hint: t("tp.card.ofTotal", { a: n(summary.totalItems) }),
-    },
-    { key: "blocked", label: t("tp.card.blocked"), value: n(summary.blockedItems), hint: "" },
-    {
-      key: "unassigned",
-      label: t("tp.card.unassigned"),
-      value: n(summary.unassignedItems),
-      hint: t("tp.card.ofTotal", { a: n(summary.totalItems) }),
-    },
-    {
-      key: "coverage",
-      label: t("tp.card.estimateCoverage"),
-      value:
-        summary.estimateCoveragePercent === null
-          ? t("tp.na")
-          : `${n(summary.estimateCoveragePercent)}%`,
-      hint: t("tp.card.scoped", { a: n(summary.scopedItems) }),
-    },
-  ];
-
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-        {cards.map((c) => (
-          <div key={c.key} className="rounded-lg border border-border bg-card p-3 shadow-card">
-            <p className="truncate text-xs text-muted-foreground">{c.label}</p>
-            <p className="mt-1 text-xl font-semibold text-foreground">
-              <Iso>{c.value}</Iso>
-            </p>
-            {c.hint ? <p className="mt-0.5 text-[11px] text-muted-foreground">{c.hint}</p> : null}
-          </div>
-        ))}
-      </div>
-
       {accessLevel === "aggregate" ? (
         <Notice tone="neutral" title={t("tp.exec.title")} body={t("tp.exec.body")} />
       ) : null}
@@ -279,7 +214,10 @@ function TeamBody({ payload }: { payload: Payload }) {
         </div>
       ) : null}
 
-      {accessLevel !== "aggregate" ? (
+      <EndedSprintNotice />
+      <PeopleSection teamIterationId={filters.iterationId} />
+
+      {accessLevel !== "aggregate" && summary.capacityAvailable ? (
         <SectionCard
           title={t("tp.workload.title")}
           subtitle={t("tp.workload.subtitle")}
@@ -384,35 +322,6 @@ function TeamBody({ payload }: { payload: Payload }) {
           )}
         </SectionCard>
       ) : null}
-
-      <SectionCard title={t("tp.dist.title")} subtitle={t("tp.dist.subtitle")}>
-        <div className="grid gap-6 md:grid-cols-3">
-          <DistributionList
-            title={t("tp.dist.byState")}
-            total={summary.totalItems}
-            rows={distribution.byStateCategory.map((r) => ({
-              label: t(stateKey(r.key)),
-              count: r.count,
-            }))}
-          />
-          <DistributionList
-            title={t("tp.dist.byType")}
-            total={summary.totalItems}
-            rows={distribution.byType.map((r) => ({
-              label: `${t(typeKey(r.key))} · ${r.azureType}`,
-              count: r.count,
-            }))}
-          />
-          <DistributionList
-            title={t("tp.dist.byAssignment")}
-            total={summary.totalItems}
-            rows={[
-              { label: t("tp.dist.assigned"), count: distribution.assignment.assigned },
-              { label: t("tp.dist.unassigned"), count: distribution.assignment.unassigned },
-            ]}
-          />
-        </div>
-      </SectionCard>
 
       {accessLevel !== "aggregate" ? (
         <SectionCard
@@ -642,38 +551,5 @@ function ToggleChip({
     >
       {label}
     </button>
-  );
-}
-
-function DistributionList({
-  title,
-  rows,
-  total,
-}: {
-  title: string;
-  rows: readonly { label: string; count: number }[];
-  total: number;
-}) {
-  const { n } = useI18n();
-  return (
-    <div>
-      <p className="mb-2 text-xs font-medium text-muted-foreground">{title}</p>
-      <ul className="space-y-2">
-        {rows.map((r) => (
-          <li key={r.label}>
-            <div className="flex items-center justify-between gap-2 text-xs">
-              <Iso className="truncate text-foreground">{r.label}</Iso>
-              <Iso className="text-muted-foreground">{n(r.count)}</Iso>
-            </div>
-            <div className="mt-1 h-1.5 rounded-full bg-muted">
-              <div
-                className="h-1.5 rounded-full bg-azure"
-                style={{ width: `${total > 0 ? Math.round((r.count / total) * 100) : 0}%` }}
-              />
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }

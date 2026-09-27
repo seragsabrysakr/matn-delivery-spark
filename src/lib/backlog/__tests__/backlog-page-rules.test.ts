@@ -45,6 +45,13 @@ describe("placementOf", () => {
     expect(
       placementOf({ name: "S3", startDate: "2026-09-20", finishDate: "2026-09-27" }, TODAY),
     ).toBe("currentSprint");
+    // A late sprint the team still works in is current, not backlog (ADR-028).
+    expect(
+      placementOf(
+        { name: "S2", startDate: "2026-09-06", finishDate: "2026-09-17", isCurrent: true },
+        TODAY,
+      ),
+    ).toBe("currentSprint");
   });
 });
 

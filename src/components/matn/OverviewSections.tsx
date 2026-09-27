@@ -83,12 +83,15 @@ function MoreLink({
   to,
   label,
 }: {
-  to: "/stuck" | "/delivery" | "/hierarchy" | "/people" | "/backlog";
+  to: "stuck" | "/delivery" | "/hierarchy" | "/team" | "/backlog";
   label: string;
 }) {
+  // Stuck work is a tab of the Sprint board page (ADR-029).
+  const target =
+    to === "stuck" ? ({ to: "/board", search: { tab: "stuck" } } as const) : ({ to } as const);
   return (
     <Link
-      to={to}
+      {...target}
       className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
     >
       {label}
@@ -703,7 +706,7 @@ export function AttentionCard({ teamIterationId }: { teamIterationId: string }) 
       subtitle={t("ov.attention.subtitle")}
       action={
         rows && rows.length > 0 ? (
-          <MoreLink to="/stuck" label={t("ov.all", { a: rows.length })} />
+          <MoreLink to="stuck" label={t("ov.all", { a: rows.length })} />
         ) : null
       }
     >
@@ -761,7 +764,7 @@ export function AttentionCard({ teamIterationId }: { teamIterationId: string }) 
                 ))}
               </ul>
               <div className="mt-2">
-                <MoreLink to="/people" label={t("pp.title")} />
+                <MoreLink to="/team" label={t("nav.team")} />
               </div>
             </div>
           ) : null}
@@ -964,5 +967,119 @@ export function DataHealthStrip({ summary }: { summary: SprintSummary }) {
         )}
       </div>
     </section>
+  );
+}
+
+/**
+ * A sprint a later one has replaced shows only what happened in it, as it
+ * stood at its end (ADR-018, ADR-029) — never today's state of its items.
+ */
+export function SprintResultCard({
+  teamIterationId,
+  summary,
+  sprintName,
+}: {
+  teamIterationId: string;
+  summary: SprintSummary;
+  sprintName: string;
+}) {
+  const { t } = useI18n();
+  const query = useQuery({
+    queryKey: ["sprint-history", teamIterationId],
+    queryFn: () => getSprintHistory({ data: { teamIterationId } }),
+    retry: false,
+  });
+  const row = query.data?.ok
+    ? query.data.history.rows.find(
+        (r) => r.startDate === summary.startDate && r.finishDate === summary.finishDate,
+      )
+    : undefined;
+  const tally = (v: { count: number; points: number | null } | null) =>
+    v === null
+      ? "—"
+      : v.points !== null
+        ? `${v.count} · ${v.points} ${t("sh.points")}`
+        : String(v.count);
+  return (
+    <SectionCard
+      title={t("ov.result.title")}
+      subtitle={t("ov.result.subtitle", { a: sprintName, b: summary.finishDate ?? "—" })}
+      action={<MoreLink to="/delivery" label={t("nav.delivery")} />}
+    >
+      {query.isLoading ? (
+        <LoadingBlock rows={3} />
+      ) : !row ? (
+        <p className="text-sm text-muted-foreground">{t("ov.result.none")}</p>
+      ) : (
+        <div className="flex flex-col gap-5">
+          <div className="flex items-center gap-5">
+            <Ring
+              value={row.sayDo?.percent ?? null}
+              className={
+                (row.sayDo?.percent ?? 0) >= 80
+                  ? "stroke-success"
+                  : (row.sayDo?.percent ?? 0) >= 50
+                    ? "stroke-warning"
+                    : "stroke-critical"
+              }
+              size={96}
+              stroke={9}
+            >
+              <span className="flex flex-col items-center">
+                <Iso className="text-xl font-semibold text-foreground">
+                  {row.sayDo ? `${Math.round(row.sayDo.percent)}%` : "—"}
+                </Iso>
+                <span className="text-[10px] text-muted-foreground">Say/Do</span>
+              </span>
+            </Ring>
+            <p className="text-sm text-muted-foreground">{t("ov.result.sayDo")}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            {(
+              [
+                ["ov.result.committed", tally(row.committed)],
+                ["ov.result.added", tally(row.added)],
+                ["ov.result.removed", tally(row.removed)],
+                ["ov.result.delivered", tally(row.delivered)],
+                ["ov.result.carried", tally(row.carriedOver)],
+                ["ov.result.velocity", row.velocity === null ? "—" : `${row.velocity}`],
+              ] as const
+            ).map(([key, value]) => (
+              <div key={key} className="rounded-lg border border-border bg-surface p-3">
+                <Iso className="block text-base font-semibold text-foreground">{value}</Iso>
+                <span className="text-[11px] text-muted-foreground">{t(key)}</span>
+              </div>
+            ))}
+          </div>
+          {row.deliveredAfterEnd && row.deliveredAfterEnd.count > 0 ? (
+            <p className="rounded-lg border border-warning/40 bg-warning/5 px-3 py-2 text-xs text-foreground">
+              {t("ov.result.lateClosed", {
+                a: row.deliveredAfterEnd.count,
+                b: row.medianDaysLate ?? "—",
+              })}
+            </p>
+          ) : null}
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
+/** On pages that show live items, says once that an old sprint is history (ADR-029). */
+export function EndedSprintNotice() {
+  const { t, locale } = useI18n();
+  const { sprintSummary, iteration } = useWorkspace();
+  if (sprintSummary?.phase !== "ended") return null;
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-sm">
+      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+      <p className="text-foreground">
+        {t("ov.phase.ended.live", {
+          a: iteration?.name[locale] ?? "",
+          b: sprintSummary.finishDate ?? "—",
+        })}{" "}
+        <MoreLink to="/delivery" label={t("nav.delivery")} />
+      </p>
+    </div>
   );
 }
