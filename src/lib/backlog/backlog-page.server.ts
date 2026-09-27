@@ -11,6 +11,7 @@ import type { ResolvedTeamIteration } from "@/lib/workspace/context.server";
 import type { StateCategory } from "@/types/domain/work-item";
 import {
   buildBacklog,
+  inTeamAreas,
   READINESS_CHECKS,
   STALE_AFTER_DAYS,
   type BacklogFlag,
@@ -44,7 +45,7 @@ export async function buildBacklogPayload(target: ResolvedTeamIteration): Promis
       .eq("organization_id", target.organizationId),
     supabaseAdmin
       .from("core_teams")
-      .select("name_en")
+      .select("name_en, area_paths")
       .eq("tenant_id", target.tenantId)
       .eq("id", target.teamId)
       .maybeSingle(),
@@ -86,6 +87,7 @@ export async function buildBacklogPayload(target: ResolvedTeamIteration): Promis
       },
     ]),
   );
+  const teamAreas = (team.data?.area_paths ?? []).filter(Boolean);
   const memberName = new Map((members.data ?? []).map((m) => [m.id, m.display_name]));
 
   const items: BacklogItemInput[] = [];
@@ -93,11 +95,10 @@ export async function buildBacklogPayload(target: ResolvedTeamIteration): Promis
     const { data, error } = await supabaseAdmin
       .from("az_work_items")
       .select(
-        "azure_work_item_id, parent_azure_work_item_id, azure_work_item_type, title, state, state_category, counts_toward_scope, estimate, assigned_to_member_id, priority, tags, azure_url, created_at_source, changed_at_source, iteration_id",
+        "azure_work_item_id, parent_azure_work_item_id, azure_work_item_type, title, state, state_category, counts_toward_scope, estimate, assigned_to_member_id, priority, tags, azure_url, created_at_source, changed_at_source, iteration_id, area_path, team_id",
       )
       .eq("tenant_id", target.tenantId)
       .eq("project_id", target.projectId)
-      .eq("team_id", target.teamId)
       .eq("is_deleted", false)
       .eq("counts_toward_scope", true)
       .not("state_category", "in", "(completed,removed)")
@@ -105,6 +106,13 @@ export async function buildBacklogPayload(target: ResolvedTeamIteration): Promis
       .range(from, from + PAGE - 1);
     if (error) throw new AzureDevOpsError("unknown");
     for (const row of data ?? []) {
+      // The team's backlog, as Azure shows it: every item in the team's areas.
+      // Without synced areas, fall back to the item's owning team.
+      const onBacklog =
+        teamAreas.length > 0
+          ? inTeamAreas(row.area_path, teamAreas)
+          : row.team_id === target.teamId;
+      if (!onBacklog) continue;
       items.push({
         azureId: Number(row.azure_work_item_id),
         parentAzureId:

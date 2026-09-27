@@ -538,3 +538,24 @@ export const getPortfolio = createServerFn({ method: "GET" })
       return { ok: false as const, failure: toAzureFailure(error) };
     }
   });
+
+/** Open and recently resolved alerts for manager roles (ADR-030). */
+export const getAlerts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({ tenantId: uuid.optional() })
+      .strict()
+      .parse(data ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext } = await import("@/lib/azure/authz.server");
+    const { loadAlerts } = await import("@/lib/alerts/alerts-read.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      return { ok: true as const, alerts: await loadAlerts(tenant) };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
