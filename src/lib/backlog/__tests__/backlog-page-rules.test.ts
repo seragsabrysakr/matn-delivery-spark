@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildBacklog,
+  inTeamAreas,
   matchesFilter,
   placementOf,
   STALE_AFTER_DAYS,
@@ -141,5 +142,17 @@ describe("matchesFilter", () => {
     expect(pick("unassigned")).toEqual([2]);
     expect(pick("notReady")).toEqual([2]);
     expect(pick("stale")).toEqual([]);
+  });
+});
+
+describe("inTeamAreas", () => {
+  it("matches the team's areas and everything under them, like Azure", () => {
+    const areas = ["Hoteliana"];
+    expect(inTeamAreas("Hoteliana", areas)).toBe(true);
+    expect(inTeamAreas("Hoteliana\\Supplier Dashboard", areas)).toBe(true);
+    expect(inTeamAreas("hoteliana\\agent dashboard", areas)).toBe(true);
+    expect(inTeamAreas("HotelianaX", areas)).toBe(false);
+    expect(inTeamAreas("TalkCat", areas)).toBe(false);
+    expect(inTeamAreas("Hoteliana", ["", "  "])).toBe(false);
   });
 });

@@ -99,6 +99,20 @@ export function placementOf(
   return "currentSprint";
 }
 
+/**
+ * Whether an item belongs on a team's backlog: its area is one of the team's
+ * areas or under one (as Azure shows it — an item can be on several teams'
+ * backlogs). The stored areas carry no includeChildren flag, so children are
+ * included, as in the backlog sync's fallback (ADR-014).
+ */
+export function inTeamAreas(areaPath: string, teamAreas: readonly string[]): boolean {
+  const path = areaPath.toLowerCase();
+  return teamAreas.some((area) => {
+    const a = area.trim().toLowerCase();
+    return a.length > 0 && (path === a || path.startsWith(`${a}\\`));
+  });
+}
+
 const OPEN = (c: StateCategory) => c !== "completed" && c !== "removed";
 
 /** Highest priority first (Azure: 1 is highest; none last), then oldest id. */
