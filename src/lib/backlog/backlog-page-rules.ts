@@ -37,6 +37,8 @@ export interface BacklogItemInput {
     readonly name: string;
     readonly startDate: string | null;
     readonly finishDate: string | null;
+    /** The team's current sprint — latest started, late until the next starts (ADR-028). */
+    readonly isCurrent?: boolean;
   } | null;
 }
 
@@ -82,13 +84,15 @@ const daysSince = (iso: string, nowIso: string): number | null => {
 
 /**
  * Where an open item sits relative to today (a date in the team's time zone):
- * a sprint containing today is current; an undated sprint (e.g. the project's
- * root iteration) is treated as no sprint.
+ * the team's current sprint (running, or late until the next starts) is not
+ * backlog; an undated sprint (e.g. the project's root iteration) is treated
+ * as no sprint.
  */
 export function placementOf(
   sprint: BacklogItemInput["sprint"],
   today: string,
 ): BacklogPlacementKind {
+  if (sprint?.isCurrent) return "currentSprint";
   if (!sprint || !sprint.startDate || !sprint.finishDate) return "noSprint";
   if (sprint.finishDate < today) return "pastSprint";
   if (sprint.startDate > today) return "futureSprint";

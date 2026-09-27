@@ -292,6 +292,18 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
   5. **Team load counts hours only** — estimates are summed only when their unit is hours; story points never read as hours.
 - **Consequences**: No migration. Hoteliana Sprint 2 reads "late 6 working days" until Sprint 3 starts or 17 Oct; the scheduler keeps syncing it until then.
 
+### ADR-029: Sidebar consolidation and old sprints as history
+
+- **Context**: The sidebar had 11 pages, several showing the same thing in different shapes: People and Team were both per-person views; Stuck work repeated the Sprint board's stuck cards and the Overview's attention list; Team repeated the Overview's distribution and data warnings; Engineering and Intelligence were empty placeholders. The owner also set the rule that each team has exactly one working sprint, and a sprint that a later one has replaced shows only what happened in it.
+- **Decision**:
+  1. **Seven pages, grouped** — Overview; Sprint: Board, Team; Planning: Backlog, Delivery, Hierarchy; Settings. Each answers one question: where do we stand, where is work stuck, who is doing what, what is ready next, are we keeping promises, how is the work structured.
+  2. **Team = People + work items** — the People cards (ADR-026) followed by the sprint's item list; the distribution charts and the capacity / assignment / estimate notices are removed (the Overview carries them); the workload table shows only once capacity exists in Azure.
+  3. **Board = board + stuck across teams**, as two tabs (`/board?tab=stuck`).
+  4. **Engineering and Intelligence leave the sidebar** until they have data (pull requests and builds; an AI provider).
+  5. **Old links keep working** — `/people` redirects to `/team`, `/stuck` to `/board?tab=stuck`.
+  6. **Old sprints are history** — a sprint whose successor has started (`ended`, ADR-028) shows its result as it stood at its end on the Overview (committed, added, removed, delivered by the end, carried over, say/do, velocity, work closed late; ADR-018), never today's state of its items. Board and Team say so and point to Delivery. The team's current sprint — running or late — is never treated as backlog.
+- **Consequences**: Display and navigation only; no migration and no calculation changed.
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.

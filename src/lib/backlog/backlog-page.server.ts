@@ -6,6 +6,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { AzureDevOpsError } from "@/lib/azure/errors";
 import { localDateOf } from "@/lib/people/people-rules";
+import { pickScheduledSprints } from "@/lib/scheduler/scheduler-rules";
 import type { ResolvedTeamIteration } from "@/lib/workspace/context.server";
 import type { StateCategory } from "@/types/domain/work-item";
 import {
@@ -29,7 +30,7 @@ export interface BacklogPayload {
 }
 
 export async function buildBacklogPayload(target: ResolvedTeamIteration): Promise<BacklogPayload> {
-  const [iterations, members, team] = await Promise.all([
+  const [iterations, members, team, teamSprints] = await Promise.all([
     supabaseAdmin
       .from("core_iterations")
       .select("id, name_en, start_date, finish_date")
@@ -47,11 +48,42 @@ export async function buildBacklogPayload(target: ResolvedTeamIteration): Promis
       .eq("tenant_id", target.tenantId)
       .eq("id", target.teamId)
       .maybeSingle(),
+    supabaseAdmin
+      .from("core_team_iterations")
+      .select("id, iteration_id, core_iterations!inner(start_date, finish_date)")
+      .eq("tenant_id", target.tenantId)
+      .eq("team_id", target.teamId)
+      .eq("is_deleted", false),
   ]);
+  const nowIso = new Date().toISOString();
+  const today = localDateOf(nowIso, target.timeZone) ?? nowIso.slice(0, 10);
+  const links = (teamSprints.data ?? []).map((row) => {
+    const it = row.core_iterations as unknown as {
+      start_date: string | null;
+      finish_date: string | null;
+    };
+    return {
+      tenantId: target.tenantId,
+      teamId: target.teamId,
+      teamIterationId: row.id,
+      iterationId: row.iteration_id,
+      startDate: it.start_date,
+      finishDate: it.finish_date,
+    };
+  });
+  const currentIds = new Set(pickScheduledSprints(links, today).map((s) => s.teamIterationId));
+  const currentIterationIds = new Set(
+    links.filter((l) => currentIds.has(l.teamIterationId)).map((l) => l.iterationId),
+  );
   const sprintById = new Map(
     (iterations.data ?? []).map((i) => [
       i.id,
-      { name: i.name_en, startDate: i.start_date, finishDate: i.finish_date },
+      {
+        name: i.name_en,
+        startDate: i.start_date,
+        finishDate: i.finish_date,
+        isCurrent: currentIterationIds.has(i.id),
+      },
     ]),
   );
   const memberName = new Map((members.data ?? []).map((m) => [m.id, m.display_name]));
@@ -97,8 +129,6 @@ export async function buildBacklogPayload(target: ResolvedTeamIteration): Promis
     if ((data ?? []).length < PAGE) break;
   }
 
-  const nowIso = new Date().toISOString();
-  const today = localDateOf(nowIso, target.timeZone) ?? nowIso.slice(0, 10);
   const { rows, stats } = buildBacklog(items, today, nowIso);
   return {
     teamName: team.data?.name_en ?? "",
