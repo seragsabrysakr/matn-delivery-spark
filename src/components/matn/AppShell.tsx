@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Activity,
+  Bell,
   Building2,
   ChevronsLeft,
   ChevronsRight,
@@ -20,6 +21,8 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { getAlerts } from "@/lib/workspace/workspace.functions";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -53,7 +56,13 @@ const navGroups: readonly {
     readonly icon: typeof LayoutGrid;
   }[];
 }[] = [
-  { labelKey: null, items: [{ to: "/", key: "nav.overview", icon: LayoutGrid }] },
+  {
+    labelKey: null,
+    items: [
+      { to: "/", key: "nav.overview", icon: LayoutGrid },
+      { to: "/alerts", key: "nav.alerts", icon: Bell },
+    ],
+  },
   {
     labelKey: "nav.group.sprint",
     items: [
@@ -278,6 +287,32 @@ function freshnessKey(f: DataFreshness): TKey {
   return `shell.freshness.${f}` as TKey;
 }
 
+/** Open alerts for managers (ADR-030); links to the Alerts page. */
+function AlertsBell() {
+  const { t } = useI18n();
+  const query = useQuery({
+    queryKey: ["alerts"],
+    queryFn: () => getAlerts({ data: {} }),
+    retry: false,
+    staleTime: 5 * 60_000,
+  });
+  const payload = query.data?.ok ? query.data.alerts : null;
+  if (!payload || !payload.allowed || !payload.active) return null;
+  const open = payload.open.length;
+  return (
+    <Button variant="ghost" size="icon" asChild>
+      <Link to="/alerts" aria-label={t("nav.alerts")} title={t("nav.alerts")} className="relative">
+        <Bell className="size-4" aria-hidden />
+        {open > 0 ? (
+          <span className="absolute -end-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-critical px-1 text-[10px] font-semibold leading-4 text-critical-foreground">
+            {open > 99 ? "99+" : open}
+          </span>
+        ) : null}
+      </Link>
+    </Button>
+  );
+}
+
 function TopBar({ onOpenMobileNav }: { onOpenMobileNav: () => void }) {
   const { t, locale, setLocale } = useI18n();
   const { theme, toggleTheme } = useTheme();
@@ -331,6 +366,7 @@ function TopBar({ onOpenMobileNav }: { onOpenMobileNav: () => void }) {
           <div className="hidden sm:block">
             <StatePreviewSelect />
           </div>
+          {mode === "real" ? <AlertsBell /> : null}
           <Button
             variant="ghost"
             size="icon"

@@ -305,6 +305,17 @@ Phase 2 stops at specification. Nothing below is executed until a human approves
   6. **Old sprints are history** — a sprint whose successor has started (`ended`, ADR-028) shows its result as it stood at its end on the Overview (committed, added, removed, delivered by the end, carried over, say/do, velocity, work closed late; ADR-018), never today's state of its items. Board and Team say so and point to Delivery. The team's current sprint — running or late — is never treated as backlog.
 - **Consequences**: Display and navigation only; no migration and no calculation changed.
 
+### ADR-030: Alerts and the daily digest (Phase 5)
+
+- **Context**: Managers should not have to open the app to learn that work got stuck or a deliverable slipped. The owner chose: in-app alerts plus Microsoft Teams; alerts for newly stuck work and for late or at-risk deliverables; a digest at 9:00 Cairo on working days for managers (tenant_admin, delivery_manager, team_lead), each seeing only the projects they can access.
+- **Decision**:
+  1. **Detection in the scheduler** — after the syncs are idle, at most every 30 minutes per tenant, the tick runs the same rules the pages use: stuck work (ADR-015) in each team's current sprint (ADR-028) and deliverable status (ADR-021, `loadDeliverySchedule`, no user needed). Candidates are keyed by subject (`stuck:<id>`, `dlv:<id>:late|at_risk`).
+  2. **Alert episodes, never deleted** — `ntf_alerts` opens a row when a subject appears and sets `resolved_at` once when it disappears; a recurrence is a new row. A trigger keeps identity and detection time immutable and forbids reopening. A project that could not be read is never resolved. Every pass is logged in `ntf_detection_runs` (append-only).
+  3. **Daily digest** — from 9:00 on a working day, once: the `ntf_digests` insert (unique per tenant and date) is the claim, so a second call never sends twice. Content: each current sprint (phase, stories, tasks, stuck), open counts, alerts new since the previous digest.
+  4. **Teams** — an Adaptive Card posted to `MATN_TEAMS_WEBHOOK_URL` (a server secret in Lovable, never in the DB or `VITE_*`); only Microsoft webhook hosts over https are accepted. The channel copy covers every project of the tenant, so it belongs in a managers' channel. Without the secret the digest is stored with `teams_status = not_configured`. Azure DevOps stays read-only.
+  5. **In-app** — `/alerts` (open alerts oldest first, resolved in the last 7 days, last check and last digest status) and a bell with the open count, for manager roles, filtered to the user's projects; RLS allows clients only SELECT on `ntf_alerts` through `has_project_access`; the log and digests are service-only.
+- **Consequences**: One forward migration (three tables). Nothing runs until the scheduler secret `MATN_CRON_SECRET` is set in Lovable and GitHub.
+
 ## Phase 3 — Database foundation
 
 - **Inputs**: approved `database-blueprint.md`, `domain-model.md`, `security-and-access.md`.

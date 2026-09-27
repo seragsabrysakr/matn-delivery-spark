@@ -30,8 +30,8 @@ const ENTITY_KIND: Readonly<Record<Exclude<ScheduledSyncKind, "foundation">, str
 export interface TickStep {
   readonly tenantId: string;
   readonly teamIterationId: string | null;
-  readonly kind: ScheduledSyncKind | "snapshot";
-  readonly action: "start" | "advance" | "snapshot";
+  readonly kind: ScheduledSyncKind | "snapshot" | "alerts" | "digest";
+  readonly action: "start" | "advance" | "snapshot" | "detect" | "send";
   readonly runStatus?: string;
   readonly phase?: string;
 }
@@ -268,6 +268,40 @@ export async function runSchedulerTick(nowMs: number = Date.now()): Promise<Tick
           action: "snapshot",
         },
       };
+    }
+  }
+  // Once the data is fresh: alerts, then the day's digest (ADR-030).
+  for (const tenantId of await loadScheduledTenants()) {
+    try {
+      const { detectAlerts, sendDailyDigest } = await import("@/lib/alerts/alerts.server");
+      const detection = await detectAlerts(tenantId, nowMs);
+      if (detection) {
+        return {
+          status: "working",
+          step: {
+            tenantId,
+            teamIterationId: null,
+            kind: "alerts",
+            action: "detect",
+            runStatus: `opened ${detection.opened}, resolved ${detection.resolved}`,
+          },
+        };
+      }
+      const digest = await sendDailyDigest(tenantId, nowMs);
+      if (digest) {
+        return {
+          status: "working",
+          step: {
+            tenantId,
+            teamIterationId: null,
+            kind: "digest",
+            action: "send",
+            runStatus: `${digest.date} teams:${digest.teamsStatus}`,
+          },
+        };
+      }
+    } catch {
+      failed.push({ tenantId, teamIterationId: null, kind: "alerts", action: "detect" });
     }
   }
   return { status: "idle", sprints: sprints.length, failed };

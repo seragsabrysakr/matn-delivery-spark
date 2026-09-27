@@ -85,6 +85,13 @@ export async function buildDeliverySchedule(
   tenant: TenantContext,
   target: ResolvedTeamIteration,
 ): Promise<DeliverySchedulePayload> {
+  return { ...(await loadDeliverySchedule(target)), canEdit: canManageDelivery(tenant) };
+}
+
+/** The schedule without the viewer's edit right; the scheduler reads it too (ADR-030). */
+export async function loadDeliverySchedule(
+  target: ResolvedTeamIteration,
+): Promise<Omit<DeliverySchedulePayload, "canEdit">> {
   const [mapping, types, deliverables, changes, lastRun] = await Promise.all([
     supabaseAdmin
       .from("dlv_project_mappings")
@@ -208,7 +215,6 @@ export async function buildDeliverySchedule(
         ? { mode: mapping.data.mode as DeliveryMappingMode, value: mapping.data.value }
         : null,
     workItemTypes: (types.data ?? []).map((t) => t.name),
-    canEdit: canManageDelivery(tenant),
     deliverables: views,
     changes: (changes.data ?? []).map((c) => ({
       id: c.id,

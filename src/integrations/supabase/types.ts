@@ -3721,6 +3721,154 @@ export type Database = {
           },
         ]
       }
+      ntf_alerts: {
+        Row: {
+          azure_work_item_id: number | null
+          created_at: string
+          deliverable_id: string | null
+          details: Json
+          detected_at: string
+          id: string
+          kind: string
+          project_id: string
+          resolved_at: string | null
+          subject_key: string
+          team_iteration_id: string | null
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          azure_work_item_id?: number | null
+          created_at?: string
+          deliverable_id?: string | null
+          details?: Json
+          detected_at?: string
+          id?: string
+          kind: string
+          project_id: string
+          resolved_at?: string | null
+          subject_key: string
+          team_iteration_id?: string | null
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          azure_work_item_id?: number | null
+          created_at?: string
+          deliverable_id?: string | null
+          details?: Json
+          detected_at?: string
+          id?: string
+          kind?: string
+          project_id?: string
+          resolved_at?: string | null
+          subject_key?: string
+          team_iteration_id?: string | null
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ntf_alerts_deliverable_fk"
+            columns: ["tenant_id", "project_id", "deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "dlv_deliverables"
+            referencedColumns: ["tenant_id", "project_id", "id"]
+          },
+          {
+            foreignKeyName: "ntf_alerts_project_fk"
+            columns: ["tenant_id", "project_id"]
+            isOneToOne: false
+            referencedRelation: "core_projects"
+            referencedColumns: ["tenant_id", "id"]
+          },
+          {
+            foreignKeyName: "ntf_alerts_team_iteration_fk"
+            columns: ["tenant_id", "project_id", "team_iteration_id"]
+            isOneToOne: false
+            referencedRelation: "core_team_iterations"
+            referencedColumns: ["tenant_id", "project_id", "id"]
+          },
+        ]
+      }
+      ntf_detection_runs: {
+        Row: {
+          created_at: string
+          failures: string[]
+          id: string
+          opened: number
+          projects: number
+          ran_at: string
+          resolved: number
+          sprints: number
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          failures?: string[]
+          id?: string
+          opened?: number
+          projects?: number
+          ran_at?: string
+          resolved?: number
+          sprints?: number
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          failures?: string[]
+          id?: string
+          opened?: number
+          projects?: number
+          ran_at?: string
+          resolved?: number
+          sprints?: number
+          tenant_id?: string
+        }
+        Relationships: []
+      }
+      ntf_digests: {
+        Row: {
+          content: Json
+          created_at: string
+          digest_date: string
+          id: string
+          teams_error: string | null
+          teams_sent_at: string | null
+          teams_status: string
+          tenant_id: string
+          time_zone: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          digest_date: string
+          id?: string
+          teams_error?: string | null
+          teams_sent_at?: string | null
+          teams_status?: string
+          tenant_id: string
+          time_zone?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          digest_date?: string
+          id?: string
+          teams_error?: string | null
+          teams_sent_at?: string | null
+          teams_status?: string
+          tenant_id?: string
+          time_zone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ops_cron_nonces: {
         Row: {
           created_at: string
