@@ -20,43 +20,42 @@ Paste this file (or point to it) at the start of any new Claude Code session.
 
 ## Done (ADR numbers in `docs/data-architecture/implementation-plan.md`)
 
-| Area                              | ADR | Notes                                                                                         |
-| --------------------------------- | --- | --------------------------------------------------------------------------------------------- |
-| Dynamic states / board columns    | 013 |                                                                                               |
-| Backlog + incremental sync        | 014 |                                                                                               |
-| Stuck detection                   | 015 | 3 working days in an in-progress column                                                       |
-| Hierarchy / bug handling          | 016 |                                                                                               |
-| Revisions (history)               | 017 |                                                                                               |
-| Sprint history (say/do, velocity) | 018 | Delivery page                                                                                 |
-| Capacity + days off               | 019 | Team isn't filling capacity in Azure yet                                                      |
-| Scheduler + daily snapshots       | 020 | Needs `MATN_CRON_SECRET` in Lovable secrets AND GitHub Actions secrets (owner action pending) |
-| Delivery schedule                 | 021 | Mapping per project, forecasts, committed/baseline dates                                      |
-| Export Excel/PDF                  | 022 |                                                                                               |
-| Scope from Azure backlog levels   | 023 | Rule v3; verified: only User Stories are scope                                                |
-| Hierarchy page `/hierarchy`       | 024 |                                                                                               |
-| Sprint board `/board`, `/stuck`   | 025 | Published 2026-09-27                                                                          |
+| Area                                 | ADR | Notes                                                                                         |
+| ------------------------------------ | --- | --------------------------------------------------------------------------------------------- |
+| Dynamic states / board columns       | 013 |                                                                                               |
+| Backlog + incremental sync           | 014 |                                                                                               |
+| Stuck detection                      | 015 | 3 working days in an in-progress column                                                       |
+| Hierarchy / bug handling             | 016 |                                                                                               |
+| Revisions (history)                  | 017 |                                                                                               |
+| Sprint history (say/do, velocity)    | 018 | Delivery page                                                                                 |
+| Capacity + days off                  | 019 | Team isn't filling capacity in Azure yet                                                      |
+| Scheduler + daily snapshots          | 020 | Needs `MATN_CRON_SECRET` in Lovable secrets AND GitHub Actions secrets (owner action pending) |
+| Delivery schedule                    | 021 | Mapping per project, forecasts, committed/baseline dates                                      |
+| Export Excel/PDF                     | 022 |                                                                                               |
+| Scope from Azure backlog levels      | 023 | Rule v3; verified: only User Stories are scope                                                |
+| Hierarchy page `/hierarchy`          | 024 |                                                                                               |
+| Sprint board `/board`, `/stuck`      | 025 | Published 2026-09-27                                                                          |
+| Backlog `/backlog`, People `/people` | 026 | Published 2026-09-27                                                                          |
+| Overview rebuild (stories vs tasks)  | 027 | Published 2026-09-27                                                                          |
 
-## In progress — Phase 4b (branch `claude/determined-fermi-iqg6f2`, PR open)
+## In progress — Overview command center (branch `claude/determined-fermi-iqg6f2`, PR open)
 
-Built and checked locally (tsc, vitest, eslint, prettier, vite build); ADR-026:
+ADR-028. Phase 4b (Backlog, People) and ADR-027 were published 2026-09-27.
 
-- `/backlog` — `src/lib/backlog/backlog-page-rules.ts` (+ tests), `backlog-page.server.ts`, server fn `getBacklog`. Ready = estimated + has a parent (description/acceptance criteria are not synced). Stale = unchanged 30+ days.
-- `/people` — `src/lib/people/people-rules.ts` (+ tests), `people.server.ts`, server fn `getPeople`. Previous working day's activity from revisions/transitions (mover); no-update alert after 2 working days with work in progress; visibility as the Team page.
-- Nav items `/backlog` (`ListTodo`) and `/people` (`UserRoundSearch`).
+- Rule: current sprint = the team's latest started sprint; past its finish with no later sprint started it is **overdue** ("late"), for up to 30 days (`OVERDUE_LIMIT_DAYS`), then **inactive**. `sprintPhase` / `pickScheduledSprints` in `src/lib/scheduler/scheduler-rules.ts`; used by the scheduler, `/stuck`, the sprint selector default and the Overview.
+- Overview (real mode): command header + portfolio cards (`getPortfolio`, `src/lib/portfolio/`), selected sprint status, needs attention (+ people not updating), delivery trend (say/do), deliverables, data health. Confidence, trajectory, KPI grid, risks, actions, funnel, team load, engineering removed from the live Overview.
+- Team load counts hours only (was adding story points as hours).
+- Design checked in a local preview with numbers shaped like the real data; not yet seen by the owner on real data.
 
-Next steps: merge PR (Phase 4b + Overview) → confirm Lovable has the code → Publish (no migration).
-
-## Overview rebuild (ADR-027, same branch/PR)
-
-Owner feedback 2026-09-27: Overview look and data were very poor on real data. Rebuilt (real mode only): sprint-phase notice, stories vs tasks card with "stories still New while tasks moved", needs-attention (stuck) + risks, delivery status, no "unavailable" cards, sync counters folded. Not yet seen by the owner on the live site.
+Next steps: merge PR → confirm Lovable has the code → Publish (no migration) → owner checks the Overview.
 
 ## Remaining roadmap
 
-- Phase 4c: Portfolio (all projects/teams/current sprints: progress, stuck, days left).
+- Phase 4c: portfolio started on the Overview (ADR-028); a dedicated portfolio page with deliverables per project remains.
 - Phase 5: daily digest and alerts.
 - New requests (answers pending from the owner): Release planning vs a product folder; Scrum ceremony tracking from a meetings folder with automatic AI reports. Open questions: folder location (Drive/SharePoint), product file format, how releases are defined in Azure, meeting platform and transcripts, an AI API key as a server secret.
 - Open decision: task discipline (BE/FE/QA) from tags vs Activity vs title prefix.
-- Known data facts: no current sprint exists (Sprint 2 ended 17 Sep, no Sprint 3 in Azure); Hoteliana Sprint 2: all 19 stories still New while 62/120 tasks closed (team does not move stories); tasks carry no remaining hours; capacity not filled in Azure.
+- Known data facts: Hoteliana Sprint 2 (due 17 Sep) is still the current sprint, late, because no Sprint 3 exists in Azure; Hoteliana Sprint 2: all 19 stories still New while 62/120 tasks closed (team does not move stories); tasks carry no remaining hours; capacity not filled in Azure.
 
 ## Local checks
 

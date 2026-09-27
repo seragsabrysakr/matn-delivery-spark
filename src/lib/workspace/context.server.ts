@@ -8,7 +8,8 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { AzureDevOpsError } from "@/lib/azure/errors";
 import type { TenantContext } from "@/lib/azure/authz.server";
-import { cairoToday, containsDate } from "@/lib/calendar/cairo";
+import { cairoToday } from "@/lib/calendar/cairo";
+import { pickScheduledSprints } from "@/lib/scheduler/scheduler-rules";
 
 export interface SelectorOption {
   readonly id: string;
@@ -157,16 +158,28 @@ export async function loadWorkspaceSelectors(context: TenantContext): Promise<Wo
       nameAr: row.core_iterations?.name_ar ?? "تكرار",
       startDate: row.core_iterations?.start_date ?? null,
       finishDate: row.core_iterations?.finish_date ?? null,
-      isCurrent: containsDate(
-        row.core_iterations?.start_date ?? null,
-        row.core_iterations?.finish_date ?? null,
-        today,
-      ),
+      isCurrent: false,
     }))
     .sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""));
 
+  // Current = each team's latest started sprint while running or late (ADR-028).
+  const currentIds = new Set(
+    pickScheduledSprints(
+      teamIterations.map((it) => ({
+        tenantId: context.tenantId,
+        teamId: it.teamId,
+        teamIterationId: it.id,
+        startDate: it.startDate,
+        finishDate: it.finishDate,
+      })),
+      today,
+    ).map((s) => s.teamIterationId),
+  );
+
+  // The most recently started current sprint; otherwise the latest dated one.
+  const options = teamIterations.map((it) => ({ ...it, isCurrent: currentIds.has(it.id) }));
   const current =
-    teamIterations.find((it) => it.isCurrent) ?? teamIterations[teamIterations.length - 1] ?? null;
+    [...options].reverse().find((it) => it.isCurrent) ?? options[options.length - 1] ?? null;
   const defaultTeam = current
     ? (teamRows.data ?? []).find((t) => t.id === current.teamId)
     : (teamRows.data ?? [])[0];
@@ -192,7 +205,7 @@ export async function loadWorkspaceSelectors(context: TenantContext): Promise<Wo
       nameEn: t.name_en,
       nameAr: t.name_ar,
     })),
-    teamIterations,
+    teamIterations: options,
     defaults: {
       organizationId: defaultProject?.organization_id ?? (orgQuery.data ?? [])[0]?.id ?? null,
       projectId: defaultProject?.id ?? null,

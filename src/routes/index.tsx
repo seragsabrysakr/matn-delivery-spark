@@ -1,6 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { AppShell } from "@/components/matn/AppShell";
 import { KpiGrid } from "@/components/matn/KpiGrid";
 import { TrajectoryCard } from "@/components/matn/Trajectory";
@@ -11,7 +9,12 @@ import { EngineeringHealthCard } from "@/components/matn/EngineeringHealth";
 import { RecommendedActionsCard } from "@/components/matn/RecommendedActions";
 import {
   AttentionCard,
+  CommandHeader,
+  DataHealthStrip,
   DeliveryStatusCard,
+  DeliveryTrendCard,
+  PortfolioGrid,
+  SprintHeading,
   SprintPhaseNotice,
   SprintSummaryCard,
 } from "@/components/matn/OverviewSections";
@@ -40,54 +43,38 @@ export const Route = createFileRoute("/")({
 
 function OverviewPage() {
   const { t, locale } = useI18n();
-  const { iteration, mode, unavailable, syncing, syncMessage, runSync, sprintDatesUnavailable } =
-    useWorkspace();
+  const { iteration, mode, unavailable, syncMessage, sprintDatesUnavailable } = useWorkspace();
   const noSprintDates = sprintDatesUnavailable;
 
   return (
     <AppShell>
       <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4">
-        <header className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
-          <div className="min-w-0">
-            <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-              <h1 className="min-w-0 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-                {t("overview.title")}
-              </h1>
-              <span className="inline-flex items-center rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted-foreground">
-                {mode === "real" ? t("real.mode.badge") : t("real.mode.mock")}
-              </span>
-              {iteration ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-0.5 text-[11px] text-muted-foreground">
-                  <span className="font-medium text-foreground">{iteration.name[locale]}</span>
-                  {mode !== "real" ? (
-                    <>
-                      <span aria-hidden>·</span>
-                      <Iso>
-                        {t("overview.sprintDay", {
-                          a: iteration.currentDay,
-                          b: iteration.totalDays,
-                        })}
-                      </Iso>
-                    </>
-                  ) : null}
+        {mode === "real" ? (
+          <CommandHeader />
+        ) : (
+          <header className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+            <div className="min-w-0">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                <h1 className="min-w-0 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+                  {t("overview.title")}
+                </h1>
+                <span className="inline-flex items-center rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted-foreground">
+                  {t("real.mode.mock")}
                 </span>
-              ) : null}
+                {iteration ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-0.5 text-[11px] text-muted-foreground">
+                    <span className="font-medium text-foreground">{iteration.name[locale]}</span>
+                    <span aria-hidden>·</span>
+                    <Iso>
+                      {t("overview.sprintDay", { a: iteration.currentDay, b: iteration.totalDays })}
+                    </Iso>
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-0.5 text-[13px] text-muted-foreground">{t("overview.subtitle")}</p>
             </div>
-            <p className="mt-0.5 text-[13px] text-muted-foreground">{t("overview.subtitle")}</p>
-          </div>
-          {mode === "real" ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full min-h-11 shrink-0 sm:min-h-9 sm:w-auto"
-              disabled={syncing}
-              onClick={runSync}
-            >
-              <RefreshCw className={`size-3.5 ${syncing ? "animate-spin" : ""}`} aria-hidden />
-              {syncing ? t("real.sync.running") : t("real.sync.action")}
-            </Button>
-          ) : null}
-        </header>
+          </header>
+        )}
 
         {syncMessage ? (
           <Notice tone="warning" title={t("state.error.title")} body={syncMessage} />
@@ -166,47 +153,20 @@ function RealOverview() {
     );
   }
 
-  const running = sprintSummary.phase === "running";
-  // During a sprint every indicator is live; once it has ended, the pace-based
-  // ones (expected, confidence) describe a finished race and are left out.
-  const kpis = snapshot.kpis.filter(
-    (k) => !k.unavailable && (running || (k.id !== "expected" && k.id !== "confidence")),
-  );
-
+  const sprintName = iteration?.name[locale] ?? "";
   return (
     <>
       <FreshnessNotices />
-      <SprintPhaseNotice summary={sprintSummary} sprintName={iteration?.name[locale] ?? ""} />
+      <PortfolioGrid />
+      <SprintHeading summary={sprintSummary} sprintName={sprintName} />
+      <SprintPhaseNotice summary={sprintSummary} sprintName={sprintName} />
       <SprintSummaryCard summary={sprintSummary} />
-
       <div className="grid gap-4 xl:grid-cols-2">
         <AttentionCard teamIterationId={filters.iterationId} />
-        <RisksCard risks={snapshot.risks} />
+        <DeliveryTrendCard teamIterationId={filters.iterationId} />
       </div>
-
       <DeliveryStatusCard teamIterationId={filters.iterationId} />
-
-      {kpis.length > 0 ? <KpiGrid kpis={kpis} /> : null}
-
-      {running && !unavailable["expected"] ? (
-        <TrajectoryCard
-          trajectory={snapshot.trajectory}
-          currentDay={iteration?.currentDay ?? 0}
-          totalDays={iteration?.totalDays ?? 0}
-        />
-      ) : null}
-
-      {!unavailable["funnel"] && snapshot.funnel.length > 0 ? (
-        <FunnelCard stages={snapshot.funnel} />
-      ) : null}
-
-      <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
-        {snapshot.teamLoad.length > 0 ? <TeamLoadCard members={snapshot.teamLoad} /> : null}
-        {snapshot.actions.length > 0 ? <RecommendedActionsCard actions={snapshot.actions} /> : null}
-      </div>
-
-      {!unavailable["engineering"] ? <EngineeringHealthCard data={snapshot.engineering} /> : null}
-
+      <DataHealthStrip summary={sprintSummary} />
       <SyncDetails />
     </>
   );

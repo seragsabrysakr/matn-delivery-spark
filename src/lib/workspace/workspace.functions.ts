@@ -517,3 +517,24 @@ export const getPeople = createServerFn({ method: "GET" })
       return { ok: false as const, failure: toAzureFailure(error) };
     }
   });
+
+/** Every visible team's current sprint and where it stands (ADR-028). */
+export const getPortfolio = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({ tenantId: uuid.optional() })
+      .strict()
+      .parse(data ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    const { resolveTenantContext } = await import("@/lib/azure/authz.server");
+    const { buildPortfolio } = await import("@/lib/portfolio/portfolio.server");
+    const { toAzureFailure } = await import("@/lib/azure/errors");
+    try {
+      const tenant = await resolveTenantContext(context.userId, data.tenantId ?? null);
+      return { ok: true as const, portfolio: await buildPortfolio(tenant) };
+    } catch (error) {
+      return { ok: false as const, failure: toAzureFailure(error) };
+    }
+  });
