@@ -39,19 +39,16 @@ Paste this file (or point to it) at the start of any new Claude Code session.
 | Overview rebuild (stories vs tasks)  | 027 | Published 2026-09-27                                                                          |
 | Command center, late-sprint rule     | 028 | Published 2026-09-27                                                                          |
 | Sidebar consolidation, old sprints   | 029 | Published 2026-09-27                                                                          |
+| Alerts + daily digest `/alerts`      | 030 | Published 2026-09-27; migration applied; waits for MATN_CRON_SECRET                           |
 
-## In progress — Phase 5 alerts + daily digest (branch `claude/determined-fermi-iqg6f2`, PR open)
+## Owner actions pending
 
-ADR-030. ADR-029 (sidebar consolidation, old sprints as history) was published 2026-09-27. Backlog fix (items by team areas, like Azure) is on this branch too.
-
-- Migration `supabase/migrations/20260927030000_alerts_and_digest.sql` (ntf_alerts, ntf_detection_runs, ntf_digests) — **needs the owner's approval, then apply before merging** (runbook step 1).
-- Scheduler tick: `detectAlerts` (every 30 min) then `sendDailyDigest` (9:00 Cairo, working days) in `src/lib/alerts/alerts.server.ts`; pure rules in `alert-rules.ts` (+ tests).
-- UI: `/alerts` page + bell in the top bar, manager roles only.
-- Owner actions: set `MATN_CRON_SECRET` in Lovable secrets AND GitHub Actions secrets (nothing runs without it); for Teams, create a Workflows/incoming webhook in a managers' channel and add its URL as `MATN_TEAMS_WEBHOOK_URL` in Lovable secrets.
-
-Next steps: owner approves migration → apply (query_database, record in schema_migrations) → merge PR → confirm Lovable has the code → Publish.
+- `MATN_CRON_SECRET` in Lovable secrets AND GitHub Actions secrets (same value, >= 32 chars). Without it the scheduler does not run: no automatic sync, alerts or digest.
+- Optional: `MATN_TEAMS_WEBHOOK_URL` in Lovable secrets (Teams channel → ⋯ → Workflows → "Post to a channel when a webhook request is received"). It only sends the daily digest; it reads nothing from Teams.
 
 ## Remaining roadmap
+
+- **Deferred by the owner (2026-09-27): reading Teams meetings** (which meetings happened, who attended, transcripts/AI summaries, Scrum ceremony tracking). Needs a Microsoft Graph app registration by the client's IT (read-only), and decisions on which meetings, summaries (AI key) and chats (recommended: no). Not started.
 
 - Phase 4c: portfolio started on the Overview (ADR-028); a dedicated portfolio page with deliverables per project remains.
 - New requests (answers pending from the owner): Release planning vs a product folder; Scrum ceremony tracking from a meetings folder with automatic AI reports. Open questions: folder location (Drive/SharePoint), product file format, how releases are defined in Azure, meeting platform and transcripts, an AI API key as a server secret.
